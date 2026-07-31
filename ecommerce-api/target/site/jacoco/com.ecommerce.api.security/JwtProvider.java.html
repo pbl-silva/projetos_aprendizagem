@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">E-Commerce API</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.api.security</a> &gt; <span class="el_source">JwtProvider.java</span></div><h1>JwtProvider.java</h1><pre class="source lang-java linenums">package com.ecommerce.api.security;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.util.Date;
+
+@Component
+@RequiredArgsConstructor
+<span class="fc" id="L15">@Slf4j</span>
+public class JwtProvider {
+    
+    private final JwtProperties jwtProperties;
+    
+    private SecretKey getSigningKey() {
+<span class="fc" id="L21">        return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());</span>
+    }
+    
+    /**
+     * Gera token JWT contendo o papel (ADMIN/USER) e, se houver, o id do
+     * cliente vinculado ao usuário. Esses claims são a base da autorização
+     * por papel e das checagens de propriedade (um cliente só acessa os
+     * próprios pedidos/pagamentos).
+     */
+    public String generateToken(String email, Long userId, String papel, Long clienteId) {
+<span class="fc" id="L31">        Date now = new Date();</span>
+<span class="fc" id="L32">        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());</span>
+        
+<span class="fc" id="L34">        log.debug(&quot;Gerando token JWT para usuário: {}&quot;, email);</span>
+        
+<span class="fc" id="L36">        var builder = Jwts.builder()</span>
+<span class="fc" id="L37">            .subject(email)</span>
+<span class="fc" id="L38">            .claim(&quot;userId&quot;, userId)</span>
+<span class="fc" id="L39">            .claim(&quot;papel&quot;, papel)</span>
+<span class="fc" id="L40">            .issuedAt(now)</span>
+<span class="fc" id="L41">            .expiration(expiryDate);</span>
+
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (clienteId != null) {</span>
+<span class="fc" id="L44">            builder.claim(&quot;clienteId&quot;, clienteId);</span>
+        }
+
+<span class="fc" id="L47">        return builder</span>
+<span class="fc" id="L48">            .signWith(getSigningKey())</span>
+<span class="fc" id="L49">            .compact();</span>
+    }
+    
+    /**
+     * Extrai email do token
+     */
+    @org.springframework.lang.Nullable
+    public String getEmailFromToken(String token) {
+        try {
+<span class="fc" id="L58">            Claims claims = Jwts.parser()</span>
+<span class="fc" id="L59">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L60">                .build()</span>
+<span class="fc" id="L61">                .parseSignedClaims(token)</span>
+<span class="fc" id="L62">                .getPayload();</span>
+            
+<span class="fc" id="L64">            return claims.getSubject();</span>
+<span class="fc" id="L65">        } catch (Exception e) {</span>
+<span class="fc" id="L66">            log.error(&quot;Erro ao extrair email do token: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L67">            return null;</span>
+        }
+    }
+    
+    /**
+     * Extrai userId do token
+     */
+    @org.springframework.lang.Nullable
+    public Long getUserIdFromToken(String token) {
+        try {
+<span class="fc" id="L77">            Claims claims = Jwts.parser()</span>
+<span class="fc" id="L78">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L79">                .build()</span>
+<span class="fc" id="L80">                .parseSignedClaims(token)</span>
+<span class="fc" id="L81">                .getPayload();</span>
+            
+<span class="fc" id="L83">            return claims.get(&quot;userId&quot;, Long.class);</span>
+<span class="fc" id="L84">        } catch (Exception e) {</span>
+<span class="fc" id="L85">            log.error(&quot;Erro ao extrair userId do token: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L86">            return null;</span>
+        }
+    }
+
+    /**
+     * Extrai o papel (ADMIN/USER) do token
+     */
+    @org.springframework.lang.Nullable
+    public String getPapelFromToken(String token) {
+        try {
+<span class="fc" id="L96">            Claims claims = Jwts.parser()</span>
+<span class="fc" id="L97">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L98">                .build()</span>
+<span class="fc" id="L99">                .parseSignedClaims(token)</span>
+<span class="fc" id="L100">                .getPayload();</span>
+
+<span class="fc" id="L102">            return claims.get(&quot;papel&quot;, String.class);</span>
+<span class="nc" id="L103">        } catch (Exception e) {</span>
+<span class="nc" id="L104">            log.error(&quot;Erro ao extrair papel do token: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L105">            return null;</span>
+        }
+    }
+
+    /**
+     * Extrai o id do cliente vinculado ao usuário, quando existir
+     */
+    @org.springframework.lang.Nullable
+    public Long getClienteIdFromToken(String token) {
+        try {
+<span class="fc" id="L115">            Claims claims = Jwts.parser()</span>
+<span class="fc" id="L116">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L117">                .build()</span>
+<span class="fc" id="L118">                .parseSignedClaims(token)</span>
+<span class="fc" id="L119">                .getPayload();</span>
+
+<span class="fc" id="L121">            return claims.get(&quot;clienteId&quot;, Long.class);</span>
+<span class="nc" id="L122">        } catch (Exception e) {</span>
+<span class="nc" id="L123">            log.error(&quot;Erro ao extrair clienteId do token: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L124">            return null;</span>
+        }
+    }
+    
+    /**
+     * Valida token
+     */
+    public boolean validateToken(String token) {
+        try {
+<span class="fc" id="L133">            Jwts.parser()</span>
+<span class="fc" id="L134">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L135">                .build()</span>
+<span class="fc" id="L136">                .parseSignedClaims(token);</span>
+            
+<span class="fc" id="L138">            log.debug(&quot;Token JWT válido&quot;);</span>
+<span class="fc" id="L139">            return true;</span>
+<span class="fc" id="L140">        } catch (Exception e) {</span>
+<span class="fc" id="L141">            log.warn(&quot;Token JWT inválido: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L142">            return false;</span>
+        }
+    }
+    
+    /**
+     * Verifica se o token está expirado
+     */
+    public boolean isTokenExpired(String token) {
+        try {
+<span class="fc" id="L151">            Claims claims = Jwts.parser()</span>
+<span class="fc" id="L152">                .verifyWith(getSigningKey())</span>
+<span class="fc" id="L153">                .build()</span>
+<span class="fc" id="L154">                .parseSignedClaims(token)</span>
+<span class="fc" id="L155">                .getPayload();</span>
+            
+<span class="fc" id="L157">            return claims.getExpiration().before(new Date());</span>
+<span class="fc" id="L158">        } catch (Exception e) {</span>
+<span class="fc" id="L159">            log.warn(&quot;Erro ao verificar expiração do token: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L160">            return true;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

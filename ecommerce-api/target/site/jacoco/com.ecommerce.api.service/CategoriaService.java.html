@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CategoriaService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">E-Commerce API</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.api.service</a> &gt; <span class="el_source">CategoriaService.java</span></div><h1>CategoriaService.java</h1><pre class="source lang-java linenums">package com.ecommerce.api.service;
+
+import com.ecommerce.api.dto.CategoriaDTO;
+import com.ecommerce.api.exception.RecursoNaoEncontradoException;
+import com.ecommerce.api.model.Categoria;
+import com.ecommerce.api.repository.CategoriaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class CategoriaService {
+    
+    private final CategoriaRepository categoriaRepository;
+    
+    public CategoriaDTO criar(CategoriaDTO dto) {
+<span class="fc" id="L25">        Categoria categoria = Categoria.builder()</span>
+<span class="fc" id="L26">            .nome(dto.getNome())</span>
+<span class="fc" id="L27">            .descricao(dto.getDescricao())</span>
+<span class="fc" id="L28">            .ativo(true)</span>
+<span class="fc" id="L29">            .build();</span>
+        
+<span class="fc" id="L31">        Categoria salva = categoriaRepository.save(categoria);</span>
+<span class="fc" id="L32">        return converterParaDTO(salva);</span>
+    }
+    
+    @Transactional(readOnly = true)
+    public CategoriaDTO obterPorId(Long id) {
+<span class="fc" id="L37">        Categoria categoria = categoriaRepository.findById(id)</span>
+<span class="fc" id="L38">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+                &quot;Categoria não encontrada com ID: &quot; + id
+            ));
+<span class="fc" id="L41">        return converterParaDTO(categoria);</span>
+    }
+    
+    @Transactional(readOnly = true)
+    public List&lt;CategoriaDTO&gt; listarTodas() {
+<span class="fc" id="L46">        return categoriaRepository.findAll()</span>
+<span class="fc" id="L47">            .stream()</span>
+<span class="fc" id="L48">            .map(this::converterParaDTO)</span>
+<span class="fc" id="L49">            .collect(Collectors.toList());</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Page&lt;CategoriaDTO&gt; listarComPaginacao(int pagina, int tamanho, String ordenarPor, String direcao) {
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">        if (tamanho &gt; 100) {</span>
+<span class="nc" id="L55">            tamanho = 100;</span>
+        }
+<span class="fc" id="L57">        Sort.Direction direction = Sort.Direction.fromString(direcao.toUpperCase());</span>
+<span class="fc" id="L58">        Sort sort = Sort.by(direction, ordenarPor);</span>
+<span class="fc" id="L59">        Pageable pageable = PageRequest.of(pagina, tamanho, sort);</span>
+<span class="fc" id="L60">        return categoriaRepository.findAll(pageable).map(this::converterParaDTO);</span>
+    }
+    
+    public CategoriaDTO atualizar(Long id, CategoriaDTO dto) {
+<span class="fc" id="L64">        Categoria categoria = categoriaRepository.findById(id)</span>
+<span class="fc" id="L65">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+                &quot;Categoria não encontrada com ID: &quot; + id
+            ));
+        
+<span class="fc" id="L69">        categoria.setNome(dto.getNome());</span>
+<span class="fc" id="L70">        categoria.setDescricao(dto.getDescricao());</span>
+        
+<span class="fc" id="L72">        Categoria atualizada = categoriaRepository.save(categoria);</span>
+<span class="fc" id="L73">        return converterParaDTO(atualizada);</span>
+    }
+    
+    public void deletar(Long id) {
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (!categoriaRepository.existsById(id)) {</span>
+<span class="fc" id="L78">            throw new RecursoNaoEncontradoException(</span>
+                &quot;Categoria não encontrada com ID: &quot; + id
+            );
+        }
+<span class="fc" id="L82">        categoriaRepository.deleteById(id);</span>
+<span class="fc" id="L83">    }</span>
+    
+    private CategoriaDTO converterParaDTO(Categoria categoria) {
+<span class="fc" id="L86">        return CategoriaDTO.builder()</span>
+<span class="fc" id="L87">            .id(categoria.getId())</span>
+<span class="fc" id="L88">            .nome(categoria.getNome())</span>
+<span class="fc" id="L89">            .descricao(categoria.getDescricao())</span>
+<span class="fc" id="L90">            .ativo(categoria.getAtivo())</span>
+<span class="fc" id="L91">            .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">E-Commerce API</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.api.controller</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.ecommerce.api.controller;
+
+import com.ecommerce.api.dto.LoginRequest;
+import com.ecommerce.api.dto.LoginResponse;
+import com.ecommerce.api.dto.RegistroClienteDTO;
+import com.ecommerce.api.dto.UsuarioDTO;
+import com.ecommerce.api.service.UsuarioService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/auth&quot;)
+@RequiredArgsConstructor
+<span class="fc" id="L21">@Slf4j</span>
+@Tag(name = &quot;Autenticação&quot;, description = &quot;Endpoints de autenticação e registro&quot;)
+public class AuthController {
+
+    private final UsuarioService usuarioService;
+
+    /**
+     * Autocadastro público de cliente. Cria o login (papel USER) já
+     * vinculado a um novo Cliente - é assim que o login fica &quot;ligado ao
+     * cliente&quot; que depois seleciona produtos e efetua pagamentos.
+     */
+    @PostMapping(&quot;/registrar&quot;)
+    @Operation(summary = &quot;Autocadastro de cliente (cria login + cliente vinculado)&quot;)
+    public ResponseEntity&lt;UsuarioDTO&gt; registrar(@Valid @RequestBody RegistroClienteDTO dto) {
+<span class="fc" id="L35">        log.info(&quot;Registrando novo cliente: {}&quot;, dto.getEmail());</span>
+<span class="fc" id="L36">        UsuarioDTO usuario = usuarioService.registrarCliente(dto);</span>
+<span class="fc" id="L37">        return ResponseEntity.status(HttpStatus.CREATED).body(usuario);</span>
+    }
+
+    /**
+     * Cria um novo login administrador. Só um ADMIN já autenticado pode
+     * criar outro ADMIN - não é possível se autopromover via /auth/registrar.
+     */
+    @PostMapping(&quot;/registrar-admin&quot;)
+    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
+    @Operation(summary = &quot;Cria um novo login administrador (apenas ADMIN)&quot;)
+    public ResponseEntity&lt;UsuarioDTO&gt; registrarAdmin(@Valid @RequestBody UsuarioDTO dto) {
+<span class="nc" id="L48">        log.info(&quot;Registrando novo administrador: {}&quot;, dto.getEmail());</span>
+<span class="nc" id="L49">        UsuarioDTO usuario = usuarioService.registrarAdmin(dto);</span>
+<span class="nc" id="L50">        return ResponseEntity.status(HttpStatus.CREATED).body(usuario);</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    @Operation(summary = &quot;Realiza login e retorna token JWT&quot;)
+    public ResponseEntity&lt;LoginResponse&gt; login(@Valid @RequestBody LoginRequest request) {
+<span class="fc" id="L56">        log.info(&quot;Login realizado para: {}&quot;, request.getEmail());</span>
+<span class="fc" id="L57">        LoginResponse response = usuarioService.login(request);</span>
+<span class="fc" id="L58">        return ResponseEntity.ok(response);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
