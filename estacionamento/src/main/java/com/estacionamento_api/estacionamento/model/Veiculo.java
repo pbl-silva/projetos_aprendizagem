@@ -34,6 +34,7 @@ public class Veiculo {
     private String cor;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean pcd = false;
     
     @Column(name = "data_criacao", nullable = false, updatable = false)

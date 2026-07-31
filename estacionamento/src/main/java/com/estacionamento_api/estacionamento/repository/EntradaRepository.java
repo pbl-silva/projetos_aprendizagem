@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface EntradaRepository extends JpaRepository<Entrada, Long> {
     Optional<Entrada> findByVeiculoIdAndAtivoTrue(Long veiculoId);
+    boolean existsByVeiculoId(Long veiculoId);
     
     @Query("SELECT e FROM Entrada e WHERE e.ativo = true")
     List<Entrada> findAllAtivas();

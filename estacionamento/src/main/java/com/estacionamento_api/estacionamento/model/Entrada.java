@@ -28,6 +28,7 @@ public class Entrada {
     private Vaga vaga;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean ativo = true;
     
     @OneToOne(mappedBy = "entrada", cascade = CascadeType.ALL)

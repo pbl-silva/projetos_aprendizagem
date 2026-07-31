@@ -25,6 +25,7 @@ public class Vaga {
     private TipoVaga tipoVaga;
     
     @Column(nullable = false)
+    @Builder.Default
     private Boolean disponivel = true;
     
     @Column(name = "data_criacao", nullable = false, updatable = false)

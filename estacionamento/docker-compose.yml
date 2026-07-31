@@ -1,0 +1,7 @@
+services:
+  estacionamento-api:
+    build: .
+    ports:
+      - "8080:8080"
+    # H2 é em memória: os dados somem a cada restart do container, igual
+    # já acontece hoje quando você roda ./mvnw spring-boot:run localmente.
