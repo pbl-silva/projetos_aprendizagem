@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClienteController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">E-Commerce API</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.api.controller</a> &gt; <span class="el_source">ClienteController.java</span></div><h1>ClienteController.java</h1><pre class="source lang-java linenums">package com.ecommerce.api.controller;
 
 import com.ecommerce.api.dto.ClienteDTO;
-import com.ecommerce.api.security.UsuarioPrincipal;
 import com.ecommerce.api.service.ClienteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -21,85 +18,44 @@ public class ClienteController {
     private final ClienteService service;
 
     /**
-     * Lista todos os clientes SEM paginação - apenas ADMIN.
+     * Lista todos os clientes SEM paginação
      */
     @GetMapping(&quot;/todos&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;List&lt;ClienteDTO&gt;&gt; listarTodos() {
-<span class="fc" id="L29">        return ResponseEntity.ok(service.listarTodos());</span>
+<span class="fc" id="L25">        return ResponseEntity.ok(service.listarTodos());</span>
     }
 
     /**
-     * Lista clientes COM paginação - apenas ADMIN.
+     * Lista clientes COM paginação
      */
     @GetMapping
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;Page&lt;ClienteDTO&gt;&gt; listar(
             @RequestParam(defaultValue = &quot;0&quot;) int pagina,
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho,
             @RequestParam(defaultValue = &quot;id&quot;) String ordenarPor,
             @RequestParam(defaultValue = &quot;DESC&quot;) String direcao) {
-<span class="fc" id="L42">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
+<span class="fc" id="L37">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
     }
 
-    /**
-     * Retorna o próprio perfil de cliente do usuário autenticado.
-     */
-    @GetMapping(&quot;/me&quot;)
-    public ResponseEntity&lt;ClienteDTO&gt; obterMeuPerfil() {
-<span class="nc" id="L50">        UsuarioPrincipal principal = UsuarioPrincipal.getUsuarioAutenticado();</span>
-<span class="nc bnc" id="L51" title="All 4 branches missed.">        if (principal == null || principal.getClienteId() == null) {</span>
-<span class="nc" id="L52">            throw new AccessDeniedException(&quot;Usuário autenticado não possui cliente vinculado&quot;);</span>
-        }
-<span class="nc" id="L54">        return ResponseEntity.ok(service.obterPorId(principal.getClienteId()));</span>
-    }
-
-    /**
-     * Obtém cliente por ID - ADMIN pode ver qualquer um, USER só o próprio.
-     */
     @GetMapping(&quot;/{id}&quot;)
     public ResponseEntity&lt;ClienteDTO&gt; obter(@PathVariable Long id) {
-<span class="fc" id="L62">        exigirAdminOuProprioCliente(id);</span>
-<span class="fc" id="L63">        return ResponseEntity.ok(service.obterPorId(id));</span>
+<span class="fc" id="L42">        return ResponseEntity.ok(service.obterPorId(id));</span>
     }
 
-    /**
-     * Cadastro de cliente feito diretamente pelo admin (sem login associado).
-     * O autocadastro normal do cliente acontece em POST /auth/registrar.
-     */
     @PostMapping
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;ClienteDTO&gt; criar(@Valid @RequestBody ClienteDTO dto) {
-<span class="fc" id="L73">        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));</span>
+<span class="fc" id="L47">        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));</span>
     }
 
-    /**
-     * Atualiza cliente - ADMIN pode atualizar qualquer um, USER só o próprio.
-     */
     @PutMapping(&quot;/{id}&quot;)
     public ResponseEntity&lt;ClienteDTO&gt; atualizar(@PathVariable Long id, @Valid @RequestBody ClienteDTO dto) {
-<span class="fc" id="L81">        exigirAdminOuProprioCliente(id);</span>
-<span class="fc" id="L82">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
+<span class="fc" id="L52">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
     }
 
     @DeleteMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;Void&gt; deletar(@PathVariable Long id) {
-<span class="fc" id="L88">        service.deletar(id);</span>
-<span class="fc" id="L89">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L57">        service.deletar(id);</span>
+<span class="fc" id="L58">        return ResponseEntity.noContent().build();</span>
     }
-
-    private void exigirAdminOuProprioCliente(Long clienteId) {
-<span class="fc" id="L93">        UsuarioPrincipal principal = UsuarioPrincipal.getUsuarioAutenticado();</span>
-<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if (principal == null) {</span>
-<span class="nc" id="L95">            throw new AccessDeniedException(&quot;Não autenticado&quot;);</span>
-        }
-<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (principal.isAdmin()) {</span>
-<span class="fc" id="L98">            return;</span>
-        }
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (!clienteId.equals(principal.getClienteId())) {</span>
-<span class="nc" id="L101">            throw new AccessDeniedException(&quot;Você só pode acessar seus próprios dados de cliente&quot;);</span>
-        }
-<span class="fc" id="L103">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

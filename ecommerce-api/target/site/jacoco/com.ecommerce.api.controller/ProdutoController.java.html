@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping(&quot;/produtos&quot;)
 @RequiredArgsConstructor
-<span class="fc" id="L22">@Slf4j</span>
+<span class="fc" id="L21">@Slf4j</span>
 @Tag(name = &quot;Produtos&quot;, description = &quot;Endpoints para gerenciar produtos&quot;)
 public class ProdutoController {
     
@@ -31,9 +30,9 @@ public class ProdutoController {
     @GetMapping(&quot;/todos&quot;)
     @Operation(summary = &quot;Lista todos os produtos sem paginação&quot;)
     public ResponseEntity&lt;List&lt;ProdutoDTO&gt;&gt; listarTodos() {
-<span class="fc" id="L34">        log.info(&quot;GET /api/produtos/todos&quot;);</span>
-<span class="fc" id="L35">        List&lt;ProdutoDTO&gt; produtos = produtoService.listarTodos();</span>
-<span class="fc" id="L36">        return ResponseEntity.ok(produtos);</span>
+<span class="fc" id="L33">        log.info(&quot;GET /api/produtos/todos&quot;);</span>
+<span class="fc" id="L34">        List&lt;ProdutoDTO&gt; produtos = produtoService.listarTodos();</span>
+<span class="fc" id="L35">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**
@@ -54,11 +53,11 @@ public class ProdutoController {
             @Parameter(description = &quot;Direção da ordenação: ASC ou DESC&quot;)
             @RequestParam(defaultValue = &quot;DESC&quot;) String direcao) {
         
-<span class="nc" id="L57">        log.info(&quot;GET /api/produtos - Página: {}, Tamanho: {}, Ordenar por: {}, Direção: {}&quot;, </span>
-<span class="nc" id="L58">            pagina, tamanho, ordenarPor, direcao);</span>
+<span class="nc" id="L56">        log.info(&quot;GET /api/produtos - Página: {}, Tamanho: {}, Ordenar por: {}, Direção: {}&quot;, </span>
+<span class="nc" id="L57">            pagina, tamanho, ordenarPor, direcao);</span>
         
-<span class="nc" id="L60">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarComPaginacao(pagina, tamanho, ordenarPor, direcao);</span>
-<span class="nc" id="L61">        return ResponseEntity.ok(produtos);</span>
+<span class="nc" id="L59">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarComPaginacao(pagina, tamanho, ordenarPor, direcao);</span>
+<span class="nc" id="L60">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**
@@ -70,10 +69,10 @@ public class ProdutoController {
             @RequestParam(defaultValue = &quot;0&quot;) int pagina,
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho) {
         
-<span class="nc" id="L73">        log.info(&quot;GET /api/produtos/ativos - Página: {}, Tamanho: {}&quot;, pagina, tamanho);</span>
+<span class="nc" id="L72">        log.info(&quot;GET /api/produtos/ativos - Página: {}, Tamanho: {}&quot;, pagina, tamanho);</span>
         
-<span class="nc" id="L75">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarAtivosComPaginacao(pagina, tamanho);</span>
-<span class="nc" id="L76">        return ResponseEntity.ok(produtos);</span>
+<span class="nc" id="L74">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarAtivosComPaginacao(pagina, tamanho);</span>
+<span class="nc" id="L75">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**
@@ -88,10 +87,10 @@ public class ProdutoController {
             @RequestParam(defaultValue = &quot;0&quot;) int pagina,
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho) {
         
-<span class="nc" id="L91">        log.info(&quot;GET /api/produtos/buscar?nome={} - Página: {}, Tamanho: {}&quot;, nome, pagina, tamanho);</span>
+<span class="nc" id="L90">        log.info(&quot;GET /api/produtos/buscar?nome={} - Página: {}, Tamanho: {}&quot;, nome, pagina, tamanho);</span>
         
-<span class="nc" id="L93">        Page&lt;ProdutoDTO&gt; produtos = produtoService.buscarPorNome(nome, pagina, tamanho);</span>
-<span class="nc" id="L94">        return ResponseEntity.ok(produtos);</span>
+<span class="nc" id="L92">        Page&lt;ProdutoDTO&gt; produtos = produtoService.buscarPorNome(nome, pagina, tamanho);</span>
+<span class="nc" id="L93">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**
@@ -106,10 +105,10 @@ public class ProdutoController {
             @RequestParam(defaultValue = &quot;0&quot;) int pagina,
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho) {
         
-<span class="nc" id="L109">        log.info(&quot;GET /api/produtos/categoria/{} - Página: {}, Tamanho: {}&quot;, categoriaId, pagina, tamanho);</span>
+<span class="nc" id="L108">        log.info(&quot;GET /api/produtos/categoria/{} - Página: {}, Tamanho: {}&quot;, categoriaId, pagina, tamanho);</span>
         
-<span class="nc" id="L111">        Page&lt;ProdutoDTO&gt; produtos = produtoService.buscarPorCategoria(categoriaId, pagina, tamanho);</span>
-<span class="nc" id="L112">        return ResponseEntity.ok(produtos);</span>
+<span class="nc" id="L110">        Page&lt;ProdutoDTO&gt; produtos = produtoService.buscarPorCategoria(categoriaId, pagina, tamanho);</span>
+<span class="nc" id="L111">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**
@@ -121,30 +120,28 @@ public class ProdutoController {
             @Parameter(description = &quot;ID do produto&quot;)
             @PathVariable Long id) {
         
-<span class="fc" id="L124">        log.info(&quot;GET /api/produtos/{}&quot;, id);</span>
+<span class="fc" id="L123">        log.info(&quot;GET /api/produtos/{}&quot;, id);</span>
         
-<span class="fc" id="L126">        ProdutoDTO produto = produtoService.obterPorId(id);</span>
-<span class="fc" id="L127">        return ResponseEntity.ok(produto);</span>
+<span class="fc" id="L125">        ProdutoDTO produto = produtoService.obterPorId(id);</span>
+<span class="fc" id="L126">        return ResponseEntity.ok(produto);</span>
     }
     
     /**
      * Cria novo produto
      */
     @PostMapping
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     @Operation(summary = &quot;Cria novo produto&quot;)
     public ResponseEntity&lt;ProdutoDTO&gt; criar(@Valid @RequestBody ProdutoDTO dto) {
-<span class="fc" id="L137">        log.info(&quot;POST /api/produtos - Criando produto: {}&quot;, dto.getNome());</span>
+<span class="fc" id="L135">        log.info(&quot;POST /api/produtos - Criando produto: {}&quot;, dto.getNome());</span>
         
-<span class="fc" id="L139">        ProdutoDTO produto = produtoService.criar(dto);</span>
-<span class="fc" id="L140">        return ResponseEntity.status(HttpStatus.CREATED).body(produto);</span>
+<span class="fc" id="L137">        ProdutoDTO produto = produtoService.criar(dto);</span>
+<span class="fc" id="L138">        return ResponseEntity.status(HttpStatus.CREATED).body(produto);</span>
     }
     
     /**
      * Atualiza produto
      */
     @PutMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     @Operation(summary = &quot;Atualiza um produto&quot;)
     public ResponseEntity&lt;ProdutoDTO&gt; atualizar(
             @Parameter(description = &quot;ID do produto&quot;)
@@ -152,33 +149,31 @@ public class ProdutoController {
             
             @Valid @RequestBody ProdutoDTO dto) {
         
-<span class="fc" id="L155">        log.info(&quot;PUT /api/produtos/{} - Atualizando produto&quot;, id);</span>
+<span class="fc" id="L152">        log.info(&quot;PUT /api/produtos/{} - Atualizando produto&quot;, id);</span>
         
-<span class="fc" id="L157">        ProdutoDTO produto = produtoService.atualizar(id, dto);</span>
-<span class="fc" id="L158">        return ResponseEntity.ok(produto);</span>
+<span class="fc" id="L154">        ProdutoDTO produto = produtoService.atualizar(id, dto);</span>
+<span class="fc" id="L155">        return ResponseEntity.ok(produto);</span>
     }
     
     /**
      * Deleta produto
      */
     @DeleteMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     @Operation(summary = &quot;Deleta um produto&quot;)
     public ResponseEntity&lt;Void&gt; deletar(
             @Parameter(description = &quot;ID do produto&quot;)
             @PathVariable Long id) {
         
-<span class="fc" id="L171">        log.info(&quot;DELETE /api/produtos/{}&quot;, id);</span>
+<span class="fc" id="L167">        log.info(&quot;DELETE /api/produtos/{}&quot;, id);</span>
         
-<span class="fc" id="L173">        produtoService.deletar(id);</span>
-<span class="fc" id="L174">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L169">        produtoService.deletar(id);</span>
+<span class="fc" id="L170">        return ResponseEntity.noContent().build();</span>
     }
     
     /**
      * Diminui estoque de um produto
      */
     @PatchMapping(&quot;/{id}/estoque/diminuir&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     @Operation(summary = &quot;Diminui o estoque de um produto&quot;)
     public ResponseEntity&lt;Integer&gt; diminuirEstoque(
             @Parameter(description = &quot;ID do produto&quot;)
@@ -187,17 +182,16 @@ public class ProdutoController {
             @Parameter(description = &quot;Quantidade a diminuir&quot;)
             @RequestParam Integer quantidade) {
         
-<span class="fc" id="L190">        log.info(&quot;PATCH /api/produtos/{}/estoque/diminuir?quantidade={}&quot;, id, quantidade);</span>
+<span class="fc" id="L185">        log.info(&quot;PATCH /api/produtos/{}/estoque/diminuir?quantidade={}&quot;, id, quantidade);</span>
         
-<span class="fc" id="L192">        Integer novoEstoque = produtoService.diminuirEstoque(id, quantidade);</span>
-<span class="fc" id="L193">        return ResponseEntity.ok(novoEstoque);</span>
+<span class="fc" id="L187">        Integer novoEstoque = produtoService.diminuirEstoque(id, quantidade);</span>
+<span class="fc" id="L188">        return ResponseEntity.ok(novoEstoque);</span>
     }
     
     /**
      * Aumenta estoque de um produto
      */
     @PatchMapping(&quot;/{id}/estoque/aumentar&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     @Operation(summary = &quot;Aumenta o estoque de um produto&quot;)
     public ResponseEntity&lt;Integer&gt; aumentarEstoque(
             @Parameter(description = &quot;ID do produto&quot;)
@@ -206,10 +200,10 @@ public class ProdutoController {
             @Parameter(description = &quot;Quantidade a aumentar&quot;)
             @RequestParam Integer quantidade) {
         
-<span class="fc" id="L209">        log.info(&quot;PATCH /api/produtos/{}/estoque/aumentar?quantidade={}&quot;, id, quantidade);</span>
+<span class="fc" id="L203">        log.info(&quot;PATCH /api/produtos/{}/estoque/aumentar?quantidade={}&quot;, id, quantidade);</span>
         
-<span class="fc" id="L211">        Integer novoEstoque = produtoService.aumentarEstoque(id, quantidade);</span>
-<span class="fc" id="L212">        return ResponseEntity.ok(novoEstoque);</span>
+<span class="fc" id="L205">        Integer novoEstoque = produtoService.aumentarEstoque(id, quantidade);</span>
+<span class="fc" id="L206">        return ResponseEntity.ok(novoEstoque);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

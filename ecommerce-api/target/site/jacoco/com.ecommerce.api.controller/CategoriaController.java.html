@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class CategoriaController {
      */
     @GetMapping(&quot;/todas&quot;)
     public ResponseEntity&lt;List&lt;CategoriaDTO&gt;&gt; listarTodas() {
-<span class="fc" id="L26">        return ResponseEntity.ok(service.listarTodas());</span>
+<span class="fc" id="L25">        return ResponseEntity.ok(service.listarTodas());</span>
     }
 
     /**
@@ -35,31 +34,28 @@ public class CategoriaController {
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho,
             @RequestParam(defaultValue = &quot;id&quot;) String ordenarPor,
             @RequestParam(defaultValue = &quot;DESC&quot;) String direcao) {
-<span class="fc" id="L38">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
+<span class="fc" id="L37">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
     }
 
     @GetMapping(&quot;/{id}&quot;)
     public ResponseEntity&lt;CategoriaDTO&gt; obter(@PathVariable Long id) {
-<span class="fc" id="L43">        return ResponseEntity.ok(service.obterPorId(id));</span>
+<span class="fc" id="L42">        return ResponseEntity.ok(service.obterPorId(id));</span>
     }
 
     @PostMapping
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;CategoriaDTO&gt; criar(@Valid @RequestBody CategoriaDTO dto) {
-<span class="fc" id="L49">        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));</span>
+<span class="fc" id="L47">        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));</span>
     }
 
     @PutMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;CategoriaDTO&gt; atualizar(@PathVariable Long id, @Valid @RequestBody CategoriaDTO dto) {
-<span class="fc" id="L55">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
+<span class="fc" id="L52">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
     }
 
     @DeleteMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;Void&gt; deletar(@PathVariable Long id) {
-<span class="fc" id="L61">        service.deletar(id);</span>
-<span class="fc" id="L62">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L57">        service.deletar(id);</span>
+<span class="fc" id="L58">        return ResponseEntity.noContent().build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

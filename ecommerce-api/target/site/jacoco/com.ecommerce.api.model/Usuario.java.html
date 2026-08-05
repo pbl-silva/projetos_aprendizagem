@@ -35,17 +35,9 @@ public class Usuario {
     @Column(nullable = false)
     @Builder.Default
     private Boolean ativo = true;
-
-    /**
-     * Vínculo do login com o cliente correspondente.
-     * Usuários com papel ADMIN não possuem cliente associado.
-     */
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = &quot;cliente_id&quot;)
-    private Cliente cliente;
     
-<span class="fc" id="L47">    public enum Papel {</span>
-<span class="fc" id="L48">        ADMIN, USER</span>
+<span class="fc" id="L39">    public enum Papel {</span>
+<span class="fc" id="L40">        ADMIN, USER</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

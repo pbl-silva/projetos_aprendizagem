@@ -61,66 +61,55 @@ public class PedidoService {
 <span class="fc" id="L61">            .collect(Collectors.toList());</span>
     }
 
-    /**
-     * Lista os pedidos de um único cliente (usado para &quot;meus pedidos&quot;).
-     */
-    @Transactional(readOnly = true)
-    public List&lt;PedidoDTO&gt; listarPorCliente(Long clienteId) {
-<span class="nc" id="L69">        return pedidoRepository.findByClienteId(clienteId)</span>
-<span class="nc" id="L70">            .stream()</span>
-<span class="nc" id="L71">            .map(this::converterParaDTO)</span>
-<span class="nc" id="L72">            .collect(Collectors.toList());</span>
-    }
-
     @Transactional(readOnly = true)
     public Page&lt;PedidoDTO&gt; listarComPaginacao(int pagina, int tamanho, String ordenarPor, String direcao) {
-<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (tamanho &gt; 100) {</span>
-<span class="nc" id="L78">            tamanho = 100;</span>
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (tamanho &gt; 100) {</span>
+<span class="nc" id="L67">            tamanho = 100;</span>
         }
-<span class="fc" id="L80">        Sort.Direction direction = Sort.Direction.fromString(direcao.toUpperCase());</span>
-<span class="fc" id="L81">        Sort sort = Sort.by(direction, ordenarPor);</span>
-<span class="fc" id="L82">        Pageable pageable = PageRequest.of(pagina, tamanho, sort);</span>
-<span class="fc" id="L83">        return pedidoRepository.findAll(pageable).map(this::converterParaDTO);</span>
+<span class="fc" id="L69">        Sort.Direction direction = Sort.Direction.fromString(direcao.toUpperCase());</span>
+<span class="fc" id="L70">        Sort sort = Sort.by(direction, ordenarPor);</span>
+<span class="fc" id="L71">        Pageable pageable = PageRequest.of(pagina, tamanho, sort);</span>
+<span class="fc" id="L72">        return pedidoRepository.findAll(pageable).map(this::converterParaDTO);</span>
     }
     
     public PedidoDTO atualizar(Long id, PedidoDTO dto) {
-<span class="fc" id="L87">        Pedido pedido = pedidoRepository.findById(id)</span>
-<span class="fc" id="L88">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+<span class="fc" id="L76">        Pedido pedido = pedidoRepository.findById(id)</span>
+<span class="fc" id="L77">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
                 &quot;Pedido não encontrado com ID: &quot; + id
             ));
         
-<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        if (dto.getStatus() != null) {</span>
-<span class="fc" id="L93">            pedido.setStatus(dto.getStatus());</span>
+<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (dto.getStatus() != null) {</span>
+<span class="fc" id="L82">            pedido.setStatus(dto.getStatus());</span>
         }
         
-<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        if (dto.getTotal() != null) {</span>
-<span class="fc" id="L97">            pedido.setTotal(dto.getTotal());</span>
+<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (dto.getTotal() != null) {</span>
+<span class="fc" id="L86">            pedido.setTotal(dto.getTotal());</span>
         }
         
-<span class="fc" id="L100">        pedido.setDataAtualizacao(LocalDateTime.now());</span>
+<span class="fc" id="L89">        pedido.setDataAtualizacao(LocalDateTime.now());</span>
         
-<span class="fc" id="L102">        Pedido atualizado = pedidoRepository.save(pedido);</span>
-<span class="fc" id="L103">        return converterParaDTO(atualizado);</span>
+<span class="fc" id="L91">        Pedido atualizado = pedidoRepository.save(pedido);</span>
+<span class="fc" id="L92">        return converterParaDTO(atualizado);</span>
     }
     
     public void deletar(Long id) {
-<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (!pedidoRepository.existsById(id)) {</span>
-<span class="fc" id="L108">            throw new RecursoNaoEncontradoException(</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (!pedidoRepository.existsById(id)) {</span>
+<span class="fc" id="L97">            throw new RecursoNaoEncontradoException(</span>
                 &quot;Pedido não encontrado com ID: &quot; + id
             );
         }
-<span class="fc" id="L112">        pedidoRepository.deleteById(id);</span>
-<span class="fc" id="L113">    }</span>
+<span class="fc" id="L101">        pedidoRepository.deleteById(id);</span>
+<span class="fc" id="L102">    }</span>
     
     private PedidoDTO converterParaDTO(Pedido pedido) {
-<span class="fc" id="L116">        return PedidoDTO.builder()</span>
-<span class="fc" id="L117">            .id(pedido.getId())</span>
-<span class="fc" id="L118">            .clienteId(pedido.getCliente().getId())</span>
-<span class="fc" id="L119">            .total(pedido.getTotal())</span>
-<span class="fc" id="L120">            .status(pedido.getStatus())</span>
-<span class="fc" id="L121">            .dataCriacao(pedido.getDataCriacao())</span>
-<span class="fc" id="L122">            .dataAtualizacao(pedido.getDataAtualizacao())</span>
-<span class="fc" id="L123">            .build();</span>
+<span class="fc" id="L105">        return PedidoDTO.builder()</span>
+<span class="fc" id="L106">            .id(pedido.getId())</span>
+<span class="fc" id="L107">            .clienteId(pedido.getCliente().getId())</span>
+<span class="fc" id="L108">            .total(pedido.getTotal())</span>
+<span class="fc" id="L109">            .status(pedido.getStatus())</span>
+<span class="fc" id="L110">            .dataCriacao(pedido.getDataCriacao())</span>
+<span class="fc" id="L111">            .dataAtualizacao(pedido.getDataAtualizacao())</span>
+<span class="fc" id="L112">            .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -5,13 +5,10 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.ecommerce.api.dto.PagamentoDTO;
 import com.ecommerce.api.enums.StatusPagamento;
-import com.ecommerce.api.security.UsuarioPrincipal;
 import com.ecommerce.api.service.PagamentoService;
 
 import jakarta.validation.Valid;
@@ -24,105 +21,55 @@ public class PagamentoController {
 
     private final PagamentoService service;
 
-    /**
-     * Cria pagamento para um pedido. O cliente autenticado só pode pagar os
-     * próprios pedidos; o ADMIN pode registrar pagamento para qualquer um.
-     */
     @PostMapping
     public ResponseEntity&lt;PagamentoDTO&gt; criar(@Valid @RequestBody PagamentoDTO dto) {
-<span class="fc" id="L33">        UsuarioPrincipal principal = UsuarioPrincipal.getUsuarioAutenticado();</span>
-<span class="pc bpc" id="L34" title="1 of 2 branches missed.">        if (principal == null) {</span>
-<span class="nc" id="L35">            throw new AccessDeniedException(&quot;Não autenticado&quot;);</span>
-        }
-<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if (!principal.isAdmin()) {</span>
-<span class="nc" id="L38">            Long clienteDoPedido = service.obterClienteIdDoPedido(dto.getPedidoId());</span>
-<span class="nc bnc" id="L39" title="All 2 branches missed.">            if (!clienteDoPedido.equals(principal.getClienteId())) {</span>
-<span class="nc" id="L40">                throw new AccessDeniedException(&quot;Você só pode efetuar pagamento dos seus próprios pedidos&quot;);</span>
-            }
-        }
-<span class="fc" id="L43">        return ResponseEntity.status(HttpStatus.CREATED)</span>
-<span class="fc" id="L44">            .body(service.criar(dto));</span>
+<span class="fc" id="L26">        return ResponseEntity.status(HttpStatus.CREATED)</span>
+<span class="fc" id="L27">            .body(service.criar(dto));</span>
     }
 
-    /**
-     * Obtém pagamento por ID - ADMIN vê qualquer um, cliente só o próprio.
-     */
     @GetMapping(&quot;/{id}&quot;)
     public ResponseEntity&lt;PagamentoDTO&gt; obterPorId(@PathVariable Long id) {
-<span class="fc" id="L52">        PagamentoDTO pagamento = service.obterPorId(id);</span>
-<span class="fc" id="L53">        exigirAdminOuDonoDoPagamento(pagamento);</span>
-<span class="fc" id="L54">        return ResponseEntity.ok(pagamento);</span>
+<span class="fc" id="L32">        return ResponseEntity.ok(service.obterPorId(id));</span>
     }
 
     /**
-     * Lista os pagamentos do próprio cliente autenticado.
-     */
-    @GetMapping(&quot;/meus&quot;)
-    public ResponseEntity&lt;List&lt;PagamentoDTO&gt;&gt; listarMeusPagamentos() {
-<span class="nc" id="L62">        UsuarioPrincipal principal = UsuarioPrincipal.getUsuarioAutenticado();</span>
-<span class="nc bnc" id="L63" title="All 4 branches missed.">        if (principal == null || principal.getClienteId() == null) {</span>
-<span class="nc" id="L64">            throw new AccessDeniedException(&quot;Usuário autenticado não possui cliente vinculado&quot;);</span>
-        }
-<span class="nc" id="L66">        return ResponseEntity.ok(service.listarPorCliente(principal.getClienteId()));</span>
-    }
-
-    /**
-     * Lista todos os pagamentos SEM paginação - apenas ADMIN.
+     * Lista todos os pagamentos SEM paginação
      */
     @GetMapping(&quot;/todos&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;List&lt;PagamentoDTO&gt;&gt; listarTodos() {
-<span class="fc" id="L75">        return ResponseEntity.ok(service.listarTodos());</span>
+<span class="fc" id="L40">        return ResponseEntity.ok(service.listarTodos());</span>
     }
 
     /**
-     * Lista pagamentos COM paginação - apenas ADMIN.
+     * Lista pagamentos COM paginação
      */
     @GetMapping
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;Page&lt;PagamentoDTO&gt;&gt; listar(
             @RequestParam(defaultValue = &quot;0&quot;) int pagina,
             @RequestParam(defaultValue = &quot;10&quot;) int tamanho,
             @RequestParam(defaultValue = &quot;id&quot;) String ordenarPor,
             @RequestParam(defaultValue = &quot;DESC&quot;) String direcao) {
-<span class="fc" id="L88">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
+<span class="fc" id="L52">        return ResponseEntity.ok(service.listarComPaginacao(pagina, tamanho, ordenarPor, direcao));</span>
     }
 
     @PutMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;PagamentoDTO&gt; atualizar(
             @PathVariable Long id,
             @Valid @RequestBody PagamentoDTO dto) {
-<span class="fc" id="L96">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
+<span class="fc" id="L59">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
     }
 
     @PatchMapping(&quot;/{id}/status&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;PagamentoDTO&gt; atualizarStatus(
             @PathVariable Long id,
             @RequestParam StatusPagamento status) {
-<span class="fc" id="L104">        return ResponseEntity.ok(service.atualizarStatus(id, status));</span>
+<span class="fc" id="L66">        return ResponseEntity.ok(service.atualizarStatus(id, status));</span>
     }
 
     @DeleteMapping(&quot;/{id}&quot;)
-    @PreAuthorize(&quot;hasRole('ADMIN')&quot;)
     public ResponseEntity&lt;Void&gt; deletar(@PathVariable Long id) {
-<span class="fc" id="L110">        service.deletar(id);</span>
-<span class="fc" id="L111">        return ResponseEntity.noContent().build();</span>
+<span class="fc" id="L71">        service.deletar(id);</span>
+<span class="fc" id="L72">        return ResponseEntity.noContent().build();</span>
     }
-
-    private void exigirAdminOuDonoDoPagamento(PagamentoDTO pagamento) {
-<span class="fc" id="L115">        UsuarioPrincipal principal = UsuarioPrincipal.getUsuarioAutenticado();</span>
-<span class="pc bpc" id="L116" title="1 of 2 branches missed.">        if (principal == null) {</span>
-<span class="nc" id="L117">            throw new AccessDeniedException(&quot;Não autenticado&quot;);</span>
-        }
-<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        if (principal.isAdmin()) {</span>
-<span class="fc" id="L120">            return;</span>
-        }
-<span class="nc" id="L122">        Long clienteDoPedido = service.obterClienteIdDoPedido(pagamento.getPedidoId());</span>
-<span class="nc bnc" id="L123" title="All 2 branches missed.">        if (!clienteDoPedido.equals(principal.getClienteId())) {</span>
-<span class="nc" id="L124">            throw new AccessDeniedException(&quot;Você só pode acessar seus próprios pagamentos&quot;);</span>
-        }
-<span class="nc" id="L126">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

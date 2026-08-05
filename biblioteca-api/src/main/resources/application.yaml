@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: biblioteca-api
+
+  datasource:
+    url: jdbc:h2:mem:biblioteca
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    defer-datasource-initialization: true
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+server:
+  port: 8080
+
+# Habilitar o modo debug
+debug: true
