@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -24,12 +25,13 @@ public class VeiculoService {
     private final EntradaRepository entradaRepository;
 
     public VeiculoDTO cadastrar(VeiculoDTO dto) {
-        log.debug("Cadastrando veículo: placa={}, tipo={}", dto.getPlaca(), dto.getTipoVeiculo());
+        String placa = normalizarPlaca(dto.getPlaca());
+        log.debug("Cadastrando veículo: placa={}, tipo={}", placa, dto.getTipoVeiculo());
 
-        if (veiculoRepository.existsByPlaca(dto.getPlaca())) {
-            log.warn("Tentativa de cadastro com placa já existente: {}", dto.getPlaca());
+        if (veiculoRepository.existsByPlaca(placa)) {
+            log.warn("Tentativa de cadastro com placa já existente: {}", placa);
             throw new IllegalArgumentException(
-                "Já existe um veículo cadastrado com a placa: " + dto.getPlaca());
+                "Já existe um veículo cadastrado com a placa: " + placa);
         }
 
         boolean pcd = dto.getPcd() != null && dto.getPcd();
@@ -41,7 +43,7 @@ public class VeiculoService {
         }
 
         Veiculo veiculo = Veiculo.builder()
-            .placa(dto.getPlaca())
+            .placa(placa)
             .tipoVeiculo(dto.getTipoVeiculo())
             .marca(dto.getMarca())
             .modelo(dto.getModelo())
@@ -64,9 +66,10 @@ public class VeiculoService {
 
     @Transactional(readOnly = true)
     public VeiculoDTO obterPorPlaca(String placa) {
-        Veiculo veiculo = veiculoRepository.findByPlaca(placa)
+        String placaNormalizada = normalizarPlaca(placa);
+        Veiculo veiculo = veiculoRepository.findByPlaca(placaNormalizada)
             .orElseThrow(() -> new VeiculoNaoEncontradoException(
-                "Veículo não encontrado com placa: " + placa));
+                "Veículo não encontrado com placa: " + placaNormalizada));
         return converterParaDTO(veiculo);
     }
 
@@ -85,7 +88,7 @@ public class VeiculoService {
             .orElseThrow(() -> new VeiculoNaoEncontradoException(
                 "Veículo não encontrado com id: " + id));
 
-        if (dto.getPlaca() != null && !dto.getPlaca().equalsIgnoreCase(veiculo.getPlaca())) {
+        if (dto.getPlaca() != null && !normalizarPlaca(dto.getPlaca()).equals(veiculo.getPlaca())) {
             log.warn("Tentativa de alterar a placa do veículo id={} de {} para {}",
                 id, veiculo.getPlaca(), dto.getPlaca());
             throw new IllegalArgumentException(
@@ -142,5 +145,9 @@ public class VeiculoService {
             .cor(veiculo.getCor())
             .pcd(veiculo.getPcd())
             .build();
+    }
+
+    private String normalizarPlaca(String placa) {
+        return placa.trim().replace("-", "").toUpperCase(Locale.ROOT);
     }
 }

@@ -14,7 +14,7 @@ public class TelaUsuarios extends JFrame {
 
     private JTextField txtNome;
     private JTextField txtEmail;
-    private JTextField txtTelefone;
+    private JTextField txtCpf;
     private JComboBox<String> cmbTipoUsuario;
 
     public TelaUsuarios(ApiClient apiClient) {
@@ -45,12 +45,12 @@ public class TelaUsuarios extends JFrame {
         txtEmail = new JTextField();
         painelFormulario.add(txtEmail);
 
-        painelFormulario.add(new JLabel("Telefone:"));
-        txtTelefone = new JTextField();
-        painelFormulario.add(txtTelefone);
+        painelFormulario.add(new JLabel("CPF:"));
+        txtCpf = new JTextField();
+        painelFormulario.add(txtCpf);
 
         painelFormulario.add(new JLabel("Tipo de Usuário:"));
-        cmbTipoUsuario = new JComboBox<>(new String[]{"ESTUDANTE", "PROFESSOR", "FUNCIONARIO"});
+        cmbTipoUsuario = new JComboBox<>(new String[]{"COMUM", "PREMIUM"});
         painelFormulario.add(cmbTipoUsuario);
 
         // Botões
@@ -76,7 +76,7 @@ public class TelaUsuarios extends JFrame {
         painelFormulario.add(painelBotoes);
 
         // Painel da Tabela
-        String[] colunas = {"ID", "Nome", "Email", "Telefone", "Tipo"};
+        String[] colunas = {"ID", "Nome", "Email", "CPF", "Tipo"};
         modeloTabela = new DefaultTableModel(colunas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -111,7 +111,7 @@ public class TelaUsuarios extends JFrame {
                         usuario.id,
                         usuario.nome,
                         usuario.email,
-                        usuario.telefone,
+                        usuario.cpf,
                         usuario.tipoUsuario
                 };
                 modeloTabela.addRow(linha);
@@ -127,13 +127,13 @@ public class TelaUsuarios extends JFrame {
         if (linhaSelecionada >= 0) {
             Object nome = modeloTabela.getValueAt(linhaSelecionada, 1);
             Object email = modeloTabela.getValueAt(linhaSelecionada, 2);
-            Object telefone = modeloTabela.getValueAt(linhaSelecionada, 3);
+            Object cpf = modeloTabela.getValueAt(linhaSelecionada, 3);
             Object tipo = modeloTabela.getValueAt(linhaSelecionada, 4);
 
             txtNome.setText(nome != null ? nome.toString() : "");
             txtEmail.setText(email != null ? email.toString() : "");
-            txtTelefone.setText(telefone != null ? telefone.toString() : "");
-            cmbTipoUsuario.setSelectedItem(tipo != null ? tipo.toString() : "ESTUDANTE");
+            txtCpf.setText(cpf != null ? cpf.toString() : "");
+            cmbTipoUsuario.setSelectedItem(tipo != null ? tipo.toString() : "COMUM");
         }
     }
 
@@ -142,7 +142,7 @@ public class TelaUsuarios extends JFrame {
             ApiClient.Usuario usuario = new ApiClient.Usuario();
             usuario.nome = txtNome.getText();
             usuario.email = txtEmail.getText();
-            usuario.telefone = txtTelefone.getText();
+            usuario.cpf = txtCpf.getText();
             usuario.tipoUsuario = cmbTipoUsuario.getSelectedItem().toString();
 
             apiClient.salvarUsuario(usuario);
@@ -169,7 +169,7 @@ public class TelaUsuarios extends JFrame {
             ApiClient.Usuario usuario = new ApiClient.Usuario();
             usuario.nome = txtNome.getText();
             usuario.email = txtEmail.getText();
-            usuario.telefone = txtTelefone.getText();
+            usuario.cpf = txtCpf.getText();
             usuario.tipoUsuario = cmbTipoUsuario.getSelectedItem().toString();
 
             apiClient.atualizarUsuario(id, usuario);
@@ -212,7 +212,7 @@ public class TelaUsuarios extends JFrame {
     private void limparFormulario() {
         txtNome.setText("");
         txtEmail.setText("");
-        txtTelefone.setText("");
+        txtCpf.setText("");
         cmbTipoUsuario.setSelectedIndex(0);
         tabelaUsuarios.clearSelection();
     }

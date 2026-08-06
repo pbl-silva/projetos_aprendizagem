@@ -31,9 +31,9 @@ class EmprestimoServiceTest {
     @Mock private EmprestimoRepository emprestimoRepository;
     @Mock private LivroRepository livroRepository;
     @Mock private UsuarioRepository usuarioRepository;
-    @Mock private EmprestimoValidator validator;
 
     private EmprestimoServiceImpl service;
+    private EmprestimoValidator validator;
     private Clock fixedClock;
 
     @BeforeEach
@@ -41,8 +41,9 @@ class EmprestimoServiceTest {
         MockitoAnnotations.openMocks(this);
         Instant instant = Instant.parse("2026-06-19T03:00:00Z"); // 2026-06-19 00:00 America/Sao_Paulo
         fixedClock = Clock.fixed(instant, ZoneId.of("America/Sao_Paulo"));
+        validator = new EmprestimoValidator();
 
-        // constrói service com todos os mocks (evita NPEs)
+        // Usa repositories mockados e o validator real.
         service = new EmprestimoServiceImpl(emprestimoRepository, livroRepository, usuarioRepository, validator, fixedClock);
     }
 
@@ -63,16 +64,11 @@ class EmprestimoServiceTest {
 
         EmprestimoRequestDTO dto = new EmprestimoRequestDTO(1L, 1L);
 
-        doNothing().when(validator).validarLivroDisponivel(livro);
-        doNothing().when(validator).validarLimiteEmprestimos(usuario, 0L);
-
         var resp = service.realizarEmprestimo(dto);
 
         assertNotNull(resp);
         assertEquals(LocalDate.of(2026, 6, 19), resp.getDataEmprestimo());
         assertEquals(LocalDate.of(2026, 6, 19).plusDays(usuario.getTipoUsuario().getDiasPrazo()), resp.getDataDevolucaoPrevista());
-        verify(validator).validarLivroDisponivel(livro);
-        verify(validator).validarLimiteEmprestimos(usuario, 0L);
         verify(livroRepository).save(livro);
     }
 
@@ -90,16 +86,12 @@ class EmprestimoServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(java.util.Optional.of(usuario));
         when(emprestimoRepository.contarEmprestimosAtivosPorUsuario(usuario)).thenReturn(0L);
 
-        // fazer o validator lançar BusinessException ao validar livro indisponível
-        doThrow(new BusinessException("Livro indisponível")).when(validator).validarLivroDisponivel(livro);
-
         EmprestimoRequestDTO dto = new EmprestimoRequestDTO(1L, 1L);
 
         var ex = assertThrows(BusinessException.class, () -> service.realizarEmprestimo(dto));
-        assertEquals("Livro indisponível", ex.getMessage());
+        assertEquals("Livro não está disponível para empréstimo.", ex.getMessage());
 
-        verify(validator).validarLivroDisponivel(livro);
-        verify(validator, never()).validarLimiteEmprestimos(any(), anyLong());
+        verify(emprestimoRepository, never()).contarEmprestimosAtivosPorUsuario(any());
     }
 
     @Test
@@ -119,17 +111,10 @@ class EmprestimoServiceTest {
         // simula que usuário já tem o número máximo de empréstimos
         when(emprestimoRepository.contarEmprestimosAtivosPorUsuario(usuario)).thenReturn(limite);
 
-        // validator deve lançar BusinessException quando validar limite
-        doThrow(new BusinessException("Limite excedido"))
-                .when(validator).validarLimiteEmprestimos(usuario, limite);
-
         EmprestimoRequestDTO dto = new EmprestimoRequestDTO(1L, 1L);
 
         var ex = assertThrows(BusinessException.class, () -> service.realizarEmprestimo(dto));
-        assertEquals("Limite excedido", ex.getMessage());
-
-        verify(validator).validarLivroDisponivel(livro);
-        verify(validator).validarLimiteEmprestimos(usuario, limite);
+        assertEquals("Usuário atingiu o limite de " + limite + " empréstimos simultâneos", ex.getMessage());
     }
 
     @Test
@@ -153,8 +138,6 @@ class EmprestimoServiceTest {
 
         when(emprestimoRepository.findById(10L)).thenReturn(java.util.Optional.of(emprestimo));
         when(emprestimoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(validator).validarEmprestimoAtivo(emprestimo);
-
         var resp = service.devolverLivro(10L);
 
         long diasAtraso = 11; // 2026-06-19 - 2026-06-08
@@ -166,7 +149,6 @@ class EmprestimoServiceTest {
         assertNotNull(resp);
         assertEquals(LocalDate.of(2026,6,19), resp.getDataDevolucaoReal());
         assertEquals(valorEsperado, resp.getMultaCalculada());
-        verify(validator).validarEmprestimoAtivo(emprestimo);
         verify(livroRepository).save(livro);
     }
 
@@ -201,8 +183,6 @@ class EmprestimoServiceTest {
 
         when(emprestimoRepository.findById(20L)).thenReturn(java.util.Optional.of(emprestimo));
         when(emprestimoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(validator).validarEmprestimoAtivo(emprestimo);
-
         var resp = servicePremium.devolverLivro(20L);
 
         // 11 dias de atraso - 5 dias de tolerância PREMIUM = 6 dias multados x R$2,00 = R$12,00
@@ -228,9 +208,6 @@ class EmprestimoServiceTest {
         when(usuarioRepository.findById(30L)).thenReturn(java.util.Optional.of(usuario));
         when(emprestimoRepository.contarEmprestimosAtivosPorUsuario(usuario)).thenReturn(0L);
         when(emprestimoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        doNothing().when(validator).validarLivroDisponivel(livro);
-        doNothing().when(validator).validarLimiteEmprestimos(usuario, 0L);
-
         var resp = service.realizarEmprestimo(new EmprestimoRequestDTO(30L, 30L));
 
         assertNotNull(resp.getLivro());

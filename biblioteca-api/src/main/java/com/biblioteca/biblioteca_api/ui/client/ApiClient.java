@@ -2,6 +2,8 @@ package com.biblioteca.biblioteca_api.ui.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -223,7 +225,19 @@ public class ApiClient {
     // ==================== EMPRÉSTIMOS ====================
 
     public List<Emprestimo> listarEmprestimos() throws Exception {
-        String url = buildUrl("/api/emprestimos");
+        return listarEmprestimosPorCaminho("/api/emprestimos");
+    }
+
+    public List<Emprestimo> listarEmprestimosAtivos() throws Exception {
+        return listarEmprestimosPorCaminho("/api/emprestimos/ativos");
+    }
+
+    public List<Emprestimo> listarEmprestimosAtrasados() throws Exception {
+        return listarEmprestimosPorCaminho("/api/emprestimos/atrasados");
+    }
+
+    private List<Emprestimo> listarEmprestimosPorCaminho(String caminho) throws Exception {
+        String url = buildUrl(caminho);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .GET()
@@ -310,8 +324,9 @@ public class ApiClient {
         public Long id;
         public String nome;
         public String email;
-        public String telefone;
+        public String cpf;
         public String tipoUsuario;
+        public String dataCadastro;
         public Usuario() {}
     }
 
@@ -320,11 +335,11 @@ public class ApiClient {
         public Usuario usuario;
         public Livro livro;
         public String dataEmprestimo;
-        public String dataPrevistaDevolucao;
-        public String dataDevolucao;
+        public String dataDevolucaoPrevista;
+        public String dataDevolucaoReal;
         public String status;
-        public String usuarioNome;
-        public String livroTitulo;
+        public BigDecimal multaCalculada;
+        public Long diasRestantes;
         public Emprestimo() {}
     }
 }

@@ -48,7 +48,7 @@ public class PedidoController {
     }
 
     @PutMapping(&quot;/{id}&quot;)
-    public ResponseEntity&lt;PedidoDTO&gt; atualizar(@PathVariable Long id, @Valid @RequestBody PedidoDTO dto) {
+    public ResponseEntity&lt;PedidoDTO&gt; atualizar(@PathVariable Long id, @RequestBody PedidoDTO dto) {
 <span class="fc" id="L52">        return ResponseEntity.ok(service.atualizar(id, dto));</span>
     }
 

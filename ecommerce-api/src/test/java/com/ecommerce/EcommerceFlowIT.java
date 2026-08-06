@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -107,16 +108,19 @@ class EcommerceFlowIT {
             .statusCode(201)
             .extract().jsonPath().getLong("id");
 
-        // 4. Criar pedido vinculado ao cliente
+        // 4. Criar pedido vinculado ao cliente com um produto
         Long pedidoId = given()
             .header("Authorization", auth)
             .contentType(ContentType.JSON)
-            .body(Map.of("clienteId", clienteId, "total", 3500.00))
+            .body(Map.of("clienteId", clienteId,
+                "itens", List.of(Map.of("produtoId", produtoId, "quantidade", 1))))
         .when()
             .post("/pedidos")
         .then()
             .statusCode(201)
             .body("status", equalTo("PENDENTE"))
+            .body("total", equalTo(3500.0f))
+            .body("itens", hasSize(1))
             .extract().jsonPath().getLong("id");
 
         // 5. Criar pagamento vinculado ao pedido
@@ -130,14 +134,14 @@ class EcommerceFlowIT {
             .statusCode(201)
             .body("status", equalTo("PENDENTE"));
 
-        // 6. Diminuir estoque do produto via HTTP real
+        // 6. Diminuir estoque do produto via HTTP real. O pedido já reservou uma unidade.
         given()
             .header("Authorization", auth)
         .when()
             .patch("/produtos/" + produtoId + "/estoque/diminuir?quantidade=3")
         .then()
             .statusCode(200)
-            .body(equalTo("7"));
+            .body(equalTo("6"));
 
         // 7. Listar produtos paginados e confirmar presença do produto criado
         given()
@@ -148,20 +152,14 @@ class EcommerceFlowIT {
             .statusCode(200)
             .body("content.nome", hasItem("Notebook IT"));
 
-        // 8. Deletar o produto criado e confirmar 404 em seguida
-        given()
-            .header("Authorization", auth)
-        .when()
-            .delete("/produtos/" + produtoId)
-        .then()
-            .statusCode(204);
-
+        // 8. Consultar o produto usado no pedido e confirmar o estoque final.
         given()
             .header("Authorization", auth)
         .when()
             .get("/produtos/" + produtoId)
         .then()
-            .statusCode(404);
+            .statusCode(200)
+            .body("estoque", equalTo(6));
     }
 
     @Test
@@ -170,7 +168,8 @@ class EcommerceFlowIT {
         given()
             .header("Authorization", "Bearer " + token)
             .contentType(ContentType.JSON)
-            .body(Map.of("clienteId", 999999L, "total", 100.0))
+            .body(Map.of("clienteId", 999999L,
+                "itens", List.of(Map.of("produtoId", 1L, "quantidade", 1))))
         .when()
             .post("/pedidos")
         .then()

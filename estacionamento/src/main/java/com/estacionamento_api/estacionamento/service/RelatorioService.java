@@ -2,6 +2,7 @@ package com.estacionamento_api.estacionamento.service;
 
 import com.estacionamento_api.estacionamento.dto.PaginaDTO;
 import com.estacionamento_api.estacionamento.dto.ReciboDTO;
+import com.estacionamento_api.estacionamento.exception.RequisicaoInvalidaException;
 import com.estacionamento_api.estacionamento.model.Saida;
 import com.estacionamento_api.estacionamento.repository.EntradaRepository;
 import com.estacionamento_api.estacionamento.repository.SaidaRepository;
@@ -16,8 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -33,15 +35,18 @@ public class RelatorioService {
     
     public Map<String, Object> obterTaxaOcupacao() {
         long vagasDisponiveis = vagaRepository.countVagasDisponiveis();
-        long vagasOcupadas = 50 - vagasDisponiveis;
-        double percentualOcupacao = (vagasOcupadas * 100.0) / 50;
+        long vagasTotal = vagaRepository.count();
+        long vagasOcupadas = Math.max(0, vagasTotal - vagasDisponiveis);
+        double percentualOcupacao = vagasTotal == 0
+            ? 0.0
+            : (vagasOcupadas * 100.0) / vagasTotal;
         
-        Map<String, Object> resultado = new HashMap<>();
-        resultado.put("vagasTotal", 50);
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        resultado.put("vagasTotal", vagasTotal);
         resultado.put("vagasDisponiveis", vagasDisponiveis);
         resultado.put("vagasOcupadas", vagasOcupadas);
         resultado.put("percentualOcupacao", 
-            String.format("%.2f%%", percentualOcupacao));
+            String.format(Locale.ROOT, "%.2f%%", percentualOcupacao));
         resultado.put("veiculosEstacionados", 
             entradaRepository.countVeiculosEstacionados());
         
@@ -50,12 +55,13 @@ public class RelatorioService {
     
     public Map<String, Object> obterFaturamento(LocalDateTime inicio, 
                                                     LocalDateTime fim) {
+        validarPeriodo(inicio, fim);
         BigDecimal faturamento = saidaRepository.calcularFaturamento(inicio, fim);
         if (faturamento == null) {
             faturamento = BigDecimal.ZERO;
         }
         
-        Map<String, Object> resultado = new HashMap<>();
+        Map<String, Object> resultado = new LinkedHashMap<>();
         resultado.put("periodo", inicio + " até " + fim);
         resultado.put("faturamento", faturamento);
         resultado.put("moeda", "BRL");
@@ -70,6 +76,7 @@ public class RelatorioService {
      */
     public PaginaDTO<ReciboDTO> listarSaidasPaginado(LocalDateTime inicio, LocalDateTime fim,
                                                      Pageable pageable) {
+        validarPeriodo(inicio, fim);
         Page<Saida> pagina = saidaRepository.findByDataHoraSaidaBetween(inicio, fim, pageable);
 
         List<ReciboDTO> conteudo = pagina.getContent().stream()
@@ -94,6 +101,7 @@ public class RelatorioService {
      * pra navegar na tela.
      */
     public byte[] gerarRelatorioPdf(LocalDateTime inicio, LocalDateTime fim) throws IOException {
+        validarPeriodo(inicio, fim);
         Map<String, Object> ocupacao = obterTaxaOcupacao();
         Map<String, Object> faturamento = obterFaturamento(inicio, fim);
 
@@ -114,5 +122,14 @@ public class RelatorioService {
             saida.getDataHoraSaida()
         );
         return ReciboGenerator.gerar(saida, valorBase);
+    }
+
+    private void validarPeriodo(LocalDateTime inicio, LocalDateTime fim) {
+        if (inicio == null || fim == null) {
+            throw new RequisicaoInvalidaException("As datas de início e fim são obrigatórias");
+        }
+        if (inicio.isAfter(fim)) {
+            throw new RequisicaoInvalidaException("A data inicial não pode ser posterior à data final");
+        }
     }
 }

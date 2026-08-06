@@ -22,6 +22,7 @@ public class ApiClient {
     // Token JWT da sessão atual, preenchido depois de um login bem-sucedido.
     // Sem ele, todas as rotas (exceto /auth/**) retornam 401.
     private static volatile String authToken;
+    private static volatile String ultimoErro;
     
     static {
         // Configurar Jackson para LocalDateTime e BigDecimal
@@ -37,6 +38,41 @@ public class ApiClient {
 
     public static void logout() {
         authToken = null;
+    }
+
+    /** Retorna a mensagem da última resposta de erro recebida da API. */
+    public static String getUltimoErro() {
+        return ultimoErro;
+    }
+
+    private static void limparUltimoErro() {
+        ultimoErro = null;
+    }
+
+    /** Extrai mensagens de validação do ErrorResponse retornado pela API. */
+    @SuppressWarnings("unchecked")
+    private static void registrarErro(HttpResponse<String> response) {
+        try {
+            Map<String, Object> erro = objectMapper.readValue(response.body(), Map.class);
+            Object detalhes = erro.get("detalhes");
+            if (detalhes instanceof Map<?, ?> campos && !campos.isEmpty()) {
+                ultimoErro = campos.values().stream()
+                    .map(Object::toString)
+                    .distinct()
+                    .reduce((primeiro, proximo) -> primeiro + "\n" + proximo)
+                    .orElse(null);
+            }
+            if (ultimoErro == null || ultimoErro.isBlank()) {
+                Object mensagem = erro.get("mensagem");
+                ultimoErro = mensagem == null ? "Erro HTTP " + response.statusCode() : mensagem.toString();
+            }
+        } catch (Exception e) {
+            ultimoErro = "Erro HTTP " + response.statusCode();
+        }
+    }
+
+    private static void registrarErro(Exception e) {
+        ultimoErro = "Não foi possível conectar à API: " + e.getMessage();
     }
 
     /**
@@ -222,6 +258,7 @@ public class ApiClient {
     public static boolean postProduto(String nome, BigDecimal preco, Integer estoque, 
                                       Long categoriaId, String descricao) {
         try {
+            limparUltimoErro();
             Map<String, Object> body = new HashMap<>();
             body.put("nome", nome);
             body.put("preco", preco);
@@ -240,9 +277,13 @@ public class ApiClient {
             HttpResponse<String> response = httpClient.send(request, 
                     HttpResponse.BodyHandlers.ofString());
             
-            return response.statusCode() == 201 || response.statusCode() == 200;
+            if (response.statusCode() == 201 || response.statusCode() == 200) {
+                return true;
+            }
+            registrarErro(response);
         } catch (Exception e) {
             System.err.println("Erro ao adicionar produto: " + e.getMessage());
+            registrarErro(e);
         }
         return false;
     }
@@ -297,6 +338,7 @@ public class ApiClient {
     public static boolean postCliente(String nome, String email, String cpf, 
                                       String telefone, String endereco) {
         try {
+            limparUltimoErro();
             Map<String, Object> body = new HashMap<>();
             body.put("nome", nome);
             body.put("email", email);
@@ -315,9 +357,13 @@ public class ApiClient {
             HttpResponse<String> response = httpClient.send(request, 
                     HttpResponse.BodyHandlers.ofString());
             
-            return response.statusCode() == 201 || response.statusCode() == 200;
+            if (response.statusCode() == 201 || response.statusCode() == 200) {
+                return true;
+            }
+            registrarErro(response);
         } catch (Exception e) {
             System.err.println("Erro ao adicionar cliente: " + e.getMessage());
+            registrarErro(e);
         }
         return false;
     }
@@ -370,12 +416,12 @@ public class ApiClient {
         return List.of();
     }
     
-    public static boolean postPedido(Long clienteId, String status) {
+    public static boolean postPedido(Long clienteId, List<Map<String, Object>> itens) {
         try {
+            limparUltimoErro();
             Map<String, Object> body = new HashMap<>();
             body.put("clienteId", clienteId);
-            body.put("status", status);
-            body.put("total", new BigDecimal("0.00"));
+            body.put("itens", itens);
             
             String jsonBody = objectMapper.writeValueAsString(body);
             
@@ -387,9 +433,13 @@ public class ApiClient {
             HttpResponse<String> response = httpClient.send(request, 
                     HttpResponse.BodyHandlers.ofString());
             
-            return response.statusCode() == 201 || response.statusCode() == 200;
+            if (response.statusCode() == 201 || response.statusCode() == 200) {
+                return true;
+            }
+            registrarErro(response);
         } catch (Exception e) {
             System.err.println("Erro ao adicionar pedido: " + e.getMessage());
+            registrarErro(e);
         }
         return false;
     }

@@ -7,6 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
 @Slf4j
 @SpringBootApplication
@@ -29,11 +31,15 @@ public class EstacionamentoApiApplication {
 	 * POST /auth/registrar).
 	 */
 	@Bean
-	CommandLineRunner inicializarUsuarioAdmin(UsuarioService usuarioService) {
+	@ConditionalOnProperty(name = "app.bootstrap-admin.enabled", havingValue = "true")
+	CommandLineRunner inicializarUsuarioAdmin(
+			UsuarioService usuarioService,
+			@Value("${app.bootstrap-admin.username}") String username,
+			@Value("${app.bootstrap-admin.password}") String password) {
 		return args -> {
-			if (!usuarioService.existeUsuario("admin")) {
-				usuarioService.registrar("admin", "admin123", "ADMIN");
-				log.info("Usuário admin padrão criado (username=admin, senha=admin123 — só para dev!)");
+			if (!usuarioService.existeUsuario(username)) {
+				usuarioService.registrar(username, password, "ADMIN");
+				log.info("Usuário administrador inicial criado: {}", username);
 			}
 		};
 	}

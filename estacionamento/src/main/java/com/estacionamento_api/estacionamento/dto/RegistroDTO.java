@@ -18,6 +18,6 @@ public class RegistroDTO {
     private String username;
 
     @NotBlank(message = "A senha é obrigatória")
-    @Size(min = 6, message = "A senha deve ter no mínimo 6 caracteres")
+    @Size(min = 6, max = 72, message = "A senha deve ter entre 6 e 72 caracteres")
     private String senha;
 }

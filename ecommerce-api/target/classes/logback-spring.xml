@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Variáveis -->
-    <property name="LOG_FILE" value="logs/ecommerce.log"/>
+    <!-- Valores vindos do Spring, com defaults seguros para execucao normal. -->
+    <springProperty name="LOG_FILE" source="logging.file.name" defaultValue="logs/ecommerce.log"/>
+    <springProperty name="APP_LOG_LEVEL" source="logging.level.com.ecommerce" defaultValue="INFO"/>
+    <springProperty name="WEB_LOG_LEVEL" source="logging.level.org.springframework.web" defaultValue="INFO"/>
+    <springProperty name="SECURITY_LOG_LEVEL" source="logging.level.org.springframework.security" defaultValue="INFO"/>
+    <springProperty name="SQL_LOG_LEVEL" source="logging.level.org.hibernate.SQL" defaultValue="WARN"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"/>
 
     <!-- Console Appender -->
@@ -28,10 +32,10 @@
     </appender>
 
     <!-- Loggers -->
-    <logger name="com.ecommerce" level="DEBUG"/>
-    <logger name="org.springframework.web" level="DEBUG"/>
-    <logger name="org.springframework.security" level="DEBUG"/>
-    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="com.ecommerce" level="${APP_LOG_LEVEL}"/>
+    <logger name="org.springframework.web" level="${WEB_LOG_LEVEL}"/>
+    <logger name="org.springframework.security" level="${SECURITY_LOG_LEVEL}"/>
+    <logger name="org.hibernate.SQL" level="${SQL_LOG_LEVEL}"/>
 
     <!-- Root Logger -->
     <root level="INFO">

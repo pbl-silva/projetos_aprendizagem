@@ -16,6 +16,23 @@ import java.util.Map;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(EstoqueInsuficienteException.class)
+    public ResponseEntity<ErrorResponse> handleEstoqueInsuficiente(
+            EstoqueInsuficienteException ex, WebRequest request) {
+
+        log.error("Estoque insuficiente: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.CONFLICT.value())
+            .erro("Estoque insuficiente")
+            .mensagem(ex.getMessage())
+            .caminho(request.getDescription(false).replace("uri=", ""))
+            .build();
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
     
     @ExceptionHandler(RecursoNaoEncontradoException.class)
     public ResponseEntity<ErrorResponse> handleRecursoNaoEncontrado(

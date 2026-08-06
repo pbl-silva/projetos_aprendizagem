@@ -6,10 +6,12 @@ import com.estacionamento_api.estacionamento.enums.Modalidade;
 import com.estacionamento_api.estacionamento.enums.TipoPagamento;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "saidas")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -18,6 +20,9 @@ public class Saida {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "numero_recibo", nullable = false, unique = true, length = 40)
+    private String numeroRecibo;
     
     @Column(name = "data_hora_saida", nullable = false)
     private LocalDateTime dataHoraSaida;
@@ -45,7 +50,15 @@ public class Saida {
     
     @PrePersist
     protected void onCreate() {
-        dataCriacao = LocalDateTime.now();
-        dataHoraSaida = LocalDateTime.now();
+        LocalDateTime agora = LocalDateTime.now();
+        if (numeroRecibo == null) {
+            numeroRecibo = "REC-" + UUID.randomUUID().toString().toUpperCase();
+        }
+        if (dataCriacao == null) {
+            dataCriacao = agora;
+        }
+        if (dataHoraSaida == null) {
+            dataHoraSaida = agora;
+        }
     }
 }

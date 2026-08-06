@@ -1,5 +1,7 @@
 package com.estacionamento_api.estacionamento.swing;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
@@ -80,7 +82,8 @@ public class RelatoriosPanel extends JPanel {
     private void carregarOcupacao() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            Map<String, Object> resultado = ApiClient.get("/relatorios/ocupacao", Map.class);
+            Map<String, Object> resultado = ApiClient.get(
+                "/relatorios/ocupacao", new TypeReference<>() {});
 
             vagasDisponiveisLabel.setText(
                 resultado.get("vagasDisponiveis") + " / " + resultado.get("vagasTotal"));
@@ -114,7 +117,7 @@ public class RelatoriosPanel extends JPanel {
                 + "&fim=" + URLEncoder.encode(fim, StandardCharsets.UTF_8);
 
             Map<String, Object> resultado = ApiClient.get(
-                "/relatorios/faturamento" + query, Map.class);
+                "/relatorios/faturamento" + query, new TypeReference<>() {});
 
             faturamentoLabel.setText(
                 "Faturamento: R$ " + resultado.get("faturamento"));

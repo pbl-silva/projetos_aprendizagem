@@ -120,7 +120,7 @@ public class ClientePanel extends JPanel {
                 carregarClientes();
             } else {
                 JOptionPane.showMessageDialog(this, 
-                    "Erro ao adicionar cliente", "Erro", 
+                    mensagemErro("Erro ao adicionar cliente"), "Erro", 
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -171,7 +171,7 @@ public class ClientePanel extends JPanel {
                 carregarClientes();
             } else {
                 JOptionPane.showMessageDialog(this, 
-                    "Erro ao atualizar cliente", "Erro", 
+                    mensagemErro("Erro ao atualizar cliente"), "Erro", 
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -203,5 +203,9 @@ public class ClientePanel extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+    private String mensagemErro(String mensagemPadrao) {
+        String erro = ApiClient.getUltimoErro();
+        return erro == null || erro.isBlank() ? mensagemPadrao : erro;
     }
 }

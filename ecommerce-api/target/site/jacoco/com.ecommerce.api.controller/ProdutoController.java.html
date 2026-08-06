@@ -53,11 +53,11 @@ public class ProdutoController {
             @Parameter(description = &quot;Direção da ordenação: ASC ou DESC&quot;)
             @RequestParam(defaultValue = &quot;DESC&quot;) String direcao) {
         
-<span class="nc" id="L56">        log.info(&quot;GET /api/produtos - Página: {}, Tamanho: {}, Ordenar por: {}, Direção: {}&quot;, </span>
-<span class="nc" id="L57">            pagina, tamanho, ordenarPor, direcao);</span>
+<span class="fc" id="L56">        log.info(&quot;GET /api/produtos - Página: {}, Tamanho: {}, Ordenar por: {}, Direção: {}&quot;, </span>
+<span class="fc" id="L57">            pagina, tamanho, ordenarPor, direcao);</span>
         
-<span class="nc" id="L59">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarComPaginacao(pagina, tamanho, ordenarPor, direcao);</span>
-<span class="nc" id="L60">        return ResponseEntity.ok(produtos);</span>
+<span class="fc" id="L59">        Page&lt;ProdutoDTO&gt; produtos = produtoService.listarComPaginacao(pagina, tamanho, ordenarPor, direcao);</span>
+<span class="fc" id="L60">        return ResponseEntity.ok(produtos);</span>
     }
     
     /**

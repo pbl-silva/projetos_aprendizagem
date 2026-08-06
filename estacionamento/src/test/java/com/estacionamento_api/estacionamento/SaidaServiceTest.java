@@ -101,7 +101,7 @@ class SaidaServiceTest {
             .modalidade(Modalidade.MENSAL)
             .build();
 
-        when(entradaRepository.findById(1L)).thenReturn(Optional.of(entrada));
+        when(entradaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(entrada));
         when(saidaRepository.save(any(Saida.class)))
             .thenAnswer(inv -> simularPersistencia(inv.getArgument(0), 1L));
 
@@ -128,7 +128,7 @@ class SaidaServiceTest {
             .modalidade(Modalidade.DIARIA)
             .build();
 
-        when(entradaRepository.findById(1L)).thenReturn(Optional.of(entrada));
+        when(entradaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(entrada));
         when(saidaRepository.save(any(Saida.class)))
             .thenAnswer(inv -> simularPersistencia(inv.getArgument(0), 2L));
 
@@ -147,7 +147,7 @@ class SaidaServiceTest {
             .modalidade(Modalidade.DIARIA)
             .build();
 
-        when(entradaRepository.findById(99L)).thenReturn(Optional.empty());
+        when(entradaRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> saidaService.registrarSaida(dto));
         verify(saidaRepository, never()).save(any(Saida.class));
@@ -181,5 +181,22 @@ class SaidaServiceTest {
     void testObterReciboNaoEncontrado() {
         when(saidaRepository.findById(404L)).thenReturn(Optional.empty());
         assertThrows(RuntimeException.class, () -> saidaService.obterRecibo(404L));
+    }
+
+    @Test
+    @DisplayName("Não deve registrar uma segunda saída para a mesma entrada")
+    void testNaoDeveRegistrarSaidaDuplicada() {
+        entrada.setAtivo(false);
+        SaidaDTO dto = SaidaDTO.builder()
+            .entradaId(1L)
+            .tipoPagamento(TipoPagamento.PIX)
+            .modalidade(Modalidade.DIARIA)
+            .build();
+
+        when(entradaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(entrada));
+
+        assertThrows(IllegalArgumentException.class, () -> saidaService.registrarSaida(dto));
+        verify(saidaRepository, never()).save(any());
+        verify(vagaService, never()).liberarVaga(any());
     }
 }

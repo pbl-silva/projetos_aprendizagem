@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Dados para criação de um empréstimo")
 public class EmprestimoRequestDTO {
 
-    @Schema(description = "ID do livro", example = "1", required = true)
+    @Schema(description = "ID do livro", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private Long livroId;
 
-    @Schema(description = "ID do usuário", example = "1", required = true)
+    @Schema(description = "ID do usuário", example = "1", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private Long usuarioId;
 }

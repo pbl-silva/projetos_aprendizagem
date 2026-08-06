@@ -1,6 +1,7 @@
 package com.ecommerce.api.service;
 
 import com.ecommerce.api.dto.ProdutoDTO;
+import com.ecommerce.api.exception.EstoqueInsuficienteException;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Categoria;
 import com.ecommerce.api.model.Produto;
@@ -183,7 +184,7 @@ public class ProdutoService {
     public ProdutoDTO atualizar(Long id, ProdutoDTO dto) {
         log.info("Atualizando produto com ID: {}", id);
         
-        Produto produto = produtoRepository.findById(id)
+        Produto produto = produtoRepository.findByIdForUpdate(id)
             .orElseThrow(() -> new RecursoNaoEncontradoException(
                 "Produto não encontrado com ID: " + id
             ));
@@ -228,8 +229,12 @@ public class ProdutoService {
      */
     public Integer diminuirEstoque(Long produtoId, Integer quantidade) {
         log.info("Diminuindo estoque do produto {} em {} unidades", produtoId, quantidade);
+
+        if (quantidade == null || quantidade <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
         
-        Produto produto = produtoRepository.findById(produtoId)
+        Produto produto = produtoRepository.findByIdForUpdate(produtoId)
             .orElseThrow(() -> new RecursoNaoEncontradoException(
                 "Produto não encontrado com ID: " + produtoId
             ));
@@ -237,7 +242,7 @@ public class ProdutoService {
         if (produto.getEstoque() < quantidade) {
             log.warn("Estoque insuficiente para produto {}: disponível {}, solicitado {}", 
                 produtoId, produto.getEstoque(), quantidade);
-            throw new IllegalArgumentException(
+            throw new EstoqueInsuficienteException(
                 "Estoque insuficiente. Disponível: " + produto.getEstoque() + 
                 ", Solicitado: " + quantidade
             );
@@ -256,13 +261,21 @@ public class ProdutoService {
      */
     public Integer aumentarEstoque(Long produtoId, Integer quantidade) {
         log.info("Aumentando estoque do produto {} em {} unidades", produtoId, quantidade);
+
+        if (quantidade == null || quantidade <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
         
-        Produto produto = produtoRepository.findById(produtoId)
+        Produto produto = produtoRepository.findByIdForUpdate(produtoId)
             .orElseThrow(() -> new RecursoNaoEncontradoException(
                 "Produto não encontrado com ID: " + produtoId
             ));
         
-        produto.setEstoque(produto.getEstoque() + quantidade);
+        try {
+            produto.setEstoque(Math.addExact(produto.getEstoque(), quantidade));
+        } catch (ArithmeticException ex) {
+            throw new IllegalArgumentException("Estoque excede o limite permitido", ex);
+        }
         Produto atualizado = produtoRepository.save(produto);
         
         log.debug("Estoque aumentado com sucesso. Novo estoque: {}", atualizado.getEstoque());

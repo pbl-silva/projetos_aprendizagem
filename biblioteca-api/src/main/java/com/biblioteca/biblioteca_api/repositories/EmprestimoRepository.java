@@ -30,9 +30,4 @@ public interface EmprestimoRepository extends JpaRepository<Emprestimo, Long> {
             AND e.status = 'ATIVO'""")
     long contarEmprestimosAtivosPorUsuario(@Param("usuario") Usuario usuario);
 
-    @Query("""
-            SELECT e FROM Emprestimo e
-            WHERE e.livro.id = :livroId
-            ORDER BY e.dataEmprestimo DESC""")
-    List<Emprestimo> buscarHistoricoPorLivro(@Param("livroId") Long livroId);
 }

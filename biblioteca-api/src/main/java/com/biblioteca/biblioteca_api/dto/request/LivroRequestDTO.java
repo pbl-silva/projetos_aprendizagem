@@ -13,22 +13,22 @@ import lombok.*;
 @Schema(description = "Dados para criação de um livro")
 public class LivroRequestDTO {
 
-    @Schema(description = "Título do livro", example = "Clean Code", required = true)
+    @Schema(description = "Título do livro", example = "Clean Code", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     private String titulo;
 
-    @Schema(description = "ISBN do livro", example = "978-0132350884", required = true)
+    @Schema(description = "ISBN do livro", example = "978-0132350884", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     private String isbn;
 
-    @Schema(description = "Autor do livro", example = "Robert C. Martin", required = true)
+    @Schema(description = "Autor do livro", example = "Robert C. Martin", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     private String autor;
 
     @Schema(description = "Ano de publicação", example = "2008")
     private Integer anoPublicacao;
 
-    @Schema(description = "Categoria do livro", example = "TECNICO", required = true)
+    @Schema(description = "Categoria do livro", example = "TECNICO", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private CategoriaLivro categoria;
 }

@@ -64,21 +64,19 @@ public class TelaDevolucao extends JFrame {
 
     private void carregarEmprestimosAtivos() {
         try {
-            List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimos();
+            List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimosAtivos();
             modeloTabela.setRowCount(0);
 
             for (ApiClient.Emprestimo emp : emprestimos) {
-                if ("ATIVO".equals(emp.status) || emp.dataDevolucao == null) {
-                    Object[] linha = {
-                            emp.id,
-                            emp.usuarioNome,
-                            emp.livroTitulo,
-                            emp.dataEmprestimo,
-                            emp.dataPrevistaDevolucao,
-                            emp.status
-                    };
-                    modeloTabela.addRow(linha);
-                }
+                Object[] linha = {
+                        emp.id,
+                        emp.usuario != null ? emp.usuario.nome : "",
+                        emp.livro != null ? emp.livro.titulo : "",
+                        emp.dataEmprestimo,
+                        emp.dataDevolucaoPrevista,
+                        emp.status
+                };
+                modeloTabela.addRow(linha);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Erro ao carregar empréstimos: " + e.getMessage(),

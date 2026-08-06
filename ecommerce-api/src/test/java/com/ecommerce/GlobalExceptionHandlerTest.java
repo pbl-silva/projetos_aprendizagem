@@ -1,6 +1,7 @@
 package com.ecommerce;
 
 import com.ecommerce.api.exception.ErrorResponse;
+import com.ecommerce.api.exception.EstoqueInsuficienteException;
 import com.ecommerce.api.exception.GlobalExceptionHandler;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import org.junit.jupiter.api.BeforeEach;
@@ -83,6 +84,18 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertNotNull(body);
         assertEquals("Email já cadastrado", body.getMensagem());
+    }
+
+    @Test
+    @DisplayName("Deve tratar estoque insuficiente como 409")
+    void testHandleEstoqueInsuficiente() {
+        EstoqueInsuficienteException ex = new EstoqueInsuficienteException("Estoque insuficiente");
+
+        ResponseEntity<ErrorResponse> response = handler.handleEstoqueInsuficiente(ex, webRequest);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals("Estoque insuficiente", response.getBody().getErro());
     }
 
     @Test

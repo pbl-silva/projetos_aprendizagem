@@ -118,6 +118,20 @@ class EstacionamentoIntegrationTest {
         assertEquals("INT0001", recibo.getPlaca());
         // Carro, modalidade diária (sem desconto), mínimo de 1 hora cobrada: R$ 20,00
         assertEquals(0, recibo.getValorFinal().compareTo(new BigDecimal("20.00")));
+        assertNotNull(recibo.getNumeroRecibo());
+
+        MvcResult segundaConsulta = mockMvc.perform(get("/saidas/recibo/" + recibo.getId()))
+            .andExpect(status().isOk())
+            .andReturn();
+        ReciboDTO reciboConsultado = objectMapper.readValue(
+            segundaConsulta.getResponse().getContentAsString(), ReciboDTO.class);
+        assertEquals(recibo.getNumeroRecibo(), reciboConsultado.getNumeroRecibo(),
+            "O número do recibo deve permanecer estável em consultas posteriores");
+
+        mockMvc.perform(post("/saidas")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(saidaRequisicao)))
+            .andExpect(status().isConflict());
     }
 
     @Test
@@ -166,6 +180,35 @@ class EstacionamentoIntegrationTest {
 
         Map<?, ?> corpo = objectMapper.readValue(result.getResponse().getContentAsString(), Map.class);
         assertEquals("Veículo não encontrado", corpo.get("erro"));
+    }
+
+    @Test
+    @DisplayName("GET /entradas/{id} inexistente deve retornar 404")
+    void testObterEntradaInexistenteRetorna404() throws Exception {
+        mockMvc.perform(get("/entradas/999999"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("JSON com enum inválido deve retornar 400")
+    void testEnumInvalidoRetorna400() throws Exception {
+        String json = "{\"placa\":\"BAD0001\",\"tipoVeiculo\":\"AVIAO\","
+            + "\"marca\":\"Teste\",\"modelo\":\"Teste\"}";
+
+        mockMvc.perform(post("/veiculos")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve normalizar placa para maiúsculas e sem hífen")
+    void testNormalizaPlaca() throws Exception {
+        VeiculoDTO veiculo = cadastrarVeiculo("abc-1d23", TipoVeiculo.CARRO, false);
+        assertEquals("ABC1D23", veiculo.getPlaca());
+
+        mockMvc.perform(get("/veiculos/placa/abc-1d23"))
+            .andExpect(status().isOk());
     }
 
     @Test

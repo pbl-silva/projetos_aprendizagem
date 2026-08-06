@@ -8,8 +8,7 @@ import com.biblioteca.biblioteca_api.entities.Usuario;
 import com.biblioteca.biblioteca_api.enums.StatusEmprestimo;
 import com.biblioteca.biblioteca_api.enums.TipoUsuario;
 import com.biblioteca.biblioteca_api.exceptions.ResourceNotFoundException;
-import com.biblioteca.biblioteca_api.mappers.LivroMapper;
-import com.biblioteca.biblioteca_api.mappers.UsuarioMapper;
+import com.biblioteca.biblioteca_api.mappers.EmprestimoMapper;
 import com.biblioteca.biblioteca_api.repositories.EmprestimoRepository;
 import com.biblioteca.biblioteca_api.repositories.LivroRepository;
 import com.biblioteca.biblioteca_api.repositories.UsuarioRepository;
@@ -29,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
@@ -97,7 +95,7 @@ public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
         Emprestimo salvo = emprestimoRepository.save(emprestimo);
         livro.setDisponivel(false);
         livroRepository.save(livro);
-        return toResponse(salvo);
+        return EmprestimoMapper.toResponseDTO(salvo, clock);
     }
 
     @Override
@@ -121,16 +119,13 @@ public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
         livro.setDisponivel(true);
         livroRepository.save(livro);
 
-        return toResponse(salvo);
+        return EmprestimoMapper.toResponseDTO(salvo, clock);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EmprestimoResponseDTO> listarTodos() {
-        return emprestimoRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return EmprestimoMapper.toResponseDTOList(emprestimoRepository.findAll(), clock);
     }
 
     @Override
@@ -138,21 +133,21 @@ public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
     public EmprestimoResponseDTO buscarPorId(Long id) {
         Emprestimo emprestimo = emprestimoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empréstimo não encontrado com ID: " + id));
-        return toResponse(emprestimo);
+        return EmprestimoMapper.toResponseDTO(emprestimo, clock);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EmprestimoResponseDTO> listarPorUsuario(Long usuarioId) {
         List<Emprestimo> lista = emprestimoRepository.findByUsuarioId(usuarioId);
-        return lista.stream().map(this::toResponse).collect(Collectors.toList());
+        return EmprestimoMapper.toResponseDTOList(lista, clock);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<EmprestimoResponseDTO> listarAtivos() {
         List<Emprestimo> lista = emprestimoRepository.findByStatus(StatusEmprestimo.ATIVO);
-        return lista.stream().map(this::toResponse).collect(Collectors.toList());
+        return EmprestimoMapper.toResponseDTOList(lista, clock);
     }
 
     @Override
@@ -160,7 +155,7 @@ public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
     public List<EmprestimoResponseDTO> listarAtrasados() {
         LocalDate hoje = LocalDate.now(clock);
         List<Emprestimo> lista = emprestimoRepository.buscarEmprestimosAtrasados(hoje);
-        return lista.stream().map(this::toResponse).collect(Collectors.toList());
+        return EmprestimoMapper.toResponseDTOList(lista, clock);
     }
 
     private BigDecimal calcularMulta(Emprestimo emprestimo) {
@@ -192,30 +187,4 @@ public class EmprestimoServiceImpl implements GerenciadorEmprestimo {
         return Math.max(0L, diff);
     }
 
-    private EmprestimoResponseDTO toResponse(Emprestimo e) {
-        if (e == null) return null;
-
-        EmprestimoResponseDTO dto = new EmprestimoResponseDTO();
-        dto.setId(e.getId());
-
-        dto.setLivro(e.getLivro() != null ? LivroMapper.toResponseDTO(e.getLivro()) : null);
-        dto.setUsuario(e.getUsuario() != null ? UsuarioMapper.toResponseDTO(e.getUsuario()) : null);
-
-        dto.setDataEmprestimo(e.getDataEmprestimo());
-        dto.setDataDevolucaoPrevista(e.getDataDevolucaoPrevista());
-        dto.setDataDevolucaoReal(e.getDataDevolucaoReal());
-        dto.setStatus(e.getStatus());
-        dto.setMultaCalculada(e.getMultaCalculada());
-
-        LocalDate hoje = LocalDate.now(clock);
-        LocalDate prevista = e.getDataDevolucaoPrevista();
-        Long diasRestantes = null;
-        if (prevista != null) {
-            long diff = ChronoUnit.DAYS.between(hoje, prevista);
-            diasRestantes = Math.max(0L, diff);
-        }
-        dto.setDiasRestantes(diasRestantes);
-
-        return dto;
-    }
 }

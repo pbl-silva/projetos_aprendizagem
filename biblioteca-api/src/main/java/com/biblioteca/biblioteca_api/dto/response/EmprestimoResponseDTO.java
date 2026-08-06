@@ -18,10 +18,10 @@ public class EmprestimoResponseDTO {
     @Schema(description = "ID do empréstimo", example = "1")
     private Long id;
 
-    @Schema(description = "Dados do livro associado", required = true)
+    @Schema(description = "Dados do livro associado", requiredMode = Schema.RequiredMode.REQUIRED)
     private LivroResponseDTO livro;
 
-    @Schema(description = "Dados do usuário associado", required = true)
+    @Schema(description = "Dados do usuário associado", requiredMode = Schema.RequiredMode.REQUIRED)
     private UsuarioResponseDTO usuario;
 
     @Schema(description = "Data do empréstimo", example = "2026-06-01")

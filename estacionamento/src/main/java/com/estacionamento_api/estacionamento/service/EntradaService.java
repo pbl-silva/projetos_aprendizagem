@@ -4,6 +4,7 @@ import com.estacionamento_api.estacionamento.dto.EntradaDTO;
 import com.estacionamento_api.estacionamento.enums.TipoVeiculo;
 import com.estacionamento_api.estacionamento.enums.TipoVaga;
 import com.estacionamento_api.estacionamento.exception.VagaNaoDisponvelException;
+import com.estacionamento_api.estacionamento.exception.RecursoNaoEncontradoException;
 import com.estacionamento_api.estacionamento.model.Entrada;
 import com.estacionamento_api.estacionamento.model.Vaga;
 import com.estacionamento_api.estacionamento.model.Veiculo;
@@ -29,13 +30,13 @@ public class EntradaService {
     public EntradaDTO registrarEntrada(EntradaDTO dto) {
         log.debug("Registrando entrada para veiculoId={}", dto.getVeiculoId());
 
-        Veiculo veiculo = veiculoRepository.findById(dto.getVeiculoId())
-            .orElseThrow(() -> new RuntimeException("Veículo não encontrado"));
+        Veiculo veiculo = veiculoRepository.findByIdForUpdate(dto.getVeiculoId())
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Veículo não encontrado"));
         
         if (entradaRepository.findByVeiculoIdAndAtivoTrue(veiculo.getId()).isPresent()) {
             log.warn("Tentativa de registrar entrada para veículo já estacionado: placa={}",
                 veiculo.getPlaca());
-            throw new RuntimeException("Veículo já está estacionado");
+            throw new IllegalArgumentException("Veículo já está estacionado");
         }
         
         Vaga vaga = encontrarVagaParaVeiculo(veiculo);
@@ -85,7 +86,7 @@ public class EntradaService {
     @Transactional(readOnly = true)
     public EntradaDTO obterPorId(Long id) {
         Entrada entrada = entradaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Entrada não encontrada"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Entrada não encontrada"));
         return converterParaDTO(entrada);
     }
     
@@ -105,8 +106,8 @@ public class EntradaService {
     public void cancelarEntrada(Long id) {
         log.debug("Cancelando entrada id={}", id);
 
-        Entrada entrada = entradaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Entrada não encontrada"));
+        Entrada entrada = entradaRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Entrada não encontrada"));
 
         if (!Boolean.TRUE.equals(entrada.getAtivo())) {
             log.warn("Tentativa de cancelar entrada já finalizada: id={}", id);

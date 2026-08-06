@@ -27,17 +27,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
 <span class="fc" id="L28">            String jwt = getJwtFromRequest(request);</span>
             
-<span class="pc bpc" id="L30" title="3 of 4 branches missed.">            if (jwt != null &amp;&amp; jwtProvider.validateToken(jwt)) {</span>
-<span class="nc" id="L31">                String email = jwtProvider.getEmailFromToken(jwt);</span>
-<span class="nc" id="L32">                Long userId = jwtProvider.getUserIdFromToken(jwt);</span>
+<span class="pc bpc" id="L30" title="1 of 4 branches missed.">            if (jwt != null &amp;&amp; jwtProvider.validateToken(jwt)) {</span>
+<span class="fc" id="L31">                String email = jwtProvider.getEmailFromToken(jwt);</span>
+<span class="fc" id="L32">                Long userId = jwtProvider.getUserIdFromToken(jwt);</span>
                 
-<span class="nc" id="L34">                UsernamePasswordAuthenticationToken authentication = </span>
+<span class="fc" id="L34">                UsernamePasswordAuthenticationToken authentication = </span>
                     new UsernamePasswordAuthenticationToken(
                         email, null, null
                     );
-<span class="nc" id="L38">                authentication.setDetails(userId);</span>
+<span class="fc" id="L38">                authentication.setDetails(userId);</span>
                 
-<span class="nc" id="L40">                SecurityContextHolder.getContext().setAuthentication(authentication);</span>
+<span class="fc" id="L40">                SecurityContextHolder.getContext().setAuthentication(authentication);</span>
             }
 <span class="nc" id="L42">        } catch (Exception ex) {</span>
 <span class="nc" id="L43">            logger.error(&quot;Erro ao processar JWT: &quot; + ex.getMessage());</span>
@@ -49,8 +49,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @org.springframework.lang.Nullable
     private String getJwtFromRequest(HttpServletRequest request) {
 <span class="fc" id="L51">        String bearerToken = request.getHeader(&quot;Authorization&quot;);</span>
-<span class="pc bpc" id="L52" title="3 of 4 branches missed.">        if (bearerToken != null &amp;&amp; bearerToken.startsWith(&quot;Bearer &quot;)) {</span>
-<span class="nc" id="L53">            return bearerToken.substring(7);</span>
+<span class="pc bpc" id="L52" title="1 of 4 branches missed.">        if (bearerToken != null &amp;&amp; bearerToken.startsWith(&quot;Bearer &quot;)) {</span>
+<span class="fc" id="L53">            return bearerToken.substring(7);</span>
         }
 <span class="fc" id="L55">        return null;</span>
     }

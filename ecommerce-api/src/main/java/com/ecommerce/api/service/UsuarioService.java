@@ -39,7 +39,9 @@ public class UsuarioService {
             .email(dto.getEmail())
             .senha(passwordEncoder.encode(dto.getSenha()))
             .nome(dto.getNome())
-            .papel(dto.getPapel())
+            // O endpoint de registro e publico. Aceitar o papel enviado pelo
+            // cliente permitiria que qualquer pessoa se tornasse ADMIN.
+            .papel(Usuario.Papel.USER)
             .ativo(true)
             .build();
         
@@ -58,6 +60,11 @@ public class UsuarioService {
                 log.warn("Tentativa de login com email não encontrado: {}", request.getEmail());
                 return new RecursoNaoEncontradoException("Usuário não encontrado");
             });
+
+        if (!Boolean.TRUE.equals(usuario.getAtivo())) {
+            log.warn("Tentativa de login de usuário inativo: {}", request.getEmail());
+            throw new IllegalArgumentException("Usuário inativo");
+        }
         
         if (!passwordEncoder.matches(request.getSenha(), usuario.getSenha())) {
             log.warn("Tentativa de login com senha incorreta: {}", request.getEmail());

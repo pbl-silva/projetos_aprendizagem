@@ -6,7 +6,8 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "entradas")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -36,6 +37,8 @@ public class Entrada {
     
     @PrePersist
     protected void onCreate() {
-        dataHoraEntrada = LocalDateTime.now();
+        if (dataHoraEntrada == null) {
+            dataHoraEntrada = LocalDateTime.now();
+        }
     }
 }

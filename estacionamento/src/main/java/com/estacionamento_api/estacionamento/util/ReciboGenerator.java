@@ -19,7 +19,7 @@ public final class ReciboGenerator {
     }
 
     public static String gerarNumeroRecibo() {
-        return "REC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "REC-" + UUID.randomUUID().toString().toUpperCase();
     }
 
     public static ReciboDTO gerar(Saida saida, BigDecimal valorBase) {
@@ -31,7 +31,7 @@ public final class ReciboGenerator {
 
         return ReciboDTO.builder()
             .id(saida.getId())
-            .numeroRecibo(gerarNumeroRecibo())
+            .numeroRecibo(saida.getNumeroRecibo())
             .placa(entrada.getVeiculo().getPlaca())
             .marca(entrada.getVeiculo().getMarca())
             .modelo(entrada.getVeiculo().getModelo())

@@ -5,9 +5,7 @@ com\ecommerce\api\config\package-info.class
 com\ecommerce\api\dto\ProdutoDTO$ProdutoDTOBuilder.class
 com\ecommerce\api\model\Pagamento$PagamentoBuilder.class
 com\ecommerce\api\security\JwtProperties.class
-META-INF\spring-configuration-metadata.json
 com\ecommerce\api\service\UsuarioService.class
-application.properties
 com\ecommerce\api\model\Pedido$PedidoBuilder.class
 com\ecommerce\api\exception\RecursoNaoEncontradoException.class
 com\ecommerce\api\security\JwtProvider.class
@@ -24,6 +22,7 @@ com\ecommerce\api\dto\PagamentoDTO$PagamentoDTOBuilder.class
 com\ecommerce\api\exception\ErrorResponse$ErrorResponseBuilder.class
 com\ecommerce\api\dto\ClienteDTO.class
 com\ecommerce\api\model\ItemPedido$ItemPedidoBuilder.class
+com\ecommerce\ui\panels\PedidoPanel$1.class
 com\ecommerce\api\model\Categoria.class
 com\ecommerce\api\repository\UsuarioRepository.class
 com\ecommerce\api\repository\CategoriaRepository.class
@@ -34,7 +33,6 @@ com\ecommerce\api\dto\PedidoDTO.class
 com\ecommerce\api\config\JacksonConfig.class
 com\ecommerce\api\dto\ItemPedidoDTO$ItemPedidoDTOBuilder.class
 com\ecommerce\api\service\PedidoService.class
-logback-spring.xml
 com\ecommerce\api\config\H2ConsoleConfiguration.class
 com\ecommerce\ui\panels\ClientePanel.class
 com\ecommerce\api\repository\PagamentoRepository.class
@@ -48,6 +46,7 @@ com\ecommerce\Application.class
 com\ecommerce\api\controller\AuthController.class
 com\ecommerce\ui\util\MapUtils.class
 com\ecommerce\api\model\ItemPedido.class
+com\ecommerce\ui\panels\PedidoPanel$ProdutoOpcao.class
 com\ecommerce\ui\panels\ProdutoPanel.class
 com\ecommerce\api\model\Cliente$ClienteBuilder.class
 com\ecommerce\api\controller\ClienteController.class
@@ -65,11 +64,13 @@ com\ecommerce\api\dto\LoginRequest.class
 com\ecommerce\api\model\Cliente.class
 com\ecommerce\api\exception\GlobalExceptionHandler.class
 com\ecommerce\api\exception\ErrorResponse.class
+com\ecommerce\ui\panels\PedidoPanel$ItemSelecionado.class
 com\ecommerce\api\config\SecurityConfig.class
 com\ecommerce\api\exception\EstoqueInsuficienteException.class
 com\ecommerce\ui\service\ApiClient.class
 com\ecommerce\api\controller\CategoriaController.class
 com\ecommerce\api\security\JwtAuthenticationFilter.class
+com\ecommerce\api\config\AdminInitializer.class
 com\ecommerce\api\dto\PagamentoDTO.class
 com\ecommerce\api\config\SwaggerConfig.class
 com\ecommerce\api\dto\LoginResponse$LoginResponseBuilder.class

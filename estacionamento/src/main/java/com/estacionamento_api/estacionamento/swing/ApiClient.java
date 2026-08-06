@@ -28,7 +28,12 @@ import java.util.Map;
  */
 public final class ApiClient {
 
-    private static final String BASE_URL = "http://localhost:8080/api";
+    private static final String BASE_URL = System.getenv()
+        .getOrDefault("ESTACIONAMENTO_API_URL", "http://localhost:8080/api");
+    private static final String USERNAME = System.getenv()
+        .getOrDefault("ESTACIONAMENTO_USERNAME", "admin");
+    private static final String PASSWORD = System.getenv()
+        .getOrDefault("ESTACIONAMENTO_PASSWORD", "admin123");
 
     private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(5))
@@ -75,6 +80,12 @@ public final class ApiClient {
         return MAPPER.readValue(resposta.body(), type);
     }
 
+    public static <T> T get(String path, TypeReference<T> type)
+            throws IOException, InterruptedException {
+        HttpResponse<String> resposta = enviar("GET", path, null);
+        return MAPPER.readValue(resposta.body(), type);
+    }
+
     public static <T> T getList(String path, TypeReference<T> tipo) throws IOException, InterruptedException {
         HttpResponse<String> resposta = enviar("GET", path, null);
         return MAPPER.readValue(resposta.body(), tipo);
@@ -96,7 +107,7 @@ public final class ApiClient {
             return;
         }
 
-        Map<String, String> corpoLogin = Map.of("username", "admin", "senha", "admin123");
+        Map<String, String> corpoLogin = Map.of("username", USERNAME, "senha", PASSWORD);
 
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(BASE_URL + "/auth/login"))

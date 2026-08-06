@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PedidoService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">E-Commerce API</a> &gt; <a href="index.source.html" class="el_package">com.ecommerce.api.service</a> &gt; <span class="el_source">PedidoService.java</span></div><h1>PedidoService.java</h1><pre class="source lang-java linenums">package com.ecommerce.api.service;
 
+import com.ecommerce.api.dto.ItemPedidoDTO;
 import com.ecommerce.api.dto.PedidoDTO;
 import com.ecommerce.api.enums.StatusPedido;
+import com.ecommerce.api.exception.EstoqueInsuficienteException;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Cliente;
+import com.ecommerce.api.model.ItemPedido;
 import com.ecommerce.api.model.Pedido;
+import com.ecommerce.api.model.Produto;
 import com.ecommerce.api.repository.ClienteRepository;
 import com.ecommerce.api.repository.PedidoRepository;
+import com.ecommerce.api.repository.ProdutoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,102 +19,217 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class PedidoService {
-    
+
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
-    
+    private final ProdutoRepository produtoRepository;
+
+    /**
+     * Cria um pedido e baixa o estoque de todos os seus itens na mesma transação.
+     * O preço e o total são obtidos do catálogo para evitar valores manipulados pelo cliente.
+     */
     public PedidoDTO criar(PedidoDTO dto) {
-<span class="fc" id="L30">        Cliente cliente = clienteRepository.findById(dto.getClienteId())</span>
-<span class="fc" id="L31">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
-<span class="fc" id="L32">                &quot;Cliente não encontrado com ID: &quot; + dto.getClienteId()</span>
+<span class="pc bpc" id="L45" title="1 of 4 branches missed.">        if (dto.getItens() == null || dto.getItens().isEmpty()) {</span>
+<span class="fc" id="L46">            throw new IllegalArgumentException(&quot;O pedido deve conter pelo menos um produto&quot;);</span>
+        }
+
+<span class="fc" id="L49">        Map&lt;Long, Integer&gt; itensAgrupados = agruparItens(dto.getItens());</span>
+
+<span class="fc" id="L51">        Cliente cliente = clienteRepository.findById(dto.getClienteId())</span>
+<span class="fc" id="L52">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+<span class="fc" id="L53">                &quot;Cliente não encontrado com ID: &quot; + dto.getClienteId()</span>
             ));
-        
-<span class="fc" id="L35">        Pedido pedido = Pedido.builder()</span>
-<span class="fc" id="L36">            .cliente(cliente)</span>
-<span class="fc bfc" id="L37" title="All 2 branches covered.">            .total(dto.getTotal() != null ? dto.getTotal() : 0.0)</span>
-<span class="fc" id="L38">            .status(StatusPedido.PENDENTE)</span>
-<span class="fc" id="L39">            .dataCriacao(LocalDateTime.now())</span>
-<span class="fc" id="L40">            .dataAtualizacao(LocalDateTime.now())</span>
-<span class="fc" id="L41">            .build();</span>
-        
-<span class="fc" id="L43">        Pedido salvo = pedidoRepository.save(pedido);</span>
-<span class="fc" id="L44">        return converterParaDTO(salvo);</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (!Boolean.TRUE.equals(cliente.getAtivo())) {</span>
+<span class="fc" id="L57">            throw new IllegalArgumentException(&quot;Cliente inativo não pode realizar pedidos&quot;);</span>
+        }
+
+<span class="fc" id="L60">        Pedido pedido = Pedido.builder()</span>
+<span class="fc" id="L61">            .cliente(cliente)</span>
+<span class="fc" id="L62">            .status(StatusPedido.PENDENTE)</span>
+<span class="fc" id="L63">            .dataCriacao(LocalDateTime.now())</span>
+<span class="fc" id="L64">            .dataAtualizacao(LocalDateTime.now())</span>
+<span class="fc" id="L65">            .itens(new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L66">            .build();</span>
+
+<span class="fc" id="L68">        BigDecimal total = BigDecimal.ZERO;</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (Map.Entry&lt;Long, Integer&gt; itemSolicitado : itensAgrupados.entrySet()) {</span>
+<span class="fc" id="L70">            Produto produto = produtoRepository.findByIdForUpdate(itemSolicitado.getKey())</span>
+<span class="pc" id="L71">                .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+<span class="nc" id="L72">                    &quot;Produto não encontrado com ID: &quot; + itemSolicitado.getKey()</span>
+                ));
+
+<span class="fc" id="L75">            validarDisponibilidade(produto, itemSolicitado.getValue());</span>
+
+<span class="fc" id="L77">            ItemPedido item = ItemPedido.builder()</span>
+<span class="fc" id="L78">                .pedido(pedido)</span>
+<span class="fc" id="L79">                .produto(produto)</span>
+<span class="fc" id="L80">                .quantidade(itemSolicitado.getValue())</span>
+<span class="fc" id="L81">                .precoUnitario(produto.getPreco())</span>
+<span class="fc" id="L82">                .build();</span>
+
+<span class="fc" id="L84">            pedido.getItens().add(item);</span>
+<span class="fc" id="L85">            produto.setEstoque(produto.getEstoque() - itemSolicitado.getValue());</span>
+<span class="fc" id="L86">            total = total.add(item.getSubtotal());</span>
+<span class="fc" id="L87">        }</span>
+
+<span class="fc" id="L89">        pedido.setTotal(total.doubleValue());</span>
+<span class="fc" id="L90">        return converterParaDTO(pedidoRepository.save(pedido));</span>
     }
-    
+
     @Transactional(readOnly = true)
     public PedidoDTO obterPorId(Long id) {
-<span class="fc" id="L49">        Pedido pedido = pedidoRepository.findById(id)</span>
-<span class="fc" id="L50">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+<span class="fc" id="L95">        Pedido pedido = pedidoRepository.findById(id)</span>
+<span class="fc" id="L96">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
                 &quot;Pedido não encontrado com ID: &quot; + id
             ));
-<span class="fc" id="L53">        return converterParaDTO(pedido);</span>
+<span class="fc" id="L99">        return converterParaDTO(pedido);</span>
     }
-    
+
     @Transactional(readOnly = true)
     public List&lt;PedidoDTO&gt; listarTodos() {
-<span class="fc" id="L58">        return pedidoRepository.findAll()</span>
-<span class="fc" id="L59">            .stream()</span>
-<span class="fc" id="L60">            .map(this::converterParaDTO)</span>
-<span class="fc" id="L61">            .collect(Collectors.toList());</span>
+<span class="fc" id="L104">        return pedidoRepository.findAll()</span>
+<span class="fc" id="L105">            .stream()</span>
+<span class="fc" id="L106">            .map(this::converterParaDTO)</span>
+<span class="fc" id="L107">            .collect(Collectors.toList());</span>
     }
 
     @Transactional(readOnly = true)
     public Page&lt;PedidoDTO&gt; listarComPaginacao(int pagina, int tamanho, String ordenarPor, String direcao) {
-<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (tamanho &gt; 100) {</span>
-<span class="nc" id="L67">            tamanho = 100;</span>
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (tamanho &gt; 100) {</span>
+<span class="nc" id="L113">            tamanho = 100;</span>
         }
-<span class="fc" id="L69">        Sort.Direction direction = Sort.Direction.fromString(direcao.toUpperCase());</span>
-<span class="fc" id="L70">        Sort sort = Sort.by(direction, ordenarPor);</span>
-<span class="fc" id="L71">        Pageable pageable = PageRequest.of(pagina, tamanho, sort);</span>
-<span class="fc" id="L72">        return pedidoRepository.findAll(pageable).map(this::converterParaDTO);</span>
+<span class="fc" id="L115">        Sort.Direction direction = Sort.Direction.fromString(direcao.toUpperCase());</span>
+<span class="fc" id="L116">        Sort sort = Sort.by(direction, ordenarPor);</span>
+<span class="fc" id="L117">        Pageable pageable = PageRequest.of(pagina, tamanho, sort);</span>
+<span class="fc" id="L118">        return pedidoRepository.findAll(pageable).map(this::converterParaDTO);</span>
     }
-    
+
     public PedidoDTO atualizar(Long id, PedidoDTO dto) {
-<span class="fc" id="L76">        Pedido pedido = pedidoRepository.findById(id)</span>
-<span class="fc" id="L77">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+<span class="fc" id="L122">        Pedido pedido = pedidoRepository.findById(id)</span>
+<span class="fc" id="L123">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
                 &quot;Pedido não encontrado com ID: &quot; + id
             ));
-        
-<span class="pc bpc" id="L81" title="1 of 2 branches missed.">        if (dto.getStatus() != null) {</span>
-<span class="fc" id="L82">            pedido.setStatus(dto.getStatus());</span>
+
+<span class="fc" id="L127">        StatusPedido statusAtual = pedido.getStatus();</span>
+<span class="fc" id="L128">        StatusPedido novoStatus = dto.getStatus();</span>
+<span class="pc bpc" id="L129" title="2 of 6 branches missed.">        if (statusAtual == StatusPedido.CANCELADO</span>
+                &amp;&amp; novoStatus != null &amp;&amp; novoStatus != StatusPedido.CANCELADO) {
+<span class="fc" id="L131">            throw new IllegalArgumentException(&quot;Pedido cancelado não pode ser reativado&quot;);</span>
         }
-        
-<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if (dto.getTotal() != null) {</span>
-<span class="fc" id="L86">            pedido.setTotal(dto.getTotal());</span>
+
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">        if (novoStatus == StatusPedido.CANCELADO &amp;&amp; statusAtual != StatusPedido.CANCELADO) {</span>
+<span class="fc" id="L135">            restaurarEstoque(pedido);</span>
         }
-        
-<span class="fc" id="L89">        pedido.setDataAtualizacao(LocalDateTime.now());</span>
-        
-<span class="fc" id="L91">        Pedido atualizado = pedidoRepository.save(pedido);</span>
-<span class="fc" id="L92">        return converterParaDTO(atualizado);</span>
+
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if (novoStatus != null) {</span>
+<span class="fc" id="L139">            pedido.setStatus(novoStatus);</span>
+        }
+
+<span class="fc" id="L142">        pedido.setDataAtualizacao(LocalDateTime.now());</span>
+<span class="fc" id="L143">        return converterParaDTO(pedidoRepository.save(pedido));</span>
     }
-    
+
     public void deletar(Long id) {
-<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (!pedidoRepository.existsById(id)) {</span>
-<span class="fc" id="L97">            throw new RecursoNaoEncontradoException(</span>
+<span class="fc" id="L147">        Pedido pedido = pedidoRepository.findById(id)</span>
+<span class="fc" id="L148">            .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
                 &quot;Pedido não encontrado com ID: &quot; + id
+            ));
+
+        // Excluir um pedido equivale a desfazer sua reserva. Um pedido ja
+        // cancelado teve o estoque devolvido anteriormente.
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if (pedido.getStatus() != StatusPedido.CANCELADO) {</span>
+<span class="fc" id="L155">            restaurarEstoque(pedido);</span>
+        }
+<span class="fc" id="L157">        pedidoRepository.delete(pedido);</span>
+<span class="fc" id="L158">    }</span>
+
+    private void restaurarEstoque(Pedido pedido) {
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">        if (pedido.getItens() == null) {</span>
+<span class="nc" id="L162">            return;</span>
+        }
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        for (ItemPedido item : pedido.getItens().stream()</span>
+<span class="pc" id="L165">                .sorted((a, b) -&gt; a.getProduto().getId().compareTo(b.getProduto().getId()))</span>
+<span class="fc" id="L166">                .toList()) {</span>
+<span class="fc" id="L167">            Long produtoId = item.getProduto().getId();</span>
+<span class="fc" id="L168">            Produto produto = produtoRepository.findByIdForUpdate(produtoId)</span>
+<span class="pc" id="L169">                .orElseThrow(() -&gt; new RecursoNaoEncontradoException(</span>
+                    &quot;Produto não encontrado com ID: &quot; + produtoId
+                ));
+<span class="fc" id="L172">            produto.setEstoque(somarQuantidade(produto.getEstoque(), item.getQuantidade()));</span>
+<span class="fc" id="L173">        }</span>
+<span class="fc" id="L174">    }</span>
+
+    private Map&lt;Long, Integer&gt; agruparItens(List&lt;ItemPedidoDTO&gt; itens) {
+        // Ordem deterministica de bloqueio evita deadlocks quando dois pedidos
+        // concorrentes contem os mesmos produtos em ordens diferentes.
+<span class="fc" id="L179">        Map&lt;Long, Integer&gt; itensAgrupados = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        for (ItemPedidoDTO item : itens) {</span>
+<span class="pc bpc" id="L181" title="2 of 4 branches missed.">            if (item == null || item.getProdutoId() == null) {</span>
+<span class="nc" id="L182">                throw new IllegalArgumentException(&quot;Produto é obrigatório em cada item do pedido&quot;);</span>
+            }
+<span class="pc bpc" id="L184" title="2 of 4 branches missed.">            if (item.getQuantidade() == null || item.getQuantidade() &lt;= 0) {</span>
+<span class="nc" id="L185">                throw new IllegalArgumentException(&quot;Quantidade deve ser maior que zero&quot;);</span>
+            }
+<span class="fc" id="L187">            itensAgrupados.merge(item.getProdutoId(), item.getQuantidade(), this::somarQuantidade);</span>
+<span class="fc" id="L188">        }</span>
+<span class="fc" id="L189">        return itensAgrupados;</span>
+    }
+
+    private int somarQuantidade(int atual, int quantidade) {
+        try {
+<span class="fc" id="L194">            return Math.addExact(atual, quantidade);</span>
+<span class="fc" id="L195">        } catch (ArithmeticException ex) {</span>
+<span class="fc" id="L196">            throw new IllegalArgumentException(&quot;Quantidade total excede o limite permitido&quot;, ex);</span>
+        }
+    }
+
+    private void validarDisponibilidade(Produto produto, int quantidade) {
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if (!Boolean.TRUE.equals(produto.getAtivo())) {</span>
+<span class="nc" id="L202">            throw new IllegalArgumentException(&quot;Produto indisponível: &quot; + produto.getNome());</span>
+        }
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (produto.getEstoque() &lt; quantidade) {</span>
+<span class="fc" id="L205">            throw new EstoqueInsuficienteException(</span>
+<span class="fc" id="L206">                &quot;Estoque insuficiente para &quot; + produto.getNome() +</span>
+<span class="fc" id="L207">                    &quot;. Disponível: &quot; + produto.getEstoque() + &quot;, solicitado: &quot; + quantidade</span>
             );
         }
-<span class="fc" id="L101">        pedidoRepository.deleteById(id);</span>
-<span class="fc" id="L102">    }</span>
-    
+<span class="fc" id="L210">    }</span>
+
     private PedidoDTO converterParaDTO(Pedido pedido) {
-<span class="fc" id="L105">        return PedidoDTO.builder()</span>
-<span class="fc" id="L106">            .id(pedido.getId())</span>
-<span class="fc" id="L107">            .clienteId(pedido.getCliente().getId())</span>
-<span class="fc" id="L108">            .total(pedido.getTotal())</span>
-<span class="fc" id="L109">            .status(pedido.getStatus())</span>
-<span class="fc" id="L110">            .dataCriacao(pedido.getDataCriacao())</span>
-<span class="fc" id="L111">            .dataAtualizacao(pedido.getDataAtualizacao())</span>
-<span class="fc" id="L112">            .build();</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">        List&lt;ItemPedidoDTO&gt; itens = pedido.getItens() == null ? List.of() : pedido.getItens().stream()</span>
+<span class="fc" id="L214">            .map(item -&gt; ItemPedidoDTO.builder()</span>
+<span class="fc" id="L215">                .id(item.getId())</span>
+<span class="fc" id="L216">                .produtoId(item.getProduto().getId())</span>
+<span class="fc" id="L217">                .produtoNome(item.getProduto().getNome())</span>
+<span class="fc" id="L218">                .quantidade(item.getQuantidade())</span>
+<span class="fc" id="L219">                .precoUnitario(item.getPrecoUnitario())</span>
+<span class="fc" id="L220">                .subtotal(item.getSubtotal())</span>
+<span class="fc" id="L221">                .build())</span>
+<span class="fc" id="L222">            .toList();</span>
+
+<span class="fc" id="L224">        return PedidoDTO.builder()</span>
+<span class="fc" id="L225">            .id(pedido.getId())</span>
+<span class="fc" id="L226">            .clienteId(pedido.getCliente().getId())</span>
+<span class="fc" id="L227">            .total(pedido.getTotal())</span>
+<span class="fc" id="L228">            .status(pedido.getStatus())</span>
+<span class="fc" id="L229">            .dataCriacao(pedido.getDataCriacao())</span>
+<span class="fc" id="L230">            .dataAtualizacao(pedido.getDataAtualizacao())</span>
+<span class="fc" id="L231">            .itens(itens)</span>
+<span class="fc" id="L232">            .build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

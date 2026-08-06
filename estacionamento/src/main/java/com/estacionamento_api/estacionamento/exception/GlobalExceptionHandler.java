@@ -4,6 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.bind.ServletRequestBindingException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -70,6 +74,29 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleRecursoNaoEncontrado(
+            RecursoNaoEncontradoException ex) {
+        log.warn("Recurso não encontrado: {}", ex.getMessage());
+        return resposta(HttpStatus.NOT_FOUND, "Recurso não encontrado", ex.getMessage());
+    }
+
+    @ExceptionHandler(RequisicaoInvalidaException.class)
+    public ResponseEntity<Map<String, Object>> handleRequisicaoInvalida(
+            RequisicaoInvalidaException ex) {
+        log.warn("Requisição inválida: {}", ex.getMessage());
+        return resposta(HttpStatus.BAD_REQUEST, "Requisição inválida", ex.getMessage());
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class,
+                       ServletRequestBindingException.class,
+                       MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<Map<String, Object>> handleRequisicaoMalformada(Exception ex) {
+        log.warn("Requisição malformada: {}", ex.getMessage());
+        return resposta(HttpStatus.BAD_REQUEST, "Requisição inválida",
+            "O corpo ou os parâmetros da requisição estão ausentes ou em formato inválido");
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(
             IllegalArgumentException ex) {
@@ -80,6 +107,14 @@ public class GlobalExceptionHandler {
         body.put("erro", "Requisição inválida");
         body.put("mensagem", ex.getMessage());
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+        log.warn("Conflito de integridade de dados: {}", ex.getMostSpecificCause().getMessage());
+        return resposta(HttpStatus.CONFLICT, "Conflito de dados",
+            "A operação conflita com um registro existente");
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -94,12 +129,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
 
-    /**
-     * Rede de segurança para qualquer exceção não mapeada acima (incluindo
-     * os RuntimeException genéricos ainda usados em alguns services, ex:
-     * "Entrada não encontrada", "Vaga não encontrada"). Antes disso, essas
-     * exceções viravam a página de erro padrão do Spring, sem log nenhum.
-     */
+    /** Rede de segurança para qualquer exceção não mapeada acima. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         log.error("Erro inesperado: {}", ex.getMessage(), ex);
@@ -108,9 +138,17 @@ public class GlobalExceptionHandler {
         body.put("timestamp", LocalDateTime.now());
         body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
         body.put("erro", "Erro interno");
-        body.put("mensagem", ex.getMessage() != null
-            ? ex.getMessage()
-            : "Ocorreu um erro inesperado.");
+        body.put("mensagem", "Ocorreu um erro inesperado. Consulte os logs da aplicação.");
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<Map<String, Object>> resposta(HttpStatus status, String erro,
+                                                          String mensagem) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("erro", erro);
+        body.put("mensagem", mensagem);
+        return new ResponseEntity<>(body, status);
     }
 }

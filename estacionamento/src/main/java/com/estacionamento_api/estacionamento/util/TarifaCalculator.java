@@ -1,6 +1,7 @@
 package com.estacionamento_api.estacionamento.util;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -35,13 +36,16 @@ public final class TarifaCalculator {
      * binário de "new BigDecimal(double)".
      */
     public static BigDecimal calcularValorBase(double precoDiaria, long horas) {
-        return BigDecimal.valueOf(precoDiaria).multiply(BigDecimal.valueOf(horas));
+        return BigDecimal.valueOf(precoDiaria)
+            .multiply(BigDecimal.valueOf(horas))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
      * Valor do desconto (em reais) dado um percentual (ex: 0.15 = 15%).
      */
     public static BigDecimal calcularDesconto(BigDecimal valorBase, double percentualDesconto) {
-        return valorBase.multiply(BigDecimal.valueOf(percentualDesconto));
+        return valorBase.multiply(BigDecimal.valueOf(percentualDesconto))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 }

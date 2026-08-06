@@ -71,7 +71,7 @@ class EntradaServiceTest {
     @Test
     @DisplayName("Deve registrar entrada com sucesso")
     void testRegistrarEntrada() {
-        when(veiculoRepository.findById(1L)).thenReturn(Optional.of(veiculo));
+        when(veiculoRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(veiculo));
         when(entradaRepository.findByVeiculoIdAndAtivoTrue(1L))
             .thenReturn(Optional.empty());
         when(vagaService.encontrarVagaDisponivel(TipoVaga.COMUM))
@@ -100,7 +100,7 @@ class EntradaServiceTest {
             .ativo(true)
             .build();
         
-        when(veiculoRepository.findById(1L)).thenReturn(Optional.of(veiculo));
+        when(veiculoRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(veiculo));
         when(entradaRepository.findByVeiculoIdAndAtivoTrue(1L))
             .thenReturn(Optional.of(entradaExistente));
         
@@ -119,7 +119,7 @@ class EntradaServiceTest {
             .ativo(true)
             .build();
 
-        when(entradaRepository.findById(1L)).thenReturn(Optional.of(entradaAtiva));
+        when(entradaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(entradaAtiva));
 
         entradaService.cancelarEntrada(1L);
 
@@ -137,7 +137,7 @@ class EntradaServiceTest {
             .ativo(false)
             .build();
 
-        when(entradaRepository.findById(1L)).thenReturn(Optional.of(entradaFinalizada));
+        when(entradaRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(entradaFinalizada));
 
         assertThrows(IllegalArgumentException.class, () -> {
             entradaService.cancelarEntrada(1L);

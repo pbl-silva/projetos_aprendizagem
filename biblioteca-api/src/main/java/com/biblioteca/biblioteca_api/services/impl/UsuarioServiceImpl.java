@@ -8,6 +8,7 @@ import com.biblioteca.biblioteca_api.entities.Usuario;
 import com.biblioteca.biblioteca_api.enums.StatusEmprestimo;
 import com.biblioteca.biblioteca_api.exceptions.BusinessException;
 import com.biblioteca.biblioteca_api.exceptions.ResourceNotFoundException;
+import com.biblioteca.biblioteca_api.mappers.UsuarioMapper;
 import com.biblioteca.biblioteca_api.repositories.EmprestimoRepository;
 import com.biblioteca.biblioteca_api.repositories.UsuarioRepository;
 import com.biblioteca.biblioteca_api.services.GerenciadorUsuario;
@@ -18,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,17 +40,11 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
             throw new BusinessException("CPF já cadastrado.");
         }
 
-        Usuario usuario = Usuario.builder()
-                .nome(dto.getNome())
-                .email(dto.getEmail())
-                .cpf(dto.getCpf())
-                .tipoUsuario(dto.getTipoUsuario())
-                .dataCadastro(LocalDate.now())
-                .build();
+        Usuario usuario = UsuarioMapper.toEntity(dto);
 
         usuario = usuarioRepository.save(usuario);
         enviarEmailBoasVindas(usuario);
-        return toResponse(usuario);
+        return UsuarioMapper.toResponseDTO(usuario);
     }
 
     @Override
@@ -71,7 +64,7 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
         usuario.setCpf(dto.getCpf());
         usuario.setTipoUsuario(dto.getTipoUsuario());
         usuario = usuarioRepository.save(usuario);
-        return toResponse(usuario);
+        return UsuarioMapper.toResponseDTO(usuario);
     }
 
     @Override
@@ -92,7 +85,7 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscarPorId(Long id) {
         Usuario usuario = buscarUsuarioPorId(id);
-        return toResponse(usuario);
+        return UsuarioMapper.toResponseDTO(usuario);
     }
 
     @Override
@@ -100,15 +93,13 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
     public UsuarioResponseDTO buscarPorEmail(String email) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com email: " + email));
-        return toResponse(usuario);
+        return UsuarioMapper.toResponseDTO(usuario);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> listarTodos() {
-        return usuarioRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return UsuarioMapper.toResponseDTOList(usuarioRepository.findAll());
     }
 
     // ==================== NOTIFICADOR USUARIO ====================
@@ -245,14 +236,4 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
         System.out.println("===========================\n");
     }
 
-    private UsuarioResponseDTO toResponse(Usuario usuario) {
-        return new UsuarioResponseDTO(
-                usuario.getId(),
-                usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getCpf(),
-                usuario.getTipoUsuario(),
-                usuario.getDataCadastro()
-        );
-    }
 }

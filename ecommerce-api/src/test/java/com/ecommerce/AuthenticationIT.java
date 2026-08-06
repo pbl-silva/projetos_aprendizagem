@@ -118,6 +118,26 @@ class AuthenticationIT {
     }
 
     @Test
+    @DisplayName("Registro publico deve ignorar tentativa de criar administrador")
+    void testRegistroPublicoNaoCriaAdministrador() {
+        String email = "it-papel-" + UUID.randomUUID() + "@teste.com";
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of(
+                "email", email,
+                "senha", "senha123",
+                "nome", "Usuario comum",
+                "papel", Usuario.Papel.ADMIN.name()
+            ))
+        .when()
+            .post("/auth/registrar")
+        .then()
+            .statusCode(201)
+            .body("papel", equalTo(Usuario.Papel.USER.name()));
+    }
+
+    @Test
     @DisplayName("Swagger UI e API docs devem ser acessíveis sem autenticação")
     void testSwaggerAcessivelSemAuth() {
         given()

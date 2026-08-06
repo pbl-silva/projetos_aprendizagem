@@ -12,9 +12,11 @@ import java.math.BigDecimal;
 
 @Repository
 public interface SaidaRepository extends JpaRepository<Saida, Long> {
+    boolean existsByEntradaId(Long entradaId);
+
     Page<Saida> findByDataHoraSaidaBetween(LocalDateTime inicio, LocalDateTime fim, Pageable pageable);
     
-    @Query("SELECT SUM(s.valorPago) FROM Saida s WHERE s.dataCriacao BETWEEN :inicio AND :fim")
+    @Query("SELECT SUM(s.valorPago) FROM Saida s WHERE s.dataHoraSaida BETWEEN :inicio AND :fim")
     BigDecimal calcularFaturamento(@Param("inicio") LocalDateTime inicio, 
                                     @Param("fim") LocalDateTime fim);
 }

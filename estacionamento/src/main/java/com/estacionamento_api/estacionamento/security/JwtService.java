@@ -7,9 +7,11 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Date;
 
 /**
@@ -27,8 +29,22 @@ public class JwtService {
     @Value("${jwt.expiracao-ms}")
     private long expiracaoMs;
 
+    private SecretKey signingKey;
+
+    @PostConstruct
+    void inicializarChave() {
+        if (secret == null || secret.isBlank()) {
+            byte[] chaveAleatoria = new byte[32];
+            new SecureRandom().nextBytes(chaveAleatoria);
+            signingKey = Keys.hmacShaKeyFor(chaveAleatoria);
+            log.warn("JWT_SECRET não informado; foi criada uma chave temporária para esta execução");
+            return;
+        }
+        signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return signingKey;
     }
 
     public String gerarToken(String username) {

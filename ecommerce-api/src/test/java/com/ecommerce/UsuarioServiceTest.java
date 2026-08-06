@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -67,6 +68,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("Deve registrar novo usuário")
     void testRegistrar() {
+        usuarioDTO.setPapel(Usuario.Papel.ADMIN);
         when(usuarioRepository.existsByEmail("usuario@teste.com")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("senha-criptografada");
         when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
@@ -75,7 +77,9 @@ class UsuarioServiceTest {
 
         assertNotNull(resultado);
         assertEquals("usuario@teste.com", resultado.getEmail());
-        verify(usuarioRepository, times(1)).save(any(Usuario.class));
+        ArgumentCaptor<Usuario> usuarioCaptor = ArgumentCaptor.forClass(Usuario.class);
+        verify(usuarioRepository).save(usuarioCaptor.capture());
+        assertEquals(Usuario.Papel.USER, usuarioCaptor.getValue().getPapel());
     }
 
     @Test
@@ -129,6 +133,18 @@ class UsuarioServiceTest {
         when(passwordEncoder.matches("senhaErrada", "senha-criptografada")).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class, () -> usuarioService.login(request));
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar login de usuario inativo")
+    void testLoginUsuarioInativo() {
+        LoginRequest request = new LoginRequest("usuario@teste.com", "senha123");
+        usuario.setAtivo(false);
+        when(usuarioRepository.findByEmail("usuario@teste.com")).thenReturn(Optional.of(usuario));
+
+        assertThrows(IllegalArgumentException.class, () -> usuarioService.login(request));
+        verify(passwordEncoder, never()).matches(anyString(), anyString());
+        verifyNoInteractions(jwtProvider);
     }
 
     @Test

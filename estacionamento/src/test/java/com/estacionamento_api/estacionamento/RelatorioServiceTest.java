@@ -146,6 +146,7 @@ class RelatorioServiceTest {
         when(saidaRepository.calcularFaturamento(inicio, fim))
             .thenReturn(new BigDecimal("40.00"));
         when(vagaRepository.countVagasDisponiveis()).thenReturn(48L);
+        when(vagaRepository.count()).thenReturn(50L);
         when(entradaRepository.countVeiculosEstacionados()).thenReturn(2L);
 
         byte[] pdf = relatorioService.gerarRelatorioPdf(inicio, fim);
@@ -154,5 +155,29 @@ class RelatorioServiceTest {
         assertTrue(pdf.length > 0);
         String assinatura = new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII);
         assertEquals("%PDF-", assinatura);
+    }
+
+    @Test
+    @DisplayName("Deve calcular ocupação usando a quantidade real de vagas")
+    void testOcupacaoUsaTotalRealDeVagas() {
+        when(vagaRepository.count()).thenReturn(10L);
+        when(vagaRepository.countVagasDisponiveis()).thenReturn(7L);
+        when(entradaRepository.countVeiculosEstacionados()).thenReturn(3L);
+
+        var resultado = relatorioService.obterTaxaOcupacao();
+
+        assertEquals(10L, resultado.get("vagasTotal"));
+        assertEquals(3L, resultado.get("vagasOcupadas"));
+        assertEquals("30.00%", resultado.get("percentualOcupacao"));
+    }
+
+    @Test
+    @DisplayName("Não deve aceitar período com datas invertidas")
+    void testPeriodoInvertido() {
+        LocalDateTime inicio = LocalDateTime.of(2026, 8, 2, 0, 0);
+        LocalDateTime fim = LocalDateTime.of(2026, 8, 1, 0, 0);
+
+        assertThrows(RuntimeException.class,
+            () -> relatorioService.obterFaturamento(inicio, fim));
     }
 }

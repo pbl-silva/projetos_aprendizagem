@@ -3,7 +3,9 @@ package com.estacionamento_api.estacionamento.service;
 import com.estacionamento_api.estacionamento.dto.VagaDTO;
 import com.estacionamento_api.estacionamento.enums.TipoVaga;
 import com.estacionamento_api.estacionamento.exception.VagaNaoDisponvelException;
+import com.estacionamento_api.estacionamento.exception.RecursoNaoEncontradoException;
 import com.estacionamento_api.estacionamento.model.Vaga;
+import com.estacionamento_api.estacionamento.repository.EntradaRepository;
 import com.estacionamento_api.estacionamento.repository.VagaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,13 +21,9 @@ import java.util.stream.Collectors;
 public class VagaService {
     
     private final VagaRepository vagaRepository;
+    private final EntradaRepository entradaRepository;
     
     public void inicializarVagas() {
-        if (vagaRepository.count() > 0) {
-            log.info("Vagas já inicializadas ({} no total), pulando seed.", vagaRepository.count());
-            return;
-        }
-
         log.info("Inicializando vagas do estacionamento...");
         
         // Vagas Comuns
@@ -52,6 +50,9 @@ public class VagaService {
     }
     
     private void criarVaga(String numero, TipoVaga tipo) {
+        if (vagaRepository.existsByNumero(numero)) {
+            return;
+        }
         Vaga vaga = Vaga.builder()
             .numero(numero)
             .tipoVaga(tipo)
@@ -63,7 +64,7 @@ public class VagaService {
     @Transactional(readOnly = true)
     public VagaDTO obterPorId(Long id) {
         Vaga vaga = vagaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada"));
         return converterParaDTO(vaga);
     }
 
@@ -75,8 +76,19 @@ public class VagaService {
     public VagaDTO atualizar(Long id, VagaDTO dto) {
         log.debug("Atualizando vaga id={} (uso administrativo)", id);
 
-        Vaga vaga = vagaRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+        Vaga vaga = vagaRepository.findByIdForUpdate(id)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada"));
+
+        boolean ocupada = entradaRepository.existsByVagaIdAndAtivoTrue(id);
+        if (ocupada && dto.getTipoVaga() != null && dto.getTipoVaga() != vaga.getTipoVaga()) {
+            throw new IllegalArgumentException("Não é possível reclassificar uma vaga ocupada");
+        }
+        if (ocupada && Boolean.TRUE.equals(dto.getDisponivel())) {
+            throw new IllegalArgumentException("Não é possível liberar manualmente uma vaga ocupada");
+        }
+        if (dto.getNumero() != null && !dto.getNumero().equals(vaga.getNumero())) {
+            throw new IllegalArgumentException("O número da vaga não pode ser alterado");
+        }
 
         if (dto.getTipoVaga() != null) {
             vaga.setTipoVaga(dto.getTipoVaga());
@@ -115,25 +127,23 @@ public class VagaService {
     }
     
     public Vaga encontrarVagaDisponivel(TipoVaga tipo) {
-        return vagaRepository.findByTipoVagaAndDisponivel(tipo, true)
-            .stream()
-            .findFirst()
+        return vagaRepository.findFirstByTipoVagaAndDisponivelTrueOrderByIdAsc(tipo)
             .orElseThrow(() -> new VagaNaoDisponvelException(
                 "Nenhuma vaga disponível do tipo: " + tipo.getDescricao()
             ));
     }
     
     public void ocuparVaga(Long vagaId) {
-        Vaga vaga = vagaRepository.findById(vagaId)
-            .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+        Vaga vaga = vagaRepository.findByIdForUpdate(vagaId)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada"));
         vaga.setDisponivel(false);
         vagaRepository.save(vaga);
         log.debug("Vaga ocupada: id={}, numero={}", vaga.getId(), vaga.getNumero());
     }
     
     public void liberarVaga(Long vagaId) {
-        Vaga vaga = vagaRepository.findById(vagaId)
-            .orElseThrow(() -> new RuntimeException("Vaga não encontrada"));
+        Vaga vaga = vagaRepository.findByIdForUpdate(vagaId)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Vaga não encontrada"));
         vaga.setDisponivel(true);
         vagaRepository.save(vaga);
         log.debug("Vaga liberada: id={}, numero={}", vaga.getId(), vaga.getNumero());
@@ -146,7 +156,10 @@ public class VagaService {
     
     @Transactional(readOnly = true)
     public double obterTaxaOcupacao() {
-        long total = 50;
+        long total = vagaRepository.count();
+        if (total == 0) {
+            return 0.0;
+        }
         long disponiveis = obterVagasDisponiveis();
         return ((total - disponiveis) * 100.0) / total;
     }

@@ -2,6 +2,7 @@ package com.estacionamento_api.estacionamento.service;
 
 import com.estacionamento_api.estacionamento.dto.ReciboDTO;
 import com.estacionamento_api.estacionamento.dto.SaidaDTO;
+import com.estacionamento_api.estacionamento.exception.RecursoNaoEncontradoException;
 import com.estacionamento_api.estacionamento.model.Entrada;
 import com.estacionamento_api.estacionamento.model.Saida;
 import com.estacionamento_api.estacionamento.repository.EntradaRepository;
@@ -28,8 +29,14 @@ public class SaidaService {
     public ReciboDTO registrarSaida(SaidaDTO dto) {
         log.debug("Registrando saída para entradaId={}", dto.getEntradaId());
 
-        Entrada entrada = entradaRepository.findById(dto.getEntradaId())
-            .orElseThrow(() -> new RuntimeException("Entrada não encontrada"));
+        Entrada entrada = entradaRepository.findByIdForUpdate(dto.getEntradaId())
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Entrada não encontrada"));
+
+        if (!Boolean.TRUE.equals(entrada.getAtivo())
+                || saidaRepository.existsByEntradaId(entrada.getId())) {
+            log.warn("Tentativa de registrar saída duplicada para entradaId={}", entrada.getId());
+            throw new IllegalArgumentException("A saída desta entrada já foi registrada");
+        }
         
         BigDecimal valorBase = tarifaService.calcularValorBase(
             entrada.getVeiculo().getTipoVeiculo(),
@@ -43,6 +50,7 @@ public class SaidaService {
             dto.getEntradaId(), valorBase, desconto, valorFinal);
         
         Saida saida = Saida.builder()
+            .numeroRecibo(ReciboGenerator.gerarNumeroRecibo())
             .entrada(entrada)
             .tipoPagamento(dto.getTipoPagamento())
             .modalidade(dto.getModalidade())
@@ -77,7 +85,7 @@ public class SaidaService {
     public ReciboDTO obterRecibo(Long saidaId) {
         log.debug("Consultando recibo da saída id={}", saidaId);
         Saida saida = saidaRepository.findById(saidaId)
-            .orElseThrow(() -> new RuntimeException("Saída não encontrada"));
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Saída não encontrada"));
         return gerarRecibo(saida);
     }
 }

@@ -12,7 +12,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -24,6 +24,3 @@ spring:
 
 server:
   port: 8080
-
-# Habilitar o modo debug
-debug: true

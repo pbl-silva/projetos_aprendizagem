@@ -69,4 +69,23 @@ public class ProdutoServiceTest {
         Integer novoEstoque = produtoService.aumentarEstoque(produto.getId(), 5);
         assertEquals(15, novoEstoque);
     }
+
+    @Test
+    public void testAumentarEstoqueRejeitaQuantidadeInvalida() {
+        assertThrows(IllegalArgumentException.class,
+            () -> produtoService.aumentarEstoque(produto.getId(), 0));
+        assertThrows(IllegalArgumentException.class,
+            () -> produtoService.aumentarEstoque(produto.getId(), -1));
+        assertThrows(IllegalArgumentException.class,
+            () -> produtoService.aumentarEstoque(produto.getId(), null));
+    }
+
+    @Test
+    public void testAumentarEstoqueRejeitaOverflow() {
+        produto.setEstoque(Integer.MAX_VALUE);
+        produtoRepository.saveAndFlush(produto);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> produtoService.aumentarEstoque(produto.getId(), 1));
+    }
 }

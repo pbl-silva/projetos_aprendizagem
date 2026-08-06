@@ -1,6 +1,7 @@
 package com.ecommerce;
 
 import com.ecommerce.api.dto.PedidoDTO;
+import com.ecommerce.api.dto.ItemPedidoDTO;
 import com.ecommerce.api.enums.StatusPedido;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.service.PedidoService;
@@ -49,6 +50,7 @@ class PedidoControllerTest {
             .clienteId(10L)
             .total(150.0)
             .status(StatusPedido.PENDENTE)
+            .itens(List.of(ItemPedidoDTO.builder().produtoId(5L).quantidade(1).build()))
             .build();
     }
 
@@ -130,7 +132,22 @@ class PedidoControllerTest {
     @DisplayName("Deve rejeitar criação de pedido sem cliente")
     @WithMockUser
     void testCriarSemCliente() throws Exception {
-        PedidoDTO invalido = PedidoDTO.builder().total(50.0).build();
+        PedidoDTO invalido = PedidoDTO.builder()
+            .itens(List.of(ItemPedidoDTO.builder().produtoId(5L).quantidade(1).build()))
+            .build();
+
+        mockMvc.perform(post("/pedidos")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalido)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve rejeitar criação de pedido sem produtos")
+    @WithMockUser
+    void testCriarSemProdutos() throws Exception {
+        PedidoDTO invalido = PedidoDTO.builder().clienteId(10L).itens(List.of()).build();
 
         mockMvc.perform(post("/pedidos")
                 .with(csrf())

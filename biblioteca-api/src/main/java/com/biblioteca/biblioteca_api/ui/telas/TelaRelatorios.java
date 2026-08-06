@@ -2,8 +2,9 @@ package com.biblioteca.biblioteca_api.ui.telas;
 
 import com.biblioteca.biblioteca_api.ui.client.ApiClient;
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 public class TelaRelatorios extends JFrame {
@@ -139,7 +140,7 @@ public class TelaRelatorios extends JFrame {
     }
 
     private void gerarRelatorioEmprestimosAtivos(StringBuilder sb) throws Exception {
-        List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimos();
+        List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimosAtivos();
 
         sb.append("=== RELATÓRIO: EMPRÉSTIMOS ATIVOS ===\n\n");
         sb.append(String.format("%-5s %-30s %-30s %-15s %-15s\n",
@@ -148,22 +149,20 @@ public class TelaRelatorios extends JFrame {
 
         int contador = 0;
         for (ApiClient.Emprestimo emp : emprestimos) {
-            if ("ATIVO".equals(emp.status) || emp.dataDevolucao == null) {
-                sb.append(String.format("%-5d %-30s %-30s %-15s %-15s\n",
-                        emp.id,
-                        truncar(emp.usuarioNome, 30),
-                        truncar(emp.livroTitulo, 30),
-                        emp.dataEmprestimo,
-                        emp.dataPrevistaDevolucao));
-                contador++;
-            }
+            sb.append(String.format("%-5d %-30s %-30s %-15s %-15s\n",
+                    emp.id,
+                    truncar(nomeUsuario(emp), 30),
+                    truncar(tituloLivro(emp), 30),
+                    emp.dataEmprestimo,
+                    emp.dataDevolucaoPrevista));
+            contador++;
         }
 
         sb.append("\nTotal de empréstimos ativos: ").append(contador).append("\n");
     }
 
     private void gerarRelatorioEmprestimosAtrasados(StringBuilder sb) throws Exception {
-        List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimos();
+        List<ApiClient.Emprestimo> emprestimos = apiClient.listarEmprestimosAtrasados();
 
         sb.append("=== RELATÓRIO: EMPRÉSTIMOS ATRASADOS ===\n\n");
         sb.append(String.format("%-5s %-30s %-30s %-15s %-10s\n",
@@ -172,15 +171,13 @@ public class TelaRelatorios extends JFrame {
 
         int contador = 0;
         for (ApiClient.Emprestimo emp : emprestimos) {
-            if ("ATRASADO".equals(emp.status)) {
-                sb.append(String.format("%-5d %-30s %-30s %-15s %-10s\n",
-                        emp.id,
-                        truncar(emp.usuarioNome, 30),
-                        truncar(emp.livroTitulo, 30),
-                        emp.dataPrevistaDevolucao,
-                        "N/A"));
-                contador++;
-            }
+            sb.append(String.format("%-5d %-30s %-30s %-15s %-10d\n",
+                    emp.id,
+                    truncar(nomeUsuario(emp), 30),
+                    truncar(tituloLivro(emp), 30),
+                    emp.dataDevolucaoPrevista,
+                    calcularDiasAtraso(emp.dataDevolucaoPrevista)));
+            contador++;
         }
 
         sb.append("\nTotal de empréstimos atrasados: ").append(contador).append("\n");
@@ -195,11 +192,11 @@ public class TelaRelatorios extends JFrame {
         sb.append("-".repeat(95)).append("\n");
 
         for (ApiClient.Emprestimo emp : emprestimos) {
-            String dataDev = emp.dataDevolucao != null ? emp.dataDevolucao : "Pendente";
+            String dataDev = emp.dataDevolucaoReal != null ? emp.dataDevolucaoReal : "Pendente";
             sb.append(String.format("%-5d %-25s %-25s %-12s %-12s %-10s\n",
                     emp.id,
-                    truncar(emp.usuarioNome, 25),
-                    truncar(emp.livroTitulo, 25),
+                    truncar(nomeUsuario(emp), 25),
+                    truncar(tituloLivro(emp), 25),
                     emp.dataEmprestimo,
                     dataDev,
                     emp.status));
@@ -213,7 +210,7 @@ public class TelaRelatorios extends JFrame {
 
         sb.append("=== RELATÓRIO: USUÁRIOS CADASTRADOS ===\n\n");
         sb.append(String.format("%-5s %-30s %-30s %-15s %-15s\n",
-                "ID", "Nome", "Email", "Telefone", "Tipo"));
+                "ID", "Nome", "Email", "CPF", "Tipo"));
         sb.append("-".repeat(100)).append("\n");
 
         for (ApiClient.Usuario usuario : usuarios) {
@@ -221,7 +218,7 @@ public class TelaRelatorios extends JFrame {
                     usuario.id,
                     truncar(usuario.nome, 30),
                     truncar(usuario.email, 30),
-                    usuario.telefone,
+                    usuario.cpf,
                     usuario.tipoUsuario));
         }
 
@@ -231,5 +228,18 @@ public class TelaRelatorios extends JFrame {
     private String truncar(String texto, int tamanho) {
         if (texto == null) return "";
         return texto.length() > tamanho ? texto.substring(0, tamanho - 3) + "..." : texto;
+    }
+
+    private String nomeUsuario(ApiClient.Emprestimo emprestimo) {
+        return emprestimo.usuario != null ? emprestimo.usuario.nome : "";
+    }
+
+    private String tituloLivro(ApiClient.Emprestimo emprestimo) {
+        return emprestimo.livro != null ? emprestimo.livro.titulo : "";
+    }
+
+    private long calcularDiasAtraso(String dataDevolucaoPrevista) {
+        if (dataDevolucaoPrevista == null) return 0L;
+        return Math.max(0L, ChronoUnit.DAYS.between(LocalDate.parse(dataDevolucaoPrevista), LocalDate.now()));
     }
 }

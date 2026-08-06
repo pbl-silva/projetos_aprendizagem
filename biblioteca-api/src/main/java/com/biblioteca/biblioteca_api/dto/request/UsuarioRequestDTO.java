@@ -13,22 +13,22 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Dados para criação de um usuário")
 public class UsuarioRequestDTO {
 
-    @Schema(description = "Nome do usuário", example = "João da Silva", required = true)
+    @Schema(description = "Nome do usuário", example = "João da Silva", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     @Size(min = 3, max = 100)
     private String nome;
 
-    @Schema(description = "E-mail do usuário", example = "joao.silva@email.com", required = true)
+    @Schema(description = "E-mail do usuário", example = "joao.silva@email.com", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     @Email
     private String email;
 
-    @Schema(description = "CPF do usuário", example = "12345678901", required = true)
+    @Schema(description = "CPF do usuário", example = "12345678901", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     @Pattern(regexp = "\\d{11}")
     private String cpf;
 
-    @Schema(description = "Tipo de usuário", example = "COMUM", required = true)
+    @Schema(description = "Tipo de usuário", example = "COMUM", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private TipoUsuario tipoUsuario;
 }

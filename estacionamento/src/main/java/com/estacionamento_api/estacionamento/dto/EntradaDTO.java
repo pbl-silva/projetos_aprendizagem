@@ -2,6 +2,7 @@ package com.estacionamento_api.estacionamento.dto;
 
 import lombok.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,6 +14,7 @@ public class EntradaDTO {
     private LocalDateTime dataHoraEntrada;
 
     @NotNull(message = "O ID do veículo é obrigatório")
+    @Positive(message = "O ID do veículo deve ser positivo")
     private Long veiculoId;
 
     private String placaVeiculo;
