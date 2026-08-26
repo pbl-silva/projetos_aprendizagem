@@ -1,0 +1,11 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+    activate:
+      on-profile: default
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:${MYSQL_HOST_PORT:3306}/${MYSQL_DATABASE:spbank}?useSSL=false&allowPublicKeyRetrieval=true&connectionTimeZone=UTC}
+    username: ${DB_USER:${MYSQL_USER:spbank}}
+    password: ${DB_PASSWORD:${MYSQL_PASSWORD:}}
+  flyway:
+    locations: classpath:db/migration,classpath:db/devmigration
