@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    http-equiv="Cache-Control"
+    content="no-cache, no-store, must-revalidate"
+  >
+
+  <meta
+    http-equiv="Pragma"
+    content="no-cache"
+  >
+
+  <meta
+    http-equiv="Expires"
+    content="0"
+  >
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>SPBank</title>
+
+
+  <!-- =========================================
+       FAVICON
+       Padrão para tema claro
+       Versão clara/vermelha para tema escuro
+  ========================================== -->
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="img/favicon-spbank.png"
+  >
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="img/favicon-spbank-dark.png"
+    media="(prefers-color-scheme: dark)"
+  >
+
+
+  <!-- =========================================
+       ESTILOS
+  ========================================== -->
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=20260827-2"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+  >
+
+
+  <!-- =========================================
+       GRÁFICOS
+  ========================================== -->
+
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+</head>
+
+
+<body>
+
+
+  <!-- =========================================
+       LOGIN
+  ========================================== -->
+
+  <section
+    id="loginScreen"
+    class="login-screen"
+  >
+
+    <div class="login-card">
+
+
+      <!--
+        O login possui fundo escuro.
+        Portanto usamos a versão do logo
+        preparada para fundo escuro.
+      -->
+
+      <div class="login-brand">
+
+        <img
+          src="img/logo-spbank-dark.png"
+          alt="SPBank"
+        >
+
+      </div>
+
+
+      <h1>
+        Entre na sua conta
+      </h1>
+
+
+      <p>
+        Use seu acesso para consultar saldo,
+        extrato e transferências.
+      </p>
+
+
+      <form id="loginForm">
+
+
+        <label for="loginUsername">
+          Usuário
+        </label>
+
+
+        <input
+          id="loginUsername"
+          name="username"
+          autocomplete="username"
+          required
+        >
+
+
+        <label for="loginPassword">
+          Senha
+        </label>
+
+
+        <input
+          id="loginPassword"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+
+
+        <div
+          id="loginError"
+          class="error-message"
+          role="alert"
+        ></div>
+
+
+        <button
+          class="btn login-button"
+          type="submit"
+        >
+          Entrar
+        </button>
+
+
+      </form>
+
+
+      <small class="login-help">
+
+        Ambiente local:
+        usuários
+
+        <strong>
+          joao
+        </strong>
+
+        e
+
+        <strong>
+          maria
+        </strong>
+
+        · senha de estudo
+
+        <strong>
+          SPBank@123
+        </strong>.
+
+      </small>
+
+
+    </div>
+
+  </section>
+
+
+  <!-- =========================================
+       APLICAÇÃO
+  ========================================== -->
+
+  <div
+    id="appShell"
+    class="container hidden"
+  >
+
+
+    <!-- =======================================
+         SIDEBAR
+    ======================================== -->
+
+    <aside class="sidebar">
+
+
+      <!--
+        A sidebar possui fundo escuro.
+        Portanto também utiliza
+        logo-spbank-dark.png.
+      -->
+
+      <div class="logo">
+
+        <img
+          src="img/logo-spbank-dark.png"
+          alt="SPBank"
+        >
+
+      </div>
+
+
+      <!-- Dashboard -->
+
+      <button
+        type="button"
+        onclick="loadPage('dashboard')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          team_dashboard
+        </span>
+
+        Dashboard
+
+      </button>
+
+
+      <!-- Pix -->
+
+      <button
+        type="button"
+        onclick="loadPage('pix')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          id="pix"
+          aria-hidden="true"
+        >
+          window
+        </span>
+
+        Pix
+
+      </button>
+
+
+      <!-- Transferência -->
+
+      <button
+        type="button"
+        onclick="loadPage('transfer')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          sync_alt
+        </span>
+
+        Transferência
+
+      </button>
+
+
+      <!-- Investimentos -->
+
+      <button
+        type="button"
+        onclick="loadPage('invest')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          monitoring
+        </span>
+
+        Investimentos
+
+      </button>
+
+
+      <!-- Cartão -->
+
+      <button
+        type="button"
+        onclick="loadPage('cartao')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          credit_card
+        </span>
+
+        Cartão
+
+      </button>
+
+
+      <!-- Extrato -->
+
+      <button
+        type="button"
+        onclick="loadPage('extrato')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          receipt
+        </span>
+
+        Extrato
+
+      </button>
+
+
+    </aside>
+
+
+    <!-- =======================================
+         CONTEÚDO PRINCIPAL
+    ======================================== -->
+
+    <main>
+
+
+      <!-- =====================================
+           CABEÇALHO
+      ====================================== -->
+
+      <header>
+
+
+        <div class="user-session">
+
+
+          <span
+            class="material-symbols-outlined"
+            aria-hidden="true"
+          >
+            account_circle
+          </span>
+
+
+          <span
+            id="currentUserName"
+            class="user"
+          >
+            Usuário
+          </span>
+
+
+          <button
+            id="logoutButton"
+            class="logout-button"
+            type="button"
+          >
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              logout
+            </span>
+
+            Sair
+
+          </button>
+
+
+        </div>
+
+
+      </header>
+
+
+      <!-- =====================================
+           CONTEÚDO DINÂMICO
+      ====================================== -->
+
+      <section id="content"></section>
+
+
+    </main>
+
+
+  </div>
+
+
+  <!-- =========================================
+       JAVASCRIPT
+  ========================================== -->
+
+  <script src="app.js?v=20260827-2"></script>
+
+
+</body>
+
+</html>
