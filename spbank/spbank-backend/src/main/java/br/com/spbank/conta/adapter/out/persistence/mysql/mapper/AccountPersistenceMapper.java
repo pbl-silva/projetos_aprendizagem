@@ -8,10 +8,12 @@ public final class AccountPersistenceMapper {
     private AccountPersistenceMapper() {
     }
 
-    public static Account toDomain(AccountData data) {
-
+    public static Account toDomain(
+            AccountData data
+    ) {
         return new Account(
                 data.getId(),
+                data.getCustomerId(),
                 data.getHolderName(),
                 data.getHolderDocument(),
                 data.getBankCode(),
@@ -24,10 +26,12 @@ public final class AccountPersistenceMapper {
         );
     }
 
-    public static AccountData toData(Account account) {
-
+    public static AccountData toData(
+            Account account
+    ) {
         return new AccountData(
                 account.getId(),
+                account.getCustomerId(),
                 account.getHolderName(),
                 account.getHolderDocument(),
                 account.getBankCode(),

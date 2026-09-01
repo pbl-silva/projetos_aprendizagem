@@ -10,6 +10,7 @@ import java.util.UUID;
 public final class Account {
 
     private final UUID id;
+    private final UUID customerId;
     private final String holderName;
     private final String holderDocument;
     private final String bankCode;
@@ -17,11 +18,14 @@ public final class Account {
     private final String accountNumber;
     private final AccountType accountType;
     private final AccountPlan accountPlan;
+
     private BigDecimal balance;
+
     private final boolean active;
 
     public Account(
             UUID id,
+            UUID customerId,
             String holderName,
             String holderDocument,
             String bankCode,
@@ -30,9 +34,10 @@ public final class Account {
             AccountType accountType,
             AccountPlan accountPlan,
             BigDecimal balance,
-            boolean active) {
-
+            boolean active
+    ) {
         this.id = id;
+        this.customerId = customerId;
         this.holderName = holderName;
         this.holderDocument = holderDocument;
         this.bankCode = bankCode;
@@ -44,7 +49,9 @@ public final class Account {
         this.active = active;
     }
 
-    public void requireAvailable(BigDecimal total) {
+    public void requireAvailable(
+            BigDecimal total
+    ) {
         requirePositive(total);
 
         if (balance.compareTo(total) < 0) {
@@ -52,18 +59,33 @@ public final class Account {
         }
     }
 
-    public void debit(BigDecimal amount) {
+    public void debit(
+            BigDecimal amount
+    ) {
         requireAvailable(amount);
-        balance = balance.subtract(money(amount));
+
+        balance = balance.subtract(
+                money(amount)
+        );
     }
 
-    public void credit(BigDecimal amount) {
+    public void credit(
+            BigDecimal amount
+    ) {
         requirePositive(amount);
-        balance = balance.add(money(amount));
+
+        balance = balance.add(
+                money(amount)
+        );
     }
 
-    private static void requirePositive(BigDecimal value) {
-        if (value == null || value.signum() <= 0 || value.scale() > 2) {
+    private static void requirePositive(
+            BigDecimal value
+    ) {
+        if (value == null
+                || value.signum() <= 0
+                || value.scale() > 2) {
+
             throw new BusinessException(
                     "INVALID_AMOUNT",
                     "account.invalid-amount"
@@ -71,12 +93,21 @@ public final class Account {
         }
     }
 
-    private static BigDecimal money(BigDecimal value) {
-        return value.setScale(2, RoundingMode.UNNECESSARY);
+    private static BigDecimal money(
+            BigDecimal value
+    ) {
+        return value.setScale(
+                2,
+                RoundingMode.UNNECESSARY
+        );
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public UUID getCustomerId() {
+        return customerId;
     }
 
     public String getHolderName() {

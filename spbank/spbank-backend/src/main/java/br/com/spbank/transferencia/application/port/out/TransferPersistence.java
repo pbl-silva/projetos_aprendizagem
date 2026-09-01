@@ -1,8 +1,8 @@
 package br.com.spbank.transferencia.application.port.out;
 
-import br.com.spbank.transferencia.application.model.transfer.Transfer;
-import br.com.spbank.transferencia.application.model.transfer.TransferStatus;
-import br.com.spbank.transferencia.application.model.transfer.TransferType;
+import br.com.spbank.transferencia.application.model;
+import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.modelType;
 
 import java.time.Instant;
 import java.time.LocalDate;

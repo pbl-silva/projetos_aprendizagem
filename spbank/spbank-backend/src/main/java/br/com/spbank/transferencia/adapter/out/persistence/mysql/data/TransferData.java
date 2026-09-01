@@ -4,8 +4,8 @@ import br.com.spbank.conta.adapter.out.persistence.mysql.converter.AccountTypeCo
 import br.com.spbank.conta.application.model.AccountType;
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.converter.TransferStatusConverter;
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.converter.TransferTypeConverter;
-import br.com.spbank.transferencia.application.model.transfer.TransferStatus;
-import br.com.spbank.transferencia.application.model.transfer.TransferType;
+import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.modelType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;

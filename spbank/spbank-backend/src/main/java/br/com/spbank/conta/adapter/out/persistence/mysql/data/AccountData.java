@@ -26,6 +26,13 @@ public class AccountData {
     @Column(columnDefinition = "CHAR(36)")
     private UUID id;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(
+            name = "cliente_id",
+            columnDefinition = "CHAR(36)"
+    )
+    private UUID customerId;
+
     @Column(name = "nome_titular")
     private String holderName;
 
@@ -60,6 +67,7 @@ public class AccountData {
 
     public AccountData(
             UUID id,
+            UUID customerId,
             String holderName,
             String holderDocument,
             String bankCode,
@@ -71,6 +79,7 @@ public class AccountData {
             boolean active
     ) {
         this.id = id;
+        this.customerId = customerId;
         this.holderName = holderName;
         this.holderDocument = holderDocument;
         this.bankCode = bankCode;
@@ -84,6 +93,10 @@ public class AccountData {
 
     public UUID getId() {
         return id;
+    }
+
+    public UUID getCustomerId() {
+        return customerId;
     }
 
     public String getHolderName() {

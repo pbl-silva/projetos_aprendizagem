@@ -1,8 +1,8 @@
 package br.com.spbank.transferencia.adapter.out.persistence.mysql.repository;
 
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.data.TransferData;
-import br.com.spbank.transferencia.application.model.transfer.TransferStatus;
-import br.com.spbank.transferencia.application.model.transfer.TransferType;
+import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.modelType;
 
 import jakarta.persistence.LockModeType;
 

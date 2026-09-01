@@ -1,8 +1,8 @@
 package br.com.spbank.transferencia.adapter.in.api.rest.dto;
 
 import br.com.spbank.conta.application.model.AccountType;
-import br.com.spbank.transferencia.application.model.transfer.TransferStatus;
-import br.com.spbank.transferencia.application.model.transfer.TransferType;
+import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.modelType;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -3,12 +3,14 @@ package br.com.spbank.conta.adapter.out.persistence.mysql.boundary;
 import br.com.spbank.conta.adapter.out.persistence.mysql.mapper.AccountPersistenceMapper;
 import br.com.spbank.conta.adapter.out.persistence.mysql.repository.AccountJpaRepository;
 import br.com.spbank.conta.application.model.Account;
+import br.com.spbank.conta.application.model.AccountType;
 import br.com.spbank.conta.application.port.in.AccountLookup;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 
 import jakarta.persistence.EntityManager;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -32,43 +34,89 @@ public final class AccountMysqlPersistenceImpl
     }
 
     @Override
-    public Optional<Account> findById(UUID id) {
-
+    public Optional<Account> findById(
+            UUID id
+    ) {
         return repository
                 .findById(id)
-                .map(AccountPersistenceMapper::toDomain);
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                );
     }
 
     @Override
     public Optional<Account> findTarget(
-            AccountLookup key
+            AccountLookup lookup
     ) {
-
         return repository
                 .findByBankCodeAndBranchAndAccountNumberAndAccountType(
-                        key.bankCode(),
-                        key.branch(),
-                        key.accountNumber(),
-                        key.accountType()
+                        lookup.bankCode(),
+                        lookup.branch(),
+                        lookup.accountNumber(),
+                        lookup.accountType()
                 )
-                .map(AccountPersistenceMapper::toDomain);
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                );
+    }
+
+    @Override
+    public List<Account> findByCustomerId(
+            UUID customerId
+    ) {
+        return repository
+                .findByCustomerId(customerId)
+                .stream()
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                )
+                .toList();
+    }
+
+    @Override
+    public boolean existsByCustomerIdAndType(
+            UUID customerId,
+            AccountType type
+    ) {
+        return repository
+                .existsByCustomerIdAndAccountType(
+                        customerId,
+                        type
+                );
+    }
+
+    @Override
+    public boolean existsByBankData(
+            String bankCode,
+            String branch,
+            String accountNumber,
+            AccountType type
+    ) {
+        return repository
+                .existsByBankCodeAndBranchAndAccountNumberAndAccountType(
+                        bankCode,
+                        branch,
+                        accountNumber,
+                        type
+                );
     }
 
     @Override
     public Map<UUID, Account> findAllForUpdate(
             Collection<UUID> ids
     ) {
-
         entityManager.flush();
         entityManager.clear();
 
         return repository
                 .findAllForUpdate(ids)
                 .stream()
-                .map(AccountPersistenceMapper::toDomain)
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                )
                 .collect(
                         Collectors.toMap(
-                                Account::getId,
+                                account -> account.getId(),
                                 account -> account
                         )
                 );
@@ -78,10 +126,12 @@ public final class AccountMysqlPersistenceImpl
     public void saveAll(
             Collection<Account> accounts
     ) {
-
         repository.saveAll(
-                accounts.stream()
-                        .map(AccountPersistenceMapper::toData)
+                accounts
+                        .stream()
+                        .map(account ->
+                                AccountPersistenceMapper.toData(account)
+                        )
                         .toList()
         );
     }

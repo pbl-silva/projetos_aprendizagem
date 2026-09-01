@@ -22,9 +22,25 @@ public interface AccountJpaRepository
             findByBankCodeAndBranchAndAccountNumberAndAccountType(
                     String bankCode,
                     String branch,
-                    String number,
-                    AccountType type
+                    String accountNumber,
+                    AccountType accountType
             );
+
+    List<AccountData> findByCustomerId(
+            UUID customerId
+    );
+
+    boolean existsByCustomerIdAndAccountType(
+            UUID customerId,
+            AccountType accountType
+    );
+
+    boolean existsByBankCodeAndBranchAndAccountNumberAndAccountType(
+            String bankCode,
+            String branch,
+            String accountNumber,
+            AccountType accountType
+    );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

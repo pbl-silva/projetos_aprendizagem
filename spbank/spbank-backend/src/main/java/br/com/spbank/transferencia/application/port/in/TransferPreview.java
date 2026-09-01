@@ -1,6 +1,6 @@
 package br.com.spbank.transferencia.application.port.in;
 
-import br.com.spbank.transferencia.application.model.transfer.TransferType;
+import br.com.spbank.transferencia.application.modelType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

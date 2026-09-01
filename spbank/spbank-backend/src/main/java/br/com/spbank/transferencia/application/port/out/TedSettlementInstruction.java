@@ -1,6 +1,6 @@
 package br.com.spbank.transferencia.application.port.out;
 
-import br.com.spbank.transferencia.application.model.transfer.TransferRecipient;
+import br.com.spbank.transferencia.application.modelRecipient;
 
 import java.math.BigDecimal;
 import java.util.UUID;

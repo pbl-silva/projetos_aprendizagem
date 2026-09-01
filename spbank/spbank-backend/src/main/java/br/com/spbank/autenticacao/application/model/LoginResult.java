@@ -9,4 +9,12 @@ public record LoginResult(
         UUID accountId,
         String holderName
 ) {
+
+    @Override
+    public String toString() {
+        return "LoginResult[accessToken=[REDACTED]"
+                + ", expiresAt=" + expiresAt
+                + ", accountId=" + accountId
+                + ", holderName=" + holderName + "]";
+    }
 }
