@@ -5,9 +5,13 @@ import br.com.spbank.autenticacao.application.model.AccessSession;
 import br.com.spbank.autenticacao.application.model.AuthenticatedSession;
 import br.com.spbank.autenticacao.application.model.Customer;
 import br.com.spbank.autenticacao.application.model.CustomerAccount;
+import br.com.spbank.autenticacao.application.model.CustomerAddress;
 import br.com.spbank.autenticacao.application.model.LoginResult;
 import br.com.spbank.autenticacao.application.model.RegistrationResult;
 import br.com.spbank.autenticacao.application.port.in.AuthenticationUseCase;
+import br.com.spbank.autenticacao.application.port.in.ChangePasswordCommand;
+import br.com.spbank.autenticacao.application.port.in.CustomerProfileUpdateCommand;
+import br.com.spbank.autenticacao.application.port.in.CustomerRegistrationCommand;
 import br.com.spbank.autenticacao.application.port.out.AuthenticationPersistence;
 import br.com.spbank.autenticacao.application.service.PasswordHasher;
 import br.com.spbank.conta.application.model.Account;
@@ -43,6 +47,7 @@ public class AuthenticationService
     private final AccountPersistence accounts;
     private final Clock clock;
     private final Duration sessionDuration;
+
     private final SecureRandom random =
             new SecureRandom();
 
@@ -95,7 +100,10 @@ public class AuthenticationService
                         .findCustomerById(
                                 credential.customerId()
                         )
-                        .filter(Customer::active)
+                        .filter(found ->
+                                found != null
+                                        && found.active()
+                        )
                         .orElseThrow(
                                 UnauthorizedException::new
                         );
@@ -106,12 +114,14 @@ public class AuthenticationService
                                 customer.id()
                         )
                         .stream()
-                        .filter(Account::isActive)
+                        .filter(found ->
+                                found != null
+                                        && found.isActive()
+                        )
                         .sorted(
                                 Comparator.comparing(
-                                        accountFound ->
-                                                accountFound
-                                                        .getAccountType()
+                                        found ->
+                                                found.getAccountType()
                                                         == AccountType.CURRENT
                                                         ? 0
                                                         : 1
@@ -125,34 +135,26 @@ public class AuthenticationService
         byte[] tokenBytes =
                 new byte[32];
 
-        random.nextBytes(
-                tokenBytes
-        );
+        random.nextBytes(tokenBytes);
 
         String token =
                 Base64
                         .getUrlEncoder()
                         .withoutPadding()
-                        .encodeToString(
-                                tokenBytes
-                        );
+                        .encodeToString(tokenBytes);
 
         Instant now =
                 clock.instant();
 
         Instant expiresAt =
-                now.plus(
-                        sessionDuration
-                );
+                now.plus(sessionDuration);
 
         authentication.saveSession(
                 new AccessSession(
                         UUID.randomUUID(),
                         customer.id(),
                         account.getId(),
-                        PasswordHasher.tokenHash(
-                                token
-                        ),
+                        PasswordHasher.tokenHash(token),
                         now,
                         expiresAt,
                         null
@@ -170,17 +172,22 @@ public class AuthenticationService
     @Override
     @Transactional
     public RegistrationResult register(
-            String fullName,
-            String cpf,
-            String username,
-            String password,
-            AccountType accountType
+            CustomerRegistrationCommand command
     ) {
+        Objects.requireNonNull(
+                command,
+                "command"
+        );
+
         String normalizedCpf =
-                normalizeCpf(cpf);
+                normalizeCpf(
+                        command.cpf()
+                );
 
         String normalizedUsername =
-                normalizeUsername(username);
+                normalizeUsername(
+                        command.username()
+                );
 
         if (authentication
                 .findCustomerByCpf(
@@ -208,15 +215,25 @@ public class AuthenticationService
         Customer customer =
                 new Customer(
                         UUID.randomUUID(),
-                        fullName.trim(),
+                        command.fullName().trim(),
                         normalizedCpf,
+                        command.birthDate(),
+                        normalizeMobile(
+                                command.mobile()
+                        ),
+                        normalizeEmail(
+                                command.email()
+                        ),
+                        normalizeAddress(
+                                command.address()
+                        ),
                         true
                 );
 
         Account account =
                 createAccount(
                         customer,
-                        accountType
+                        command.accountType()
                 );
 
         authentication.saveCustomer(
@@ -232,7 +249,7 @@ public class AuthenticationService
                         customer.id(),
                         normalizedUsername,
                         PasswordHasher.hash(
-                                password
+                                command.password()
                         ),
                         true
                 )
@@ -241,6 +258,122 @@ public class AuthenticationService
         return new RegistrationResult(
                 customer.id(),
                 account.getId()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Customer profile(
+            UUID customerId
+    ) {
+        return requireActiveCustomer(
+                customerId
+        );
+    }
+
+    @Override
+    @Transactional
+    public Customer updateProfile(
+            UUID customerId,
+            CustomerProfileUpdateCommand command
+    ) {
+        Objects.requireNonNull(
+                command,
+                "command"
+        );
+
+        Customer current =
+                requireActiveCustomer(
+                        customerId
+                );
+
+        Customer updated =
+                current.withContact(
+                        normalizeMobile(
+                                command.mobile()
+                        ),
+                        normalizeEmail(
+                                command.email()
+                        ),
+                        normalizeAddress(
+                                command.address()
+                        )
+                );
+
+        authentication.saveCustomer(
+                updated
+        );
+
+        return updated;
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(
+            UUID customerId,
+            ChangePasswordCommand command
+    ) {
+        Objects.requireNonNull(
+                command,
+                "command"
+        );
+
+        requireActiveCustomer(
+                customerId
+        );
+
+        AccessCredential credential =
+                authentication
+                        .findCredentialByCustomerId(
+                                customerId
+                        )
+                        .filter(found ->
+                                found != null
+                                        && found.active()
+                        )
+                        .orElseThrow(
+                                UnauthorizedException::new
+                        );
+
+        if (!PasswordHasher.matches(
+                command.currentPassword(),
+                credential.passwordHash()
+        )) {
+            throw new BusinessException(
+                    "INVALID_CURRENT_PASSWORD",
+                    "auth.current-password.invalid"
+            );
+        }
+
+        if (!Objects.equals(
+                command.newPassword(),
+                command.newPasswordConfirmation()
+        )) {
+            throw new BusinessException(
+                    "PASSWORD_CONFIRMATION_MISMATCH",
+                    "auth.new-password-confirmation.mismatch"
+            );
+        }
+
+        if (PasswordHasher.matches(
+                command.newPassword(),
+                credential.passwordHash()
+        )) {
+            throw new BusinessException(
+                    "PASSWORD_REUSE_NOT_ALLOWED",
+                    "auth.password-reuse"
+            );
+        }
+
+        authentication.saveCredential(
+                new AccessCredential(
+                        credential.customerId(),
+                        credential.username(),
+                        PasswordHasher.hash(
+                                command.newPassword()
+                        ),
+                        true
+                )
         );
     }
 
@@ -258,10 +391,9 @@ public class AuthenticationService
         AccessSession session =
                 authentication
                         .findSession(
-                                PasswordHasher
-                                        .tokenHash(
-                                                accessToken
-                                        )
+                                PasswordHasher.tokenHash(
+                                        accessToken
+                                )
                         )
                         .orElseThrow(
                                 UnauthorizedException::new
@@ -294,7 +426,10 @@ public class AuthenticationService
                         customerId
                 )
                 .stream()
-                .filter(Account::isActive)
+                .filter(found ->
+                        found != null
+                                && found.isActive()
+                )
                 .map(account ->
                         toCustomerAccount(
                                 account,
@@ -359,7 +494,10 @@ public class AuthenticationService
                         .findById(
                                 accountId
                         )
-                        .filter(Account::isActive)
+                        .filter(found ->
+                                found != null
+                                        && found.isActive()
+                        )
                         .filter(found ->
                                 found
                                         .getCustomerId()
@@ -391,9 +529,13 @@ public class AuthenticationService
     ) {
         UUID customerId =
                 accounts
-                        .findById(accountId)
-                        .map(
-                                Account::getCustomerId
+                        .findById(
+                                accountId
+                        )
+                        .map(found ->
+                                Objects
+                                        .requireNonNull(found)
+                                        .getCustomerId()
                         )
                         .orElseThrow(() ->
                                 new BusinessException(
@@ -450,7 +592,10 @@ public class AuthenticationService
                 .findCustomerById(
                         customerId
                 )
-                .filter(Customer::active)
+                .filter(found ->
+                        found != null
+                                && found.active()
+                )
                 .orElseThrow(
                         UnauthorizedException::new
                 );
@@ -555,5 +700,78 @@ public class AuthenticationService
                 .toLowerCase(
                         Locale.ROOT
                 );
+    }
+
+    private static String normalizeMobile(
+            String mobile
+    ) {
+        String digits =
+                Objects
+                        .requireNonNullElse(
+                                mobile,
+                                ""
+                        )
+                        .replaceAll(
+                                "\\D",
+                                ""
+                        );
+
+        return digits.length() == 13
+                && digits.startsWith("55")
+                ? digits.substring(2)
+                : digits;
+    }
+
+    private static String normalizeEmail(
+            String email
+    ) {
+        return Objects
+                .requireNonNullElse(
+                        email,
+                        ""
+                )
+                .trim()
+                .toLowerCase(
+                        Locale.ROOT
+                );
+    }
+
+    private static CustomerAddress normalizeAddress(
+            CustomerAddress address
+    ) {
+        Objects.requireNonNull(
+                address,
+                "address"
+        );
+
+        String complement =
+                Objects
+                        .requireNonNullElse(
+                                address.complement(),
+                                ""
+                        )
+                        .trim();
+
+        return new CustomerAddress(
+                address
+                        .postalCode()
+                        .replaceAll(
+                                "\\D",
+                                ""
+                        ),
+                address.street().trim(),
+                address.number().trim(),
+                complement.isBlank()
+                        ? null
+                        : complement,
+                address.district().trim(),
+                address.city().trim(),
+                address
+                        .state()
+                        .trim()
+                        .toUpperCase(
+                                Locale.ROOT
+                        )
+        );
     }
 }

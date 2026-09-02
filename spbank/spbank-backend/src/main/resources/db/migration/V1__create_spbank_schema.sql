@@ -7,8 +7,34 @@ CREATE TABLE instituicoes_bancarias (
   CONSTRAINT chk_instituicao_flags CHECK (interna IN (0,1) AND ativa IN (0,1))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE clientes (
+  id CHAR(36) PRIMARY KEY,
+  nome_completo VARCHAR(120) NOT NULL,
+  cpf CHAR(11) NOT NULL,
+  data_nascimento DATE NOT NULL,
+  celular CHAR(11) NOT NULL,
+  email VARCHAR(254) NOT NULL,
+  cep CHAR(8) NOT NULL,
+  logradouro VARCHAR(120) NOT NULL,
+  numero_endereco VARCHAR(20) NOT NULL,
+  complemento VARCHAR(80) NULL,
+  bairro VARCHAR(80) NOT NULL,
+  cidade VARCHAR(80) NOT NULL,
+  uf CHAR(2) NOT NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  CONSTRAINT uk_cliente_cpf UNIQUE (cpf),
+  CONSTRAINT chk_cliente_cpf CHECK (cpf REGEXP '^[0-9]{11}$'),
+  CONSTRAINT chk_cliente_nascimento CHECK (data_nascimento >= '1900-01-01'),
+  CONSTRAINT chk_cliente_celular CHECK (celular REGEXP '^[1-9][0-9]9[0-9]{8}$'),
+  CONSTRAINT chk_cliente_email CHECK (email LIKE '%_@_%._%'),
+  CONSTRAINT chk_cliente_cep CHECK (cep REGEXP '^[0-9]{8}$'),
+  CONSTRAINT chk_cliente_uf CHECK (uf REGEXP '^[A-Z]{2}$'),
+  CONSTRAINT chk_cliente_ativo CHECK (ativo IN (0,1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE contas (
   id CHAR(36) PRIMARY KEY,
+  cliente_id CHAR(36) NOT NULL,
   nome_titular VARCHAR(120) NOT NULL,
   documento_titular VARCHAR(14) NOT NULL,
   codigo_banco CHAR(5) NOT NULL,
@@ -20,12 +46,26 @@ CREATE TABLE contas (
   ativa TINYINT(1) NOT NULL DEFAULT 1,
   CONSTRAINT fk_conta_instituicao FOREIGN KEY (codigo_banco)
     REFERENCES instituicoes_bancarias(codigo_estudo),
+  CONSTRAINT fk_conta_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
   CONSTRAINT chk_tipo_conta CHECK (tipo_conta IN ('CORRENTE','POUPANCA')),
   CONSTRAINT chk_plano_conta CHECK (plano_conta IN ('STANDARD','PLUS')),
   CONSTRAINT chk_documento_titular CHECK (CHAR_LENGTH(documento_titular) IN (11,14)),
   CONSTRAINT chk_saldo_conta CHECK (saldo >= 0),
   CONSTRAINT chk_conta_ativa CHECK (ativa IN (0,1)),
-  CONSTRAINT uk_dados_bancarios UNIQUE (codigo_banco, agencia, numero_conta, tipo_conta)
+  CONSTRAINT uk_dados_bancarios UNIQUE (
+    codigo_banco,
+    agencia,
+    numero_conta,
+    tipo_conta
+  ),
+  CONSTRAINT uk_cliente_tipo_conta UNIQUE (
+    cliente_id,
+    tipo_conta
+  ),
+  CONSTRAINT uk_conta_cliente_id UNIQUE (
+    cliente_id,
+    id
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE transferencias (
@@ -51,22 +91,53 @@ CREATE TABLE transferencias (
   referencia_liquidacao VARCHAR(100) NULL,
   codigo_falha VARCHAR(60) NULL,
   mensagem_falha VARCHAR(240) NULL,
-  CONSTRAINT fk_transferencia_origem FOREIGN KEY (conta_origem_id) REFERENCES contas(id),
-  CONSTRAINT fk_transferencia_destino FOREIGN KEY (conta_destino_id) REFERENCES contas(id),
-  CONSTRAINT fk_transferencia_instituicao FOREIGN KEY (codigo_banco_destino)
+  CONSTRAINT fk_transferencia_origem
+    FOREIGN KEY (conta_origem_id)
+    REFERENCES contas(id),
+  CONSTRAINT fk_transferencia_destino
+    FOREIGN KEY (conta_destino_id)
+    REFERENCES contas(id),
+  CONSTRAINT fk_transferencia_instituicao
+    FOREIGN KEY (codigo_banco_destino)
     REFERENCES instituicoes_bancarias(codigo_estudo),
-  CONSTRAINT uk_transferencia_idempotencia UNIQUE (conta_origem_id, chave_idempotencia),
-  CONSTRAINT chk_tipo_transferencia CHECK (tipo_transferencia IN ('INTERNA','TED')),
-  CONSTRAINT chk_destino_por_modalidade CHECK (
-    (tipo_transferencia = 'INTERNA' AND conta_destino_id IS NOT NULL)
-    OR (tipo_transferencia = 'TED' AND conta_destino_id IS NULL)
+  CONSTRAINT uk_transferencia_idempotencia UNIQUE (
+    conta_origem_id,
+    chave_idempotencia
   ),
-  CONSTRAINT chk_valor_transferencia CHECK (valor > 0),
-  CONSTRAINT chk_taxa_transferencia CHECK (taxa >= 0),
-  CONSTRAINT chk_taxa_calculada CHECK (taxa_calculada IN (0,1)),
-  CONSTRAINT chk_hash_requisicao CHECK (hash_requisicao REGEXP '^[0-9a-f]{64}$'),
+  CONSTRAINT chk_tipo_transferencia CHECK (
+    tipo_transferencia IN ('INTERNA','TED')
+  ),
+  CONSTRAINT chk_destino_por_modalidade CHECK (
+    (
+      tipo_transferencia = 'INTERNA'
+      AND conta_destino_id IS NOT NULL
+    )
+    OR
+    (
+      tipo_transferencia = 'TED'
+      AND conta_destino_id IS NULL
+    )
+  ),
+  CONSTRAINT chk_valor_transferencia CHECK (
+    valor > 0
+  ),
+  CONSTRAINT chk_taxa_transferencia CHECK (
+    taxa >= 0
+  ),
+  CONSTRAINT chk_taxa_calculada CHECK (
+    taxa_calculada IN (0,1)
+  ),
+  CONSTRAINT chk_hash_requisicao CHECK (
+    hash_requisicao REGEXP '^[0-9a-f]{64}$'
+  ),
   CONSTRAINT chk_situacao_transferencia CHECK (
-    situacao IN ('AGENDADA','PROCESSANDO','CONCLUIDA','FALHA','CANCELADA')
+    situacao IN (
+      'AGENDADA',
+      'PROCESSANDO',
+      'CONCLUIDA',
+      'FALHA',
+      'CANCELADA'
+    )
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -84,7 +155,9 @@ CREATE TABLE lancamentos_conta (
   nome_contraparte VARCHAR(120) NULL,
   banco_contraparte VARCHAR(8) NULL,
   modalidade_operacao VARCHAR(20) NULL,
-  CONSTRAINT fk_lancamento_conta FOREIGN KEY (conta_id) REFERENCES contas(id),
+  CONSTRAINT fk_lancamento_conta
+    FOREIGN KEY (conta_id)
+    REFERENCES contas(id),
   CONSTRAINT uk_lancamento_referencia UNIQUE (
     referencia_id,
     tipo_referencia,
@@ -92,40 +165,74 @@ CREATE TABLE lancamentos_conta (
     tipo_lancamento
   ),
   CONSTRAINT chk_tipo_referencia CHECK (
-    tipo_referencia IN ('TRANSFERENCIA','PIX','CARTAO','INVESTIMENTO')
+    tipo_referencia IN (
+      'TRANSFERENCIA',
+      'PIX',
+      'CARTAO',
+      'INVESTIMENTO'
+    )
   ),
   CONSTRAINT chk_tipo_lancamento CHECK (
-    tipo_lancamento IN ('TRANSFERENCIA_SAIDA','TRANSFERENCIA_ENTRADA','TAXA')
+    tipo_lancamento IN (
+      'TRANSFERENCIA_SAIDA',
+      'TRANSFERENCIA_ENTRADA',
+      'TAXA'
+    )
   ),
-  CONSTRAINT chk_valor_lancamento CHECK (valor > 0),
-  CONSTRAINT chk_natureza_lancamento CHECK (natureza IN ('DEBITO','CREDITO')),
-  CONSTRAINT chk_saldo_apos_lancamento CHECK (saldo_apos >= 0)
+  CONSTRAINT chk_valor_lancamento CHECK (
+    valor > 0
+  ),
+  CONSTRAINT chk_natureza_lancamento CHECK (
+    natureza IN ('DEBITO','CREDITO')
+  ),
+  CONSTRAINT chk_saldo_apos_lancamento CHECK (
+    saldo_apos >= 0
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE credenciais_acesso (
-  conta_id CHAR(36) PRIMARY KEY,
+  cliente_id CHAR(36) PRIMARY KEY,
   usuario VARCHAR(60) NOT NULL,
   senha_hash VARCHAR(180) NOT NULL,
   ativa TINYINT(1) NOT NULL DEFAULT 1,
-  CONSTRAINT fk_credencial_conta FOREIGN KEY (conta_id) REFERENCES contas(id),
-  CONSTRAINT uk_credencial_usuario UNIQUE (usuario),
-  CONSTRAINT chk_credencial_ativa CHECK (ativa IN (0,1))
+  CONSTRAINT fk_credencial_cliente
+    FOREIGN KEY (cliente_id)
+    REFERENCES clientes(id),
+  CONSTRAINT uk_credencial_usuario UNIQUE (
+    usuario
+  ),
+  CONSTRAINT chk_credencial_ativa CHECK (
+    ativa IN (0,1)
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE sessoes_acesso (
   id CHAR(36) PRIMARY KEY,
+  cliente_id CHAR(36) NOT NULL,
   conta_id CHAR(36) NOT NULL,
   token_hash CHAR(64) NOT NULL,
   criada_em DATETIME(6) NOT NULL,
   expira_em DATETIME(6) NOT NULL,
   revogada_em DATETIME(6) NULL,
-  CONSTRAINT fk_sessao_conta FOREIGN KEY (conta_id) REFERENCES contas(id),
-  CONSTRAINT uk_sessao_token UNIQUE (token_hash),
-  CONSTRAINT chk_expiracao_sessao CHECK (expira_em > criada_em)
+  CONSTRAINT fk_sessao_cliente
+    FOREIGN KEY (cliente_id)
+    REFERENCES clientes(id),
+  CONSTRAINT fk_sessao_conta_cliente
+    FOREIGN KEY (cliente_id, conta_id)
+    REFERENCES contas(cliente_id, id),
+  CONSTRAINT uk_sessao_token UNIQUE (
+    token_hash
+  ),
+  CONSTRAINT chk_expiracao_sessao CHECK (
+    expira_em > criada_em
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE INDEX idx_instituicoes_ativas
   ON instituicoes_bancarias(ativa, nome);
+
+CREATE INDEX idx_contas_cliente
+  ON contas(cliente_id, ativa);
 
 CREATE INDEX idx_transferencias_pendentes
   ON transferencias(situacao, agendada_para);
@@ -136,5 +243,5 @@ CREATE INDEX idx_transferencias_origem_data
 CREATE INDEX idx_lancamentos_conta_data
   ON lancamentos_conta(conta_id, ocorrido_em DESC);
 
-CREATE INDEX idx_sessoes_conta_expiracao
-  ON sessoes_acesso(conta_id, expira_em);
+CREATE INDEX idx_sessoes_cliente_expiracao
+  ON sessoes_acesso(cliente_id, expira_em);

@@ -45,27 +45,13 @@ public final class AccountMysqlPersistenceImpl
     }
 
     @Override
-    public Optional<Account> findTarget(
-            AccountLookup lookup
-    ) {
-        return repository
-                .findByBankCodeAndBranchAndAccountNumberAndAccountType(
-                        lookup.bankCode(),
-                        lookup.branch(),
-                        lookup.accountNumber(),
-                        lookup.accountType()
-                )
-                .map(data ->
-                        AccountPersistenceMapper.toDomain(data)
-                );
-    }
-
-    @Override
     public List<Account> findByCustomerId(
             UUID customerId
     ) {
         return repository
-                .findByCustomerId(customerId)
+                .findByCustomerIdOrderByAccountType(
+                        customerId
+                )
                 .stream()
                 .map(data ->
                         AccountPersistenceMapper.toDomain(data)
@@ -102,6 +88,22 @@ public final class AccountMysqlPersistenceImpl
     }
 
     @Override
+    public Optional<Account> findTarget(
+            AccountLookup lookup
+    ) {
+        return repository
+                .findByBankCodeAndBranchAndAccountNumberAndAccountType(
+                        lookup.bankCode(),
+                        lookup.branch(),
+                        lookup.accountNumber(),
+                        lookup.accountType()
+                )
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                );
+    }
+
+    @Override
     public Map<UUID, Account> findAllForUpdate(
             Collection<UUID> ids
     ) {
@@ -127,10 +129,11 @@ public final class AccountMysqlPersistenceImpl
             Collection<Account> accounts
     ) {
         repository.saveAll(
-                accounts
-                        .stream()
+                accounts.stream()
                         .map(account ->
-                                AccountPersistenceMapper.toData(account)
+                                AccountPersistenceMapper.toData(
+                                        account
+                                )
                         )
                         .toList()
         );

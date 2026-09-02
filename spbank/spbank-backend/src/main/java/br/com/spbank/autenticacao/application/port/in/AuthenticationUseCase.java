@@ -1,6 +1,7 @@
 package br.com.spbank.autenticacao.application.port.in;
 
 import br.com.spbank.autenticacao.application.model.AuthenticatedSession;
+import br.com.spbank.autenticacao.application.model.Customer;
 import br.com.spbank.autenticacao.application.model.CustomerAccount;
 import br.com.spbank.autenticacao.application.model.LoginResult;
 import br.com.spbank.autenticacao.application.model.RegistrationResult;
@@ -17,11 +18,21 @@ public interface AuthenticationUseCase {
     );
 
     RegistrationResult register(
-            String fullName,
-            String cpf,
-            String username,
-            String password,
-            AccountType accountType
+            CustomerRegistrationCommand command
+    );
+
+    Customer profile(
+            UUID customerId
+    );
+
+    Customer updateProfile(
+            UUID customerId,
+            CustomerProfileUpdateCommand command
+    );
+
+    void changePassword(
+            UUID customerId,
+            ChangePasswordCommand command
     );
 
     AuthenticatedSession resolveSession(

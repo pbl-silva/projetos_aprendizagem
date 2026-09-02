@@ -1,10 +1,11 @@
 package br.com.spbank.shared.application.exception;
 
-public final class UnauthorizedException extends BusinessException {
+public final class UnauthorizedException
+        extends BusinessException {
 
     public UnauthorizedException() {
         super(
-                "UNAUTHORIZED",
+                "AUTHENTICATION_REQUIRED",
                 "auth.invalid-credentials"
         );
     }

@@ -26,9 +26,10 @@ public interface AccountJpaRepository
                     AccountType accountType
             );
 
-    List<AccountData> findByCustomerId(
-            UUID customerId
-    );
+    List<AccountData>
+            findByCustomerIdOrderByAccountType(
+                    UUID customerId
+            );
 
     boolean existsByCustomerIdAndAccountType(
             UUID customerId,
@@ -50,6 +51,7 @@ public interface AccountJpaRepository
             ORDER BY a.id
             """)
     List<AccountData> findAllForUpdate(
-            @Param("ids") Collection<UUID> ids
+            @Param("ids")
+            Collection<UUID> ids
     );
 }

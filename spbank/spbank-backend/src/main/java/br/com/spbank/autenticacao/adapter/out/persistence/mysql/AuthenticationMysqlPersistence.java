@@ -76,12 +76,8 @@ public final class AuthenticationMysqlPersistence
         return customers
                 .findById(customerId)
                 .map(data ->
-                        new Customer(
-                                data.getId(),
-                                data.getFullName(),
-                                data.getCpf(),
-                                data.isActive()
-                        )
+                        AuthenticationMysqlPersistence
+                                .customer(data)
                 );
     }
 
@@ -92,12 +88,8 @@ public final class AuthenticationMysqlPersistence
         return customers
                 .findByCpf(cpf)
                 .map(data ->
-                        new Customer(
-                                data.getId(),
-                                data.getFullName(),
-                                data.getCpf(),
-                                data.isActive()
-                        )
+                        AuthenticationMysqlPersistence
+                                .customer(data)
                 );
     }
 
@@ -106,12 +98,7 @@ public final class AuthenticationMysqlPersistence
             Customer customer
     ) {
         customers.save(
-                new CustomerData(
-                        customer.id(),
-                        customer.fullName(),
-                        customer.cpf(),
-                        customer.active()
-                )
+                data(customer)
         );
     }
 
@@ -186,6 +173,53 @@ public final class AuthenticationMysqlPersistence
                 tokenHash,
                 customerId,
                 accountId
+        );
+    }
+
+    private static Customer customer(
+            CustomerData data
+    ) {
+        return new Customer(
+                data.getId(),
+                data.getFullName(),
+                data.getCpf(),
+                data.getBirthDate(),
+                data.getMobile(),
+                data.getEmail(),
+                new CustomerAddress(
+                        data.getPostalCode(),
+                        data.getStreet(),
+                        data.getAddressNumber(),
+                        data.getComplement(),
+                        data.getDistrict(),
+                        data.getCity(),
+                        data.getState()
+                ),
+                data.isActive()
+        );
+    }
+
+    private static CustomerData data(
+            Customer customer
+    ) {
+        CustomerAddress address =
+                customer.address();
+
+        return new CustomerData(
+                customer.id(),
+                customer.fullName(),
+                customer.cpf(),
+                customer.birthDate(),
+                customer.mobile(),
+                customer.email(),
+                address.postalCode(),
+                address.street(),
+                address.number(),
+                address.complement(),
+                address.district(),
+                address.city(),
+                address.state(),
+                customer.active()
         );
     }
 }
