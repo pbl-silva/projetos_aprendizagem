@@ -14,7 +14,7 @@ import br.com.spbank.transferencia.application.service.BusinessCalendar;
 import br.com.spbank.transferencia.application.service.TedFeePolicy;
 import br.com.spbank.transferencia.application.service.TransferPolicy;
 import br.com.spbank.transferencia.application.service.TransferRoutingService;
-import br.com.spbank.transferencia.application.serviceRoutingService.TransferRoute;
+import br.com.spbank.transferencia.application.service.TransferRoutingService.TransferRoute;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
