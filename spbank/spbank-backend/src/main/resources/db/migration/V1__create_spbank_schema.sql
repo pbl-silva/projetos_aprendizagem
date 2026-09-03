@@ -68,6 +68,75 @@ CREATE TABLE contas (
   )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE credenciais_administrativas (
+  id CHAR(36) PRIMARY KEY,
+  nome_exibicao VARCHAR(120) NOT NULL,
+  usuario VARCHAR(60) NOT NULL,
+  senha_hash VARCHAR(180) NOT NULL,
+  ativa TINYINT(1) NOT NULL DEFAULT 1,
+
+  CONSTRAINT uk_credencial_admin_usuario
+    UNIQUE (usuario),
+
+  CONSTRAINT chk_credencial_admin_ativa
+    CHECK (ativa IN (0,1))
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE sessoes_administrativas (
+  id CHAR(36) PRIMARY KEY,
+  administrador_id CHAR(36) NOT NULL,
+  token_hash CHAR(64) NOT NULL,
+  criada_em DATETIME(6) NOT NULL,
+  expira_em DATETIME(6) NOT NULL,
+  revogada_em DATETIME(6) NULL,
+
+  CONSTRAINT fk_sessao_admin
+    FOREIGN KEY (administrador_id)
+    REFERENCES credenciais_administrativas(id),
+
+  CONSTRAINT uk_sessao_admin_token
+    UNIQUE (token_hash),
+
+  CONSTRAINT chk_expiracao_sessao_admin
+    CHECK (expira_em > criada_em)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE alteracoes_plano_conta (
+  id CHAR(36) PRIMARY KEY,
+  conta_id CHAR(36) NOT NULL,
+  administrador_id CHAR(36) NOT NULL,
+  nome_administrador VARCHAR(120) NOT NULL,
+  plano_anterior VARCHAR(20) NOT NULL,
+  plano_novo VARCHAR(20) NOT NULL,
+  motivo VARCHAR(240) NOT NULL,
+  alterado_em DATETIME(6) NOT NULL,
+
+  CONSTRAINT fk_alteracao_plano_conta
+    FOREIGN KEY (conta_id)
+    REFERENCES contas(id),
+
+  CONSTRAINT fk_alteracao_plano_admin
+    FOREIGN KEY (administrador_id)
+    REFERENCES credenciais_administrativas(id),
+
+  CONSTRAINT chk_alteracao_plano_anterior
+    CHECK (plano_anterior IN ('STANDARD','PLUS')),
+
+  CONSTRAINT chk_alteracao_plano_novo
+    CHECK (plano_novo IN ('STANDARD','PLUS')),
+
+  CONSTRAINT chk_alteracao_plano_diferente
+    CHECK (plano_anterior <> plano_novo)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 CREATE TABLE transferencias (
   id CHAR(36) PRIMARY KEY,
   tipo_transferencia VARCHAR(20) NOT NULL,
@@ -245,3 +314,15 @@ CREATE INDEX idx_lancamentos_conta_data
 
 CREATE INDEX idx_sessoes_cliente_expiracao
   ON sessoes_acesso(cliente_id, expira_em);
+
+  CREATE INDEX idx_sessoes_admin_expiracao
+  ON sessoes_administrativas(
+    administrador_id,
+    expira_em
+  );
+
+CREATE INDEX idx_alteracoes_plano_conta_data
+  ON alteracoes_plano_conta(
+    conta_id,
+    alterado_em DESC
+  );

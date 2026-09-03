@@ -16,6 +16,8 @@ public interface AccountPersistence {
 
     Optional<Account> findTarget(AccountLookup lookup);
 
+    List<Account> findAll();
+
     List<Account> findByCustomerId(UUID customerId);
 
     boolean existsByCustomerIdAndType(

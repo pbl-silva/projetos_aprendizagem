@@ -1,0 +1,36 @@
+name: SPBank Backend Tests
+
+on:
+  workflow_dispatch:
+
+  push:
+    paths:
+      - "spbank/spbank-backend/**"
+      - ".github/workflows/spbank-backend-tests.yml"
+
+jobs:
+  test:
+    name: Java 25 - Maven Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: spbank/spbank-backend
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          cache-dependency-path: spbank/spbank-backend/pom.xml
+
+      - name: Permitir execução do Maven Wrapper
+        run: chmod +x mvnw
+
+      - name: Executar testes do backend
+        run: ./mvnw -B clean test

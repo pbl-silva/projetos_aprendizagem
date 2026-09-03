@@ -1,10 +1,10 @@
-package br.com.spbank.autenticacao.adapter.in.api.rest.filter;
+package br.com.spbank.administracao.adapter.in.api.rest.filter;
 
-import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ACCOUNT_ID;
-import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ACCESS_TOKEN;
-import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.CUSTOMER_ID;
+import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ADMINISTRATOR_ID;
+import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ADMINISTRATOR_NAME;
+import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ADMIN_ACCESS_TOKEN;
 
-import br.com.spbank.autenticacao.application.port.in.AuthenticationUseCase;
+import br.com.spbank.administracao.application.port.in.AdministrationUseCase;
 import br.com.spbank.shared.application.exception.UnauthorizedException;
 
 import jakarta.servlet.FilterChain;
@@ -23,18 +23,21 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
-public final class AccessSessionFilter
+public final class AdministratorSessionFilter
         extends OncePerRequestFilter {
 
-    private final AuthenticationUseCase authentication;
+    private static final String ADMIN_PREFIX =
+            "/api/v1/admin/";
+
+    private final AdministrationUseCase administration;
     private final HandlerExceptionResolver exceptionResolver;
 
-    public AccessSessionFilter(
-            AuthenticationUseCase authentication,
+    public AdministratorSessionFilter(
+            AdministrationUseCase administration,
             @Qualifier("handlerExceptionResolver")
             HandlerExceptionResolver exceptionResolver
     ) {
-        this.authentication = authentication;
+        this.administration = administration;
         this.exceptionResolver = exceptionResolver;
     }
 
@@ -50,10 +53,9 @@ public final class AccessSessionFilter
                 .equalsIgnoreCase(
                         request.getMethod()
                 )
-                || !path.startsWith("/api/")
-                || path.startsWith("/api/v1/admin/")
-                || "/api/v1/auth/login".equals(path)
-                || "/api/v1/auth/register".equals(path);
+                || !path.startsWith(ADMIN_PREFIX)
+                || "/api/v1/admin/auth/login"
+                        .equals(path);
     }
 
     @Override
@@ -78,23 +80,23 @@ public final class AccessSessionFilter
 
         try {
 
-            var session =
-                    authentication.resolveSession(
+            var administrator =
+                    administration.resolveSession(
                             token
                     );
 
             request.setAttribute(
-                    CUSTOMER_ID,
-                    session.customerId()
+                    ADMINISTRATOR_ID,
+                    administrator.id()
             );
 
             request.setAttribute(
-                    ACCOUNT_ID,
-                    session.accountId()
+                    ADMINISTRATOR_NAME,
+                    administrator.displayName()
             );
 
             request.setAttribute(
-                    ACCESS_TOKEN,
+                    ADMIN_ACCESS_TOKEN,
                     token
             );
 

@@ -31,6 +31,8 @@ public interface AccountJpaRepository
                     UUID customerId
             );
 
+    List<AccountData> findAllByOrderByHolderNameAsc();
+
     boolean existsByCustomerIdAndAccountType(
             UUID customerId,
             AccountType accountType

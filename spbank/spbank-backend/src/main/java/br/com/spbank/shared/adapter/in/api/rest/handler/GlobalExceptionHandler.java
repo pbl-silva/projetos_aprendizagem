@@ -299,34 +299,39 @@ public final class GlobalExceptionHandler {
     }
 
     private static String domain(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        if (ex instanceof UnauthorizedException) {
-            return "AUTHENTICATION";
-        }
+        Exception ex,
+        HttpServletRequest request
+) {
 
-        String path =
-                request.getRequestURI();
+    String path =
+            request.getRequestURI();
 
-        if (path.startsWith("/api/v1/auth")) {
-            return "AUTHENTICATION";
-        }
-
-        if (path.startsWith("/api/v1/accounts")
-                || path.startsWith("/api/v1/banks")) {
-
-            return "ACCOUNT";
-        }
-
-        if (path.startsWith("/api/v1/transfers")) {
-            return "TRANSFER";
-        }
-
-        if (path.startsWith("/api/v1/pix")) {
-            return "PIX";
-        }
-
-        return "SPBANK";
+    if (path.startsWith("/api/v1/admin")) {
+        return "ADMINISTRATION";
     }
+
+    if (ex instanceof UnauthorizedException) {
+        return "AUTHENTICATION";
+    }
+
+    if (path.startsWith("/api/v1/auth")) {
+        return "AUTHENTICATION";
+    }
+
+    if (path.startsWith("/api/v1/accounts")
+            || path.startsWith("/api/v1/banks")) {
+
+        return "ACCOUNT";
+    }
+
+    if (path.startsWith("/api/v1/transfers")) {
+        return "TRANSFER";
+    }
+
+    if (path.startsWith("/api/v1/pix")) {
+        return "PIX";
+    }
+
+    return "SPBANK";
+}
 }

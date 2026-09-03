@@ -108,12 +108,46 @@ INSERT INTO credenciais_acesso (
   (
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
     'alexandre',
-    'pbkdf2_sha256$120000$48zsuVaGGsX1ozR1uw9AlA==$0ykQKRLAO7puCJTN8zI1/T8sd6PY2xNRRZ86kCCek9o=',
+    'pbkdf2_sha256$120000$48zsuVaGGsX1ozR1uw9AlA==$XMKEJGUIL0L6OHA3ZF+PIcsrcAcXy/pD/SBUgbrnVyY=',
     1
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'roberta',
-    'pbkdf2_sha256$120000$0AsNBjkkKPXlsD32nJ6Dyw==$XQxMf9wvSi5HKbu5sPQOe31x73+GJUhu/urCvA9pBKM=',
+    'pbkdf2_sha256$120000$0AsNBjkkKPXlsD32nJ6Dyw==$bBejGeR8cADsFZHARNfqpTZv2/tv7mFtv8vpWa61H/M=',
     1
   );
+
+  INSERT INTO credenciais_administrativas (
+  id,
+  nome_exibicao,
+  usuario,
+  senha_hash,
+  ativa
+) VALUES (
+  'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  'Gerente SPBank',
+  'gerente',
+  'pbkdf2_sha256$120000$/2pRwqqLAmVJkHdO45ByvA==$K9aXI/0uRATy1Jc5YONPD9a3Y07R+weul7Lsj7Xv4n8=',
+  1
+);
+
+INSERT INTO alteracoes_plano_conta (
+  id,
+  conta_id,
+  administrador_id,
+  nome_administrador,
+  plano_anterior,
+  plano_novo,
+  motivo,
+  alterado_em
+) VALUES (
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  '11111111-1111-1111-1111-111111111111',
+  'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  'Gerente SPBank',
+  'STANDARD',
+  'PLUS',
+  'Conta de demonstração aprovada para o plano PLUS',
+  '2026-09-01 09:00:00.000000'
+);

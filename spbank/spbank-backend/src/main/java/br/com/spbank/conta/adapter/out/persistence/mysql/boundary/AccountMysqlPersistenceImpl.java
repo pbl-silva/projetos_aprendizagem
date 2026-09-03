@@ -34,9 +34,8 @@ public final class AccountMysqlPersistenceImpl
     }
 
     @Override
-    public Optional<Account> findById(
-            UUID id
-    ) {
+    public Optional<Account> findById(UUID id) {
+
         return repository
                 .findById(id)
                 .map(data ->
@@ -45,9 +44,22 @@ public final class AccountMysqlPersistenceImpl
     }
 
     @Override
+    public List<Account> findAll() {
+
+        return repository
+                .findAllByOrderByHolderNameAsc()
+                .stream()
+                .map(data ->
+                        AccountPersistenceMapper.toDomain(data)
+                )
+                .toList();
+    }
+
+    @Override
     public List<Account> findByCustomerId(
             UUID customerId
     ) {
+
         return repository
                 .findByCustomerIdOrderByAccountType(
                         customerId
@@ -64,6 +76,7 @@ public final class AccountMysqlPersistenceImpl
             UUID customerId,
             AccountType type
     ) {
+
         return repository
                 .existsByCustomerIdAndAccountType(
                         customerId,
@@ -78,6 +91,7 @@ public final class AccountMysqlPersistenceImpl
             String accountNumber,
             AccountType type
     ) {
+
         return repository
                 .existsByBankCodeAndBranchAndAccountNumberAndAccountType(
                         bankCode,
@@ -89,14 +103,15 @@ public final class AccountMysqlPersistenceImpl
 
     @Override
     public Optional<Account> findTarget(
-            AccountLookup lookup
+            AccountLookup key
     ) {
+
         return repository
                 .findByBankCodeAndBranchAndAccountNumberAndAccountType(
-                        lookup.bankCode(),
-                        lookup.branch(),
-                        lookup.accountNumber(),
-                        lookup.accountType()
+                        key.bankCode(),
+                        key.branch(),
+                        key.accountNumber(),
+                        key.accountType()
                 )
                 .map(data ->
                         AccountPersistenceMapper.toDomain(data)
@@ -107,6 +122,7 @@ public final class AccountMysqlPersistenceImpl
     public Map<UUID, Account> findAllForUpdate(
             Collection<UUID> ids
     ) {
+
         entityManager.flush();
         entityManager.clear();
 
@@ -128,12 +144,11 @@ public final class AccountMysqlPersistenceImpl
     public void saveAll(
             Collection<Account> accounts
     ) {
+
         repository.saveAll(
                 accounts.stream()
                         .map(account ->
-                                AccountPersistenceMapper.toData(
-                                        account
-                                )
+                                AccountPersistenceMapper.toData(account)
                         )
                         .toList()
         );
