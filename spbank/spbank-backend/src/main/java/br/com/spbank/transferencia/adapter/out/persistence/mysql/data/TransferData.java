@@ -1,6 +1,6 @@
 package br.com.spbank.transferencia.adapter.out.persistence.mysql.data;
 
-import br.com.spbank.conta.adapter.out.persistence.mysql.converter.AccountTypeConverter;
+import br.com.spbank.transferencia.adapter.out.persistence.mysql.converter.*;
 import br.com.spbank.conta.application.model.AccountType;
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.converter.TransferStatusConverter;
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.converter.TransferTypeConverter;
@@ -63,7 +63,7 @@ public class TransferData {
     @Column(name = "numero_conta_destino")
     private String recipientAccountNumber;
 
-    @Convert(converter = AccountTypeConverter.class)
+    @Convert(converter = TransferAccountTypeConverter.class)
     @Column(name = "tipo_conta_destino")
     private AccountType recipientAccountType;
 
