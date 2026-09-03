@@ -8,7 +8,7 @@ import br.com.spbank.transferencia.adapter.in.api.rest.dto.TransferConfirmationD
 import br.com.spbank.transferencia.adapter.in.api.rest.dto.TransferCreationDto;
 import br.com.spbank.transferencia.adapter.in.api.rest.dto.TransferPreviewDto;
 import br.com.spbank.transferencia.adapter.in.api.rest.dto.TransferReceiptDto;
-import br.com.spbank.transferencia.application.model;
+import br.com.spbank.transferencia.application.model.Transfer;
 import br.com.spbank.transferencia.application.port.in.CancelTransferUseCase;
 import br.com.spbank.transferencia.application.port.in.CreateTransferUseCase;
 import br.com.spbank.transferencia.application.port.in.GetTransferUseCase;

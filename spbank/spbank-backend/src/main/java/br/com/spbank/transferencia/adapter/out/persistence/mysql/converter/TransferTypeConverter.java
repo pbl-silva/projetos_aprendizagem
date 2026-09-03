@@ -1,6 +1,6 @@
 package br.com.spbank.transferencia.adapter.out.persistence.mysql.converter;
 
-import br.com.spbank.transferencia.application.modelType;
+import br.com.spbank.transferencia.application.model.TransferType;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

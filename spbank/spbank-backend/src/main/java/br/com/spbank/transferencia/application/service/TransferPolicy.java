@@ -1,7 +1,7 @@
 package br.com.spbank.transferencia.application.service;
 
 import br.com.spbank.shared.application.exception.BusinessException;
-import br.com.spbank.transferencia.application.modelType;
+import br.com.spbank.transferencia.application.model.TransferType;
 
 import java.math.BigDecimal;
 

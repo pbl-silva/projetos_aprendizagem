@@ -1,8 +1,8 @@
 package br.com.spbank.transferencia.adapter.out.persistence.mysql.mapper;
 
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.data.TransferData;
-import br.com.spbank.transferencia.application.model;
-import br.com.spbank.transferencia.application.modelRecipient;
+import br.com.spbank.transferencia.application.model.Transfer;
+import br.com.spbank.transferencia.application.model.TransferRecipient;
 
 public final class TransferPersistenceMapper {
 

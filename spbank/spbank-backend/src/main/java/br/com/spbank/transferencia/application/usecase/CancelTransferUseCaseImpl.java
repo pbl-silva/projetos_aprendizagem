@@ -2,7 +2,7 @@ package br.com.spbank.transferencia.application.usecase;
 
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
-import br.com.spbank.transferencia.application.model;
+import br.com.spbank.transferencia.application.model.Transfer;
 import br.com.spbank.transferencia.application.port.in.CancelTransferUseCase;
 import br.com.spbank.transferencia.application.port.out.BusinessLogPort;
 import br.com.spbank.transferencia.application.port.out.TransferBusinessEvent;

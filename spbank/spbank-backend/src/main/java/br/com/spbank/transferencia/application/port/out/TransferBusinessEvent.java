@@ -1,6 +1,6 @@
 package br.com.spbank.transferencia.application.port.out;
 
-import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.model.TransferStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;

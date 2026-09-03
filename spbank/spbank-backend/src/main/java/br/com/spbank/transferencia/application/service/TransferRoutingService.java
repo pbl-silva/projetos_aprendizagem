@@ -8,7 +8,7 @@ import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.conta.application.port.out.BankInstitutionCatalog;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
-import br.com.spbank.transferencia.application.modelType;
+import br.com.spbank.transferencia.application.model.TransferType;
 
 import java.text.Normalizer;
 import java.util.Locale;

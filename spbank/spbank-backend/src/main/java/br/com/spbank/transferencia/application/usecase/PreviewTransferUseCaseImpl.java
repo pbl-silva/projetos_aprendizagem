@@ -5,15 +5,15 @@ import br.com.spbank.conta.application.model.Account;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
-import br.com.spbank.transferencia.application.modelType;
+import br.com.spbank.transferencia.application.model.TransferType;
 import br.com.spbank.transferencia.application.port.in.PreviewTransferCommand;
 import br.com.spbank.transferencia.application.port.in.PreviewTransferUseCase;
 import br.com.spbank.transferencia.application.port.in.TransferPreview;
 import br.com.spbank.transferencia.application.port.out.TransferPersistence;
 import br.com.spbank.transferencia.application.service.BusinessCalendar;
 import br.com.spbank.transferencia.application.service.TedFeePolicy;
-import br.com.spbank.transferencia.application.servicePolicy;
-import br.com.spbank.transferencia.application.serviceRoutingService;
+import br.com.spbank.transferencia.application.service.TransferPolicy;
+import br.com.spbank.transferencia.application.service.TransferRoutingService;
 import br.com.spbank.transferencia.application.serviceRoutingService.TransferRoute;
 
 import java.math.BigDecimal;

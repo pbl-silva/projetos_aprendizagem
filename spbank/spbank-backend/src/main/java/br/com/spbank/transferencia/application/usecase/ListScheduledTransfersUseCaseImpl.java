@@ -1,7 +1,7 @@
 package br.com.spbank.transferencia.application.usecase;
 
-import br.com.spbank.transferencia.application.model;
-import br.com.spbank.transferencia.application.modelStatus;
+import br.com.spbank.transferencia.application.model.Transfer;
+import br.com.spbank.transferencia.application.model.TransferStatus;
 import br.com.spbank.transferencia.application.port.in.ListScheduledTransfersUseCase;
 import br.com.spbank.transferencia.application.port.out.TransferPersistence;
 

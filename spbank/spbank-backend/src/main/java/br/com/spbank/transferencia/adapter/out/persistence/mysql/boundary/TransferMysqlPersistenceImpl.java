@@ -2,9 +2,9 @@ package br.com.spbank.transferencia.adapter.out.persistence.mysql.boundary;
 
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.mapper.TransferPersistenceMapper;
 import br.com.spbank.transferencia.adapter.out.persistence.mysql.repository.TransferJpaRepository;
-import br.com.spbank.transferencia.application.model;
-import br.com.spbank.transferencia.application.modelStatus;
-import br.com.spbank.transferencia.application.modelType;
+import br.com.spbank.transferencia.application.model.Transfer;
+import br.com.spbank.transferencia.application.model.TransferStatus;
+import br.com.spbank.transferencia.application.model.TransferType;
 import br.com.spbank.transferencia.application.port.out.TransferPersistence;
 
 import java.time.Instant;
