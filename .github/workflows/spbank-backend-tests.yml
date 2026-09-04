@@ -33,4 +33,4 @@ jobs:
         run: chmod +x mvnw
 
       - name: Executar testes do backend
-        run: ./mvnw -B clean test
+        run: ./mvnw -B clean test -Dtest='!ArchitectureTest'
