@@ -1,14 +1,558 @@
+/* =========================================================
+   SPBANK FRONT-END
+   Integração com o backend oficial
+========================================================= */
+
+
+/* =========================================================
+   ESTADO DA APLICAÇÃO
+========================================================= */
+
 let saldo = 0;
 let filtroAtual = 'todos';
 let extrato = [];
 
-const apiBaseUrl = window.SPBANK_API_URL ?? 'http://localhost:8080';
-const apiTimeoutMs = 10_000;
-const authTokenKey = 'spbank.access-token';
-
 let currentUser = null;
+let currentAccountSummary = null;
+let customerAccounts = [];
+
 let pendingTransfer = null;
 let pendingIdempotencyKey = null;
+
+let adminAccounts = [];
+
+
+/* =========================================================
+   CONFIGURAÇÃO
+========================================================= */
+
+const apiBaseUrl =
+  window.SPBANK_API_URL ??
+  'http://localhost:8080';
+
+const apiTimeoutMs = 10_000;
+
+
+/* =========================================================
+   TEMA
+========================================================= */
+
+const themePreferenceKey =
+  'spbank.theme';
+
+const validThemePreferences =
+  new Set([
+    'system',
+    'light',
+    'dark'
+  ]);
+
+const themeLabels = {
+  system: 'Sistema',
+  light: 'Claro',
+  dark: 'Escuro'
+};
+
+const themeIcons = {
+  system: 'contrast',
+  light: 'light_mode',
+  dark: 'dark_mode'
+};
+
+const systemThemeQuery =
+  window.matchMedia(
+    '(prefers-color-scheme: dark)'
+  );
+
+
+function getThemePreference() {
+  try {
+    const saved =
+      localStorage.getItem(
+        themePreferenceKey
+      );
+
+    if (
+      validThemePreferences.has(
+        saved
+      )
+    ) {
+      return saved;
+    }
+
+  } catch (_) {
+    /*
+     * Se o navegador impedir acesso
+     * ao localStorage, o SPBank
+     * continua funcionando em Sistema.
+     */
+  }
+
+  return 'system';
+}
+
+
+function resolveTheme(
+  preference
+) {
+  if (
+    preference === 'light' ||
+    preference === 'dark'
+  ) {
+    return preference;
+  }
+
+  return systemThemeQuery.matches
+    ? 'dark'
+    : 'light';
+}
+
+
+function updateThemeAssets(
+  effectiveTheme
+) {
+  const dark =
+    effectiveTheme === 'dark';
+
+  const logoPath =
+    dark
+      ? 'img/logo-spbank-dark.png'
+      : 'img/logo-spbank.png';
+
+  const faviconPath =
+    dark
+      ? 'img/favicon-spbank-dark.png'
+      : 'img/favicon-spbank.png';
+
+
+  document
+    .querySelectorAll(
+      '.theme-logo'
+    )
+    .forEach(
+      logo => {
+        logo.src =
+          logoPath;
+      }
+    );
+
+
+  const favicon =
+    document.getElementById(
+      'appFavicon'
+    );
+
+  if (favicon) {
+    favicon.href =
+      faviconPath;
+  }
+}
+
+
+function updateThemeControl(
+  preference
+) {
+  const currentLabel =
+    document.getElementById(
+      'themeCurrentLabel'
+    );
+
+  const icon =
+    document.getElementById(
+      'themeIcon'
+    );
+
+  const menuButton =
+    document.getElementById(
+      'themeMenuButton'
+    );
+
+
+  if (currentLabel) {
+    currentLabel.textContent =
+      themeLabels[preference] ??
+      themeLabels.system;
+  }
+
+
+  if (icon) {
+    icon.textContent =
+      themeIcons[preference] ??
+      themeIcons.system;
+  }
+
+
+  if (menuButton) {
+    menuButton.setAttribute(
+      'aria-label',
+      `Tema atual: ${
+        themeLabels[preference] ??
+        themeLabels.system
+      }. Alterar tema.`
+    );
+  }
+
+
+  document
+    .querySelectorAll(
+      '[data-theme-option]'
+    )
+    .forEach(
+      option => {
+        const active =
+          option.dataset
+            .themeOption ===
+          preference;
+
+        option.classList.toggle(
+          'active',
+          active
+        );
+      }
+    );
+}
+
+
+function applyTheme(
+  preference =
+    getThemePreference()
+) {
+  const normalizedPreference =
+    validThemePreferences.has(
+      preference
+    )
+      ? preference
+      : 'system';
+
+  const effectiveTheme =
+    resolveTheme(
+      normalizedPreference
+    );
+
+
+  document
+    .documentElement
+    .setAttribute(
+      'data-theme',
+      effectiveTheme
+    );
+
+
+  /*
+   * Também informa ao navegador
+   * qual esquema está efetivamente
+   * em uso.
+   */
+  document
+    .documentElement
+    .style
+    .colorScheme =
+      effectiveTheme;
+
+
+  updateThemeAssets(
+    effectiveTheme
+  );
+
+  updateThemeControl(
+    normalizedPreference
+  );
+}
+
+
+function saveThemePreference(
+  preference
+) {
+  if (
+    !validThemePreferences.has(
+      preference
+    )
+  ) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      themePreferenceKey,
+      preference
+    );
+
+  } catch (_) {
+    /*
+     * O tema ainda será aplicado na
+     * página atual mesmo que o navegador
+     * não permita persistência.
+     */
+  }
+
+  applyTheme(
+    preference
+  );
+}
+
+
+function closeThemeMenu(
+  returnFocus = false
+) {
+  const menu =
+    document.getElementById(
+      'themeMenu'
+    );
+
+  const button =
+    document.getElementById(
+      'themeMenuButton'
+    );
+
+  if (!menu) {
+    return;
+  }
+
+  menu.classList.add(
+    'hidden'
+  );
+
+  button?.setAttribute(
+    'aria-expanded',
+    'false'
+  );
+
+  if (returnFocus) {
+    button?.focus();
+  }
+}
+
+
+function openThemeMenu() {
+  const menu =
+    document.getElementById(
+      'themeMenu'
+    );
+
+  const button =
+    document.getElementById(
+      'themeMenuButton'
+    );
+
+  if (!menu) {
+    return;
+  }
+
+  menu.classList.remove(
+    'hidden'
+  );
+
+  button?.setAttribute(
+    'aria-expanded',
+    'true'
+  );
+
+  const active =
+    menu.querySelector(
+      '.theme-option.active'
+    );
+
+  active?.focus();
+}
+
+
+function toggleThemeMenu() {
+  const menu =
+    document.getElementById(
+      'themeMenu'
+    );
+
+  if (!menu) {
+    return;
+  }
+
+  if (
+    menu.classList.contains(
+      'hidden'
+    )
+  ) {
+    openThemeMenu();
+
+  } else {
+    closeThemeMenu();
+  }
+}
+
+
+function handleSystemThemeChange() {
+  if (
+    getThemePreference() !==
+    'system'
+  ) {
+    return;
+  }
+
+  applyTheme(
+    'system'
+  );
+}
+
+
+function initializeTheme() {
+  applyTheme(
+    getThemePreference()
+  );
+
+
+  const control =
+    document.getElementById(
+      'themeControl'
+    );
+
+  const menuButton =
+    document.getElementById(
+      'themeMenuButton'
+    );
+
+
+  menuButton?.addEventListener(
+    'click',
+    event => {
+      event.stopPropagation();
+
+      toggleThemeMenu();
+    }
+  );
+
+
+  document
+    .querySelectorAll(
+      '[data-theme-option]'
+    )
+    .forEach(
+      option => {
+        option.addEventListener(
+          'click',
+          event => {
+            event.stopPropagation();
+
+            const preference =
+              option.dataset
+                .themeOption;
+
+            saveThemePreference(
+              preference
+            );
+
+            closeThemeMenu(
+              true
+            );
+          }
+        );
+      }
+    );
+
+
+  /*
+   * Fecha quando o usuário clicar
+   * em qualquer ponto fora do menu.
+   */
+  document.addEventListener(
+    'click',
+    event => {
+      if (
+        control &&
+        !control.contains(
+          event.target
+        )
+      ) {
+        closeThemeMenu();
+      }
+    }
+  );
+
+
+  /*
+   * Escape fecha o menu.
+   */
+  document.addEventListener(
+    'keydown',
+    event => {
+      if (
+        event.key ===
+        'Escape'
+      ) {
+        closeThemeMenu(
+          true
+        );
+      }
+    }
+  );
+
+
+  /*
+   * Com a preferência Sistema,
+   * acompanha alterações do Windows
+   * enquanto a página está aberta.
+   */
+  if (
+    typeof systemThemeQuery
+      .addEventListener ===
+    'function'
+  ) {
+    systemThemeQuery
+      .addEventListener(
+        'change',
+        handleSystemThemeChange
+      );
+
+  } else if (
+    typeof systemThemeQuery
+      .addListener ===
+    'function'
+  ) {
+    systemThemeQuery
+      .addListener(
+        handleSystemThemeChange
+      );
+  }
+
+
+  /*
+   * Sincroniza a preferência entre
+   * abas abertas do mesmo navegador.
+   */
+  window.addEventListener(
+    'storage',
+    event => {
+      if (
+        event.key ===
+        themePreferenceKey
+      ) {
+        applyTheme(
+          getThemePreference()
+        );
+      }
+    }
+  );
+}
+
+
+/* =========================================================
+   SESSÕES
+========================================================= */
+
+const authTokenKey =
+  'spbank.access-token';
+
+const adminAuthTokenKey =
+  'spbank.admin-access-token';
+
+const adminNameKey =
+  'spbank.admin-name';
+
+const activeContextKey =
+  'spbank.active-context';
+
+
+/* =========================================================
+   LABELS
+========================================================= */
 
 const transferStatusLabels = {
   SCHEDULED: 'Agendada',
@@ -23,110 +567,389 @@ const transferTypeLabels = {
   TED: 'TED'
 };
 
+const accountTypeLabels = {
+  CURRENT: 'Conta corrente',
+  SAVINGS: 'Conta poupança'
+};
+
+const accountPlanLabels = {
+  STANDARD: 'Standard',
+  PLUS: 'Plus'
+};
+
+
+/* =========================================================
+   HELPERS DE FORMATAÇÃO
+========================================================= */
+
 function formatarMoeda(valor) {
-  return Number(valor ?? 0).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
+  return Number(
+    valor ?? 0
+  ).toLocaleString(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL'
+    }
+  );
 }
+
+
+function formatDate(value) {
+  if (!value) {
+    return '—';
+  }
+
+  const date =
+    new Date(
+      `${value}T00:00:00`
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return value;
+  }
+
+  return date.toLocaleDateString(
+    'pt-BR'
+  );
+}
+
+
+function formatDateTime(value) {
+  if (!value) {
+    return '—';
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return value;
+  }
+
+  return date.toLocaleString(
+    'pt-BR'
+  );
+}
+
+
+function formatCpf(value) {
+  const digits =
+    String(
+      value ?? ''
+    ).replace(
+      /\D/g,
+      ''
+    );
+
+  if (
+    digits.length !== 11
+  ) {
+    return value ?? '—';
+  }
+
+  return digits.replace(
+    /^(\d{3})(\d{3})(\d{3})(\d{2})$/,
+    '$1.$2.$3-$4'
+  );
+}
+
 
 function escapeHtml(value) {
-  return String(value ?? '—').replace(/[&<>'"]/g, character => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  })[character]);
+  return String(
+    value ?? '—'
+  ).replace(
+    /[&<>'"]/g,
+    character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    })[character]
+  );
 }
 
-function transferModalityLabel(value) {
-  if (value === 'TED') return 'Transferência - TED';
-  if (value === 'INTERNAL' || value === 'INTERNA') return 'Transferência';
-  return value || 'Transferência';
+
+function transferModalityLabel(
+  value
+) {
+  if (
+    value === 'TED'
+  ) {
+    return 'Transferência - TED';
+  }
+
+  if (
+    value === 'INTERNAL' ||
+    value === 'INTERNA'
+  ) {
+    return 'Transferência';
+  }
+
+  return (
+    value ||
+    'Transferência'
+  );
 }
 
-function setText(id, value) {
-  const element = document.getElementById(id);
+
+function accountTypeLabel(value) {
+  return (
+    accountTypeLabels[value] ??
+    value ??
+    'Conta'
+  );
+}
+
+
+function accountPlanLabel(value) {
+  return (
+    accountPlanLabels[value] ??
+    value ??
+    '—'
+  );
+}
+
+
+/* =========================================================
+   HELPERS DE DOM
+========================================================= */
+
+function setText(
+  id,
+  value
+) {
+  const element =
+    document.getElementById(
+      id
+    );
 
   if (element) {
-    element.textContent = value ?? '—';
+    element.textContent =
+      value ?? '—';
   }
 }
 
-function showApiError(element, error) {
-  if (!element) return;
+
+function clearMessage(element) {
+  if (!element) {
+    return;
+  }
+
+  element.textContent = '';
+
+  element.classList.remove(
+    'success-message'
+  );
+}
+
+
+function showSuccess(
+  element,
+  message
+) {
+  if (!element) {
+    return;
+  }
+
+  element.textContent =
+    message;
+
+  element.classList.add(
+    'success-message'
+  );
+}
+
+
+function showApiError(
+  element,
+  error
+) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.remove(
+    'success-message'
+  );
 
   const message =
     error?.message ||
     'Não foi possível concluir a operação.';
 
-  element.textContent = error?.correlationId
-    ? `${message} (código de atendimento: ${error.correlationId})`
-    : message;
+  element.textContent =
+    error?.correlationId
+      ? `${message} (código de atendimento: ${error.correlationId})`
+      : message;
 }
 
-async function api(path, options = {}) {
-  const controller = new AbortController();
 
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    apiTimeoutMs
+/* =========================================================
+   CONTROLE DE SESSÃO LOCAL
+========================================================= */
+
+function clearClientSession() {
+  sessionStorage.removeItem(
+    authTokenKey
   );
 
+  if (
+    sessionStorage.getItem(
+      activeContextKey
+    ) === 'client'
+  ) {
+    sessionStorage.removeItem(
+      activeContextKey
+    );
+  }
+
+  currentUser = null;
+  currentAccountSummary = null;
+  customerAccounts = [];
+
+  pendingTransfer = null;
+  pendingIdempotencyKey = null;
+
+  saldo = 0;
+  extrato = [];
+}
+
+
+function clearAdminSession() {
+  sessionStorage.removeItem(
+    adminAuthTokenKey
+  );
+
+  sessionStorage.removeItem(
+    adminNameKey
+  );
+
+  if (
+    sessionStorage.getItem(
+      activeContextKey
+    ) === 'admin'
+  ) {
+    sessionStorage.removeItem(
+      activeContextKey
+    );
+  }
+
+  adminAccounts = [];
+}
+
+
+/* =========================================================
+   CLIENTE HTTP DO CLIENTE
+========================================================= */
+
+async function api(
+  path,
+  options = {}
+) {
+  const controller =
+    new AbortController();
+
+  const timeoutId =
+    setTimeout(
+      () =>
+        controller.abort(),
+      apiTimeoutMs
+    );
+
   try {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
-      ...options,
+    const token =
+      sessionStorage.getItem(
+        authTokenKey
+      );
 
-      signal: controller.signal,
+    const response =
+      await fetch(
+        `${apiBaseUrl}${path}`,
+        {
+          ...options,
 
-      headers: {
-        'Content-Type': 'application/json',
+          signal:
+            controller.signal,
 
-        ...(sessionStorage.getItem(authTokenKey)
-          ? {
-              Authorization:
-                `Bearer ${sessionStorage.getItem(authTokenKey)}`
-            }
-          : {}),
+          headers: {
+            'Content-Type':
+              'application/json',
 
-        ...(options.headers || {})
-      }
-    });
+            ...(token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`
+                }
+              : {}),
+
+            ...(options.headers || {})
+          }
+        }
+      );
 
     const contentType =
-      response.headers.get('content-type') ?? '';
+      response.headers
+        .get('content-type') ??
+      '';
 
     const isJson =
-      contentType.includes('application/json') ||
-      contentType.includes('application/problem+json');
+      contentType.includes(
+        'application/json'
+      ) ||
+      contentType.includes(
+        'application/problem+json'
+      );
 
     const body =
-      response.status === 204 || !isJson
+      response.status === 204 ||
+      !isJson
         ? null
         : await response.json();
 
     if (!response.ok) {
+      const publicRoute =
+        path ===
+          '/api/v1/auth/login' ||
+        path ===
+          '/api/v1/auth/register';
 
       if (
         response.status === 401 &&
-        path !== '/api/v1/auth/login'
+        !publicRoute
       ) {
-        sessionStorage.removeItem(authTokenKey);
+        clearClientSession();
 
-        currentUser = null;
-
-        showLogin();
+        showLogin(
+          'Sua sessão expirou. Entre novamente.'
+        );
       }
 
-      const error = new Error(
-        body?.detail ||
-        'Serviço temporariamente indisponível. Consulte a operação antes de reenviar.'
-      );
+      const error =
+        new Error(
+          body?.detail ||
+          'Serviço temporariamente indisponível. Consulte a operação antes de reenviar.'
+        );
 
-      error.status = response.status;
-      error.code = body?.errorCode;
-      error.correlationId = body?.correlationId;
+      error.status =
+        response.status;
+
+      error.code =
+        body?.errorCode;
+
+      error.correlationId =
+        body?.correlationId;
+
+      error.domain =
+        body?.domain;
 
       throw error;
     }
@@ -134,14 +957,17 @@ async function api(path, options = {}) {
     return body;
 
   } catch (error) {
+    if (
+      error.name ===
+      'AbortError'
+    ) {
+      const timeoutError =
+        new Error(
+          'O banco demorou para responder. Consulte a operação antes de tentar novamente.'
+        );
 
-    if (error.name === 'AbortError') {
-
-      const timeoutError = new Error(
-        'O banco demorou para responder. Consulte a operação antes de tentar novamente.'
-      );
-
-      timeoutError.code = 'NETWORK_TIMEOUT';
+      timeoutError.code =
+        'NETWORK_TIMEOUT';
 
       throw timeoutError;
     }
@@ -149,52 +975,404 @@ async function api(path, options = {}) {
     throw error;
 
   } finally {
-
-    clearTimeout(timeoutId);
+    clearTimeout(
+      timeoutId
+    );
   }
 }
 
-function showLogin(message = '') {
 
+/* =========================================================
+   CLIENTE HTTP ADMINISTRATIVO
+========================================================= */
+
+async function adminApi(
+  path,
+  options = {}
+) {
+  const controller =
+    new AbortController();
+
+  const timeoutId =
+    setTimeout(
+      () =>
+        controller.abort(),
+      apiTimeoutMs
+    );
+
+  try {
+    const token =
+      sessionStorage.getItem(
+        adminAuthTokenKey
+      );
+
+    const response =
+      await fetch(
+        `${apiBaseUrl}${path}`,
+        {
+          ...options,
+
+          signal:
+            controller.signal,
+
+          headers: {
+            'Content-Type':
+              'application/json',
+
+            ...(token
+              ? {
+                  Authorization:
+                    `Bearer ${token}`
+                }
+              : {}),
+
+            ...(options.headers || {})
+          }
+        }
+      );
+
+    const contentType =
+      response.headers
+        .get('content-type') ??
+      '';
+
+    const isJson =
+      contentType.includes(
+        'application/json'
+      ) ||
+      contentType.includes(
+        'application/problem+json'
+      );
+
+    const body =
+      response.status === 204 ||
+      !isJson
+        ? null
+        : await response.json();
+
+    if (!response.ok) {
+      const loginRoute =
+        path ===
+        '/api/v1/admin/auth/login';
+
+      if (
+        response.status === 401 &&
+        !loginRoute
+      ) {
+        clearAdminSession();
+
+        showPublicArea(
+          'admin'
+        );
+
+        showApiError(
+          document.getElementById(
+            'adminLoginError'
+          ),
+          new Error(
+            'Sua sessão gerencial expirou. Entre novamente.'
+          )
+        );
+      }
+
+      const error =
+        new Error(
+          body?.detail ||
+          'Não foi possível concluir a operação gerencial.'
+        );
+
+      error.status =
+        response.status;
+
+      error.code =
+        body?.errorCode;
+
+      error.correlationId =
+        body?.correlationId;
+
+      error.domain =
+        body?.domain;
+
+      throw error;
+    }
+
+    return body;
+
+  } catch (error) {
+    if (
+      error.name ===
+      'AbortError'
+    ) {
+      const timeoutError =
+        new Error(
+          'O SPBank demorou para responder. Tente novamente.'
+        );
+
+      timeoutError.code =
+        'NETWORK_TIMEOUT';
+
+      throw timeoutError;
+    }
+
+    throw error;
+
+  } finally {
+    clearTimeout(
+      timeoutId
+    );
+  }
+}
+
+
+/* =========================================================
+   ÁREA PÚBLICA
+========================================================= */
+
+function showAccessPanel(panel) {
+  const loginScreen =
+    document.getElementById(
+      'loginScreen'
+    );
+
+  const panels = {
+    login:
+      document.getElementById(
+        'loginPanel'
+      ),
+
+    register:
+      document.getElementById(
+        'registerPanel'
+      ),
+
+    admin:
+      document.getElementById(
+        'adminLoginPanel'
+      )
+  };
+
+  const controls =
+    document.querySelectorAll(
+      '[data-public-tab]'
+    );
+
+  const managerEntry =
+    document.getElementById(
+      'adminLoginTab'
+    );
+
+  const clientReturn =
+    document.getElementById(
+      'clientAccessBackButton'
+    );
+
+
+  Object
+    .entries(panels)
+    .forEach(
+      ([name, element]) => {
+        if (!element) {
+          return;
+        }
+
+        const active =
+          name === panel;
+
+        element.classList.toggle(
+          'hidden',
+          !active
+        );
+
+        element.setAttribute(
+          'aria-hidden',
+          String(!active)
+        );
+      }
+    );
+
+
+  /*
+   * Apenas as duas abas principais
+   * recebem estado visual de tab.
+   */
+  controls.forEach(
+    control => {
+      if (
+        !control.classList.contains(
+          'access-tab'
+        )
+      ) {
+        return;
+      }
+
+      const active =
+        control.dataset.publicTab ===
+        panel;
+
+      control.classList.toggle(
+        'active',
+        active
+      );
+
+      control.setAttribute(
+        'aria-selected',
+        String(active)
+      );
+    }
+  );
+
+
+  /*
+   * O acesso gerencial fica discreto.
+   * Dentro da área gerencial, aparece
+   * apenas o retorno para o cliente.
+   */
+  managerEntry?.classList.toggle(
+    'hidden',
+    panel === 'admin'
+  );
+
+  clientReturn?.classList.toggle(
+    'hidden',
+    panel !== 'admin'
+  );
+
+
+  if (loginScreen) {
+    loginScreen.classList.toggle(
+      'registration-mode',
+      panel === 'register'
+    );
+
+    loginScreen.classList.toggle(
+      'admin-access-mode',
+      panel === 'admin'
+    );
+  }
+
+
+  clearMessage(
+    document.getElementById(
+      'loginError'
+    )
+  );
+
+  clearMessage(
+    document.getElementById(
+      'registerError'
+    )
+  );
+
+  clearMessage(
+    document.getElementById(
+      'registerSuccess'
+    )
+  );
+
+  clearMessage(
+    document.getElementById(
+      'adminLoginError'
+    )
+  );
+}
+
+
+function showPublicArea(
+  panel = 'login'
+) {
   document
-    .getElementById('appShell')
-    .classList
+    .getElementById(
+      'appShell'
+    )
+    ?.classList
     .add('hidden');
 
   document
-    .getElementById('loginScreen')
-    .classList
+    .getElementById(
+      'adminShell'
+    )
+    ?.classList
+    .add('hidden');
+
+  document
+    .getElementById(
+      'loginScreen'
+    )
+    ?.classList
     .remove('hidden');
+
+  showAccessPanel(
+    panel
+  );
+}
+
+
+function showLogin(
+  message = '',
+  success = false
+) {
+  showPublicArea(
+    'login'
+  );
 
   const errorBox =
-    document.getElementById('loginError');
+    document.getElementById(
+      'loginError'
+    );
 
-  if (errorBox) {
-    errorBox.textContent = message;
+  if (!errorBox) {
+    return;
   }
+
+  errorBox.textContent =
+    message;
+
+  errorBox.classList.toggle(
+    'success-message',
+    success
+  );
 }
 
+
+/* =========================================================
+   LOGIN DO CLIENTE
+========================================================= */
+
 function showAuthenticatedApp(user) {
-
-  currentUser = user;
-
-  document
-    .getElementById('currentUserName')
-    .textContent = user.holderName;
+  currentUser =
+    user;
 
   document
-    .getElementById('loginScreen')
+    .getElementById(
+      'currentUserName'
+    )
+    .textContent =
+      user.holderName;
+
+  document
+    .getElementById(
+      'loginScreen'
+    )
     .classList
     .add('hidden');
 
   document
-    .getElementById('appShell')
+    .getElementById(
+      'adminShell'
+    )
+    .classList
+    .add('hidden');
+
+  document
+    .getElementById(
+      'appShell'
+    )
     .classList
     .remove('hidden');
 }
 
-async function handleLogin(event) {
 
+async function handleLogin(event) {
   event.preventDefault();
 
   const form =
@@ -206,7 +1384,9 @@ async function handleLogin(event) {
     );
 
   const errorBox =
-    document.getElementById('loginError');
+    document.getElementById(
+      'loginError'
+    );
 
   const data =
     Object.fromEntries(
@@ -214,18 +1394,25 @@ async function handleLogin(event) {
     );
 
   button.disabled = true;
-  button.textContent = 'Entrando…';
 
-  errorBox.textContent = '';
+  button.textContent =
+    'Entrando…';
+
+  clearMessage(
+    errorBox
+  );
 
   try {
-
     const session =
       await api(
         '/api/v1/auth/login',
         {
           method: 'POST',
-          body: JSON.stringify(data)
+
+          body:
+            JSON.stringify(
+              data
+            )
         }
       );
 
@@ -234,38 +1421,226 @@ async function handleLogin(event) {
       session.accessToken
     );
 
+    sessionStorage.setItem(
+      activeContextKey,
+      'client'
+    );
+
     saldo = 0;
     extrato = [];
+    currentAccountSummary = null;
+    customerAccounts = [];
 
-    showAuthenticatedApp(session);
+    showAuthenticatedApp(
+      session
+    );
 
     await Promise.all([
+      loadCustomerAccounts(),
       loadAccountSummary(),
       refreshOfficialStatement()
     ]);
 
-    loadPage('dashboard');
+    loadPage(
+      'dashboard'
+    );
 
     form.reset();
 
   } catch (error) {
-
     showApiError(
       errorBox,
       error
     );
 
   } finally {
+    button.disabled =
+      false;
 
-    button.disabled = false;
-    button.textContent = 'Entrar';
+    button.textContent =
+      'Entrar';
   }
 }
 
-async function performLogout() {
+
+/* =========================================================
+   CADASTRO
+========================================================= */
+
+async function handleRegistration(
+  event
+) {
+  event.preventDefault();
+
+  const form =
+    event.currentTarget;
+
+  const button =
+    form.querySelector(
+      'button[type="submit"]'
+    );
+
+  const errorBox =
+    document.getElementById(
+      'registerError'
+    );
+
+  const successBox =
+    document.getElementById(
+      'registerSuccess'
+    );
+
+  clearMessage(
+    errorBox
+  );
+
+  clearMessage(
+    successBox
+  );
+
+  const data =
+    Object.fromEntries(
+      new FormData(form)
+    );
+
+  if (
+    data.password !==
+    data.passwordConfirmation
+  ) {
+    showApiError(
+      errorBox,
+      new Error(
+        'A confirmação da senha deve ser igual à senha informada.'
+      )
+    );
+
+    return;
+  }
+
+  const payload = {
+    fullName:
+      data.fullName.trim(),
+
+    cpf:
+      data.cpf.replace(
+        /\D/g,
+        ''
+      ),
+
+    birthDate:
+      data.birthDate,
+
+    mobile:
+      data.mobile.trim(),
+
+    email:
+      data.email.trim(),
+
+    address: {
+      postalCode:
+        data.postalCode.replace(
+          /\D/g,
+          ''
+        ),
+
+      street:
+        data.street.trim(),
+
+      number:
+        data.number.trim(),
+
+      complement:
+        data.complement?.trim()
+          ? data.complement.trim()
+          : null,
+
+      district:
+        data.district.trim(),
+
+      city:
+        data.city.trim(),
+
+      state:
+        data.state
+          .trim()
+          .toUpperCase()
+    },
+
+    username:
+      data.username.trim(),
+
+    password:
+      data.password,
+
+    accountType:
+      data.accountType
+  };
+
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    'Criando cadastro…';
+
 
   try {
+    await api(
+      '/api/v1/auth/register',
+      {
+        method: 'POST',
 
+        body:
+          JSON.stringify(
+            payload
+          )
+      }
+    );
+
+    const username =
+      payload.username;
+
+    form.reset();
+
+    showLogin(
+      'Cadastro concluído. Entre com o usuário e a senha que você acabou de criar.',
+      true
+    );
+
+    const usernameInput =
+      document.getElementById(
+        'loginUsername'
+      );
+
+    if (usernameInput) {
+      usernameInput.value =
+        username;
+
+      usernameInput.focus();
+    }
+
+  } catch (error) {
+    showApiError(
+      errorBox,
+      error
+    );
+
+  } finally {
+    button.disabled =
+      false;
+
+    button.textContent =
+      'Criar cadastro';
+  }
+}
+
+
+/* =========================================================
+   LOGOUT DO CLIENTE
+========================================================= */
+
+async function performLogout() {
+  try {
     await api(
       '/api/v1/auth/logout',
       {
@@ -274,40 +1649,386 @@ async function performLogout() {
     );
 
   } catch (_) {
-
     /*
      * A sessão local deve terminar
-     * mesmo se o servidor estiver
-     * indisponível.
+     * mesmo que o servidor não
+     * responda ao logout.
      */
 
   } finally {
-
-    sessionStorage.removeItem(
-      authTokenKey
-    );
-
-    currentUser = null;
-
-    pendingTransfer = null;
-    pendingIdempotencyKey = null;
-
-    saldo = 0;
-    extrato = [];
+    clearClientSession();
 
     showLogin();
   }
 }
 
-async function loadAccountSummary() {
 
+/* =========================================================
+   CONTAS DO CLIENTE
+========================================================= */
+
+function missingAccountType() {
+  const types =
+    new Set(
+      customerAccounts.map(
+        account =>
+          account.accountType
+      )
+    );
+
+  if (
+    !types.has(
+      'CURRENT'
+    )
+  ) {
+    return 'CURRENT';
+  }
+
+  if (
+    !types.has(
+      'SAVINGS'
+    )
+  ) {
+    return 'SAVINGS';
+  }
+
+  return null;
+}
+
+
+function selectedCustomerAccount() {
+  return (
+    customerAccounts.find(
+      account =>
+        account.selected
+    ) ??
+    null
+  );
+}
+
+
+function updateAccountContext() {
+  const context =
+    document.getElementById(
+      'accountContext'
+    );
+
+  const selector =
+    document.getElementById(
+      'accountSelector'
+    );
+
+  const openButton =
+    document.getElementById(
+      'openMissingAccountButton'
+    );
+
+  if (
+    !context ||
+    !selector ||
+    !openButton
+  ) {
+    return;
+  }
+
+  if (
+    customerAccounts.length === 0
+  ) {
+    context.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+  context.classList.remove(
+    'hidden'
+  );
+
+  selector.replaceChildren(
+    ...customerAccounts.map(
+      account => {
+        const option =
+          new Option(
+            `${accountTypeLabel(
+              account.accountType
+            )} · Ag. ${account.branch} · ${account.accountNumber}`,
+            account.id
+          );
+
+        option.selected =
+          Boolean(
+            account.selected
+          );
+
+        return option;
+      }
+    )
+  );
+
+  const missingType =
+    missingAccountType();
+
+  if (missingType) {
+    openButton.classList.remove(
+      'hidden'
+    );
+
+    openButton.textContent =
+      missingType === 'CURRENT'
+        ? 'Abrir conta corrente'
+        : 'Abrir conta poupança';
+
+  } else {
+    openButton.classList.add(
+      'hidden'
+    );
+  }
+}
+
+
+async function loadCustomerAccounts() {
+  customerAccounts =
+    await api(
+      '/api/v1/auth/accounts'
+    );
+
+  updateAccountContext();
+
+  return customerAccounts;
+}
+
+
+async function handleAccountSelection(
+  event
+) {
+  const selector =
+    event.currentTarget;
+
+  const accountId =
+    selector.value;
+
+  const selected =
+    selectedCustomerAccount();
+
+  if (
+    !accountId ||
+    selected?.id ===
+      accountId
+  ) {
+    return;
+  }
+
+  selector.disabled =
+    true;
+
+  try {
+    await api(
+      `/api/v1/auth/accounts/${accountId}/select`,
+      {
+        method: 'POST'
+      }
+    );
+
+    saldo = 0;
+    extrato = [];
+    currentAccountSummary = null;
+
+    await Promise.all([
+      loadCustomerAccounts(),
+      loadAccountSummary(),
+      refreshOfficialStatement()
+    ]);
+
+    const user =
+      await api(
+        '/api/v1/auth/me'
+      );
+
+    showAuthenticatedApp(
+      user
+    );
+
+    loadPage(
+      'dashboard'
+    );
+
+  } catch (error) {
+    await loadCustomerAccounts()
+      .catch(
+        () => {}
+      );
+
+    const content =
+      document.getElementById(
+        'content'
+      );
+
+    if (content) {
+      content.innerHTML = `
+        <div class="card">
+          <p id="accountSelectionError"></p>
+        </div>
+      `;
+
+      showApiError(
+        document.getElementById(
+          'accountSelectionError'
+        ),
+        error
+      );
+    }
+
+  } finally {
+    selector.disabled =
+      false;
+  }
+}
+
+
+function openMissingAccountDialog() {
+  const type =
+    missingAccountType();
+
+  if (!type) {
+    return;
+  }
+
+  const dialog =
+    document.getElementById(
+      'openAccountDialog'
+    );
+
+  const select =
+    document.getElementById(
+      'newAccountType'
+    );
+
+  clearMessage(
+    document.getElementById(
+      'openAccountError'
+    )
+  );
+
+  select.replaceChildren(
+    new Option(
+      accountTypeLabel(type),
+      type
+    )
+  );
+
+  dialog.showModal();
+}
+
+
+async function handleOpenAccount(
+  event
+) {
+  event.preventDefault();
+
+  const form =
+    event.currentTarget;
+
+  const button =
+    form.querySelector(
+      'button[type="submit"]'
+    );
+
+  const errorBox =
+    document.getElementById(
+      'openAccountError'
+    );
+
+  const data =
+    Object.fromEntries(
+      new FormData(form)
+    );
+
+  clearMessage(
+    errorBox
+  );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    'Abrindo conta…';
+
+  try {
+    const account =
+      await api(
+        '/api/v1/auth/accounts',
+        {
+          method: 'POST',
+
+          body:
+            JSON.stringify({
+              accountType:
+                data.accountType
+            })
+        }
+      );
+
+    await api(
+      `/api/v1/auth/accounts/${account.id}/select`,
+      {
+        method: 'POST'
+      }
+    );
+
+    document
+      .getElementById(
+        'openAccountDialog'
+      )
+      .close();
+
+    saldo = 0;
+    extrato = [];
+    currentAccountSummary = null;
+
+    await Promise.all([
+      loadCustomerAccounts(),
+      loadAccountSummary(),
+      refreshOfficialStatement()
+    ]);
+
+    loadPage(
+      'dashboard'
+    );
+
+  } catch (error) {
+    showApiError(
+      errorBox,
+      error
+    );
+
+  } finally {
+    button.disabled =
+      false;
+
+    button.textContent =
+      'Abrir conta';
+  }
+}
+
+
+/* =========================================================
+   RESUMO DA CONTA
+========================================================= */
+
+async function loadAccountSummary() {
   const summary =
     await api(
       '/api/v1/accounts/me/summary'
     );
 
+  currentAccountSummary =
+    summary;
+
   saldo =
-    Number(summary.balance);
+    Number(
+      summary.balance
+    );
 
   const element =
     document.getElementById(
@@ -315,16 +2036,21 @@ async function loadAccountSummary() {
     );
 
   if (element) {
-
     element.textContent =
-      formatarMoeda(saldo);
+      formatarMoeda(
+        saldo
+      );
   }
 
   return summary;
 }
 
-async function loadBanks() {
 
+/* =========================================================
+   CATÁLOGO DE BANCOS
+========================================================= */
+
+async function loadBanks() {
   const banks =
     await api(
       '/api/v1/banks'
@@ -335,7 +2061,9 @@ async function loadBanks() {
       '[name="bankCode"]'
     );
 
-  if (!select) return;
+  if (!select) {
+    return;
+  }
 
   const placeholder =
     new Option(
@@ -343,8 +2071,11 @@ async function loadBanks() {
       ''
     );
 
-  placeholder.disabled = true;
-  placeholder.selected = true;
+  placeholder.disabled =
+    true;
+
+  placeholder.selected =
+    true;
 
   select.replaceChildren(
     placeholder,
@@ -359,18 +2090,21 @@ async function loadBanks() {
   );
 }
 
+
+/* =========================================================
+   PLACEHOLDERS
+========================================================= */
+
 function renderFeaturePlaceholder(
   title,
   description
 ) {
-
   const content =
     document.getElementById(
       'content'
     );
 
   content.innerHTML = `
-
     <div class="card highlight">
 
       <h2>
@@ -413,12 +2147,15 @@ function renderFeaturePlaceholder(
       </div>
 
     </div>
-
   `;
 }
 
-function renderDashboard() {
 
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
+function renderDashboard() {
   const content =
     document.getElementById(
       'content'
@@ -427,17 +2164,36 @@ function renderDashboard() {
   const recentEntries =
     extrato
       .slice()
-      .reverse()
-      .slice(0, 5);
+      .sort(
+        (a, b) =>
+          new Date(b.data) -
+          new Date(a.data)
+      )
+      .slice(
+        0,
+        5
+      );
 
+  const selectedAccount =
+    selectedCustomerAccount();
+
+  const missingType =
+    missingAccountType();
 
   content.innerHTML = `
-
     <div class="header">
 
-      <h2>
-        Dashboard
-      </h2>
+      <div>
+
+        <h2>
+          Dashboard
+        </h2>
+
+        <p class="summary-context">
+          Dados oficiais da conta atualmente selecionada.
+        </p>
+
+      </div>
 
     </div>
 
@@ -447,7 +2203,7 @@ function renderDashboard() {
       <div class="card highlight">
 
         <p>
-          Saldo total
+          Saldo disponível
         </p>
 
         <h2>
@@ -460,11 +2216,18 @@ function renderDashboard() {
       <div class="card">
 
         <p>
-          Cartão
+          Plano atual
         </p>
 
         <h2>
-          Em adaptação
+          ${
+            escapeHtml(
+              accountPlanLabel(
+                currentAccountSummary
+                  ?.accountPlan
+              )
+            )
+          }
         </h2>
 
       </div>
@@ -473,11 +2236,18 @@ function renderDashboard() {
       <div class="card">
 
         <p>
-          Investimentos
+          Modalidade
         </p>
 
         <h2>
-          Em adaptação
+          ${
+            escapeHtml(
+              accountTypeLabel(
+                selectedAccount
+                  ?.accountType
+              )
+            )
+          }
         </h2>
 
       </div>
@@ -485,8 +2255,114 @@ function renderDashboard() {
     </div>
 
 
-    <div class="menu-grid">
+    ${
+      selectedAccount
+        ? `
+          <div class="card account-summary-card">
 
+            <div class="header">
+
+              <div>
+
+                <h3>
+                  Conta ativa
+                </h3>
+
+                <p class="summary-context">
+                  ${
+                    escapeHtml(
+                      accountTypeLabel(
+                        selectedAccount.accountType
+                      )
+                    )
+                  }
+                </p>
+
+              </div>
+
+              ${
+                missingType
+                  ? `
+                    <button
+                      class="btn-outline btn-compact"
+                      type="button"
+                      onclick="openMissingAccountDialog()"
+                    >
+                      ${
+                        missingType ===
+                        'CURRENT'
+                          ? 'Abrir conta corrente'
+                          : 'Abrir conta poupança'
+                      }
+                    </button>
+                  `
+                  : ''
+              }
+
+            </div>
+
+
+            <div class="statement-details">
+
+              <div class="statement-detail">
+
+                <span>
+                  Agência
+                </span>
+
+                <strong>
+                  ${
+                    escapeHtml(
+                      selectedAccount.branch
+                    )
+                  }
+                </strong>
+
+              </div>
+
+
+              <div class="statement-detail">
+
+                <span>
+                  Conta
+                </span>
+
+                <strong>
+                  ${
+                    escapeHtml(
+                      selectedAccount.accountNumber
+                    )
+                  }
+                </strong>
+
+              </div>
+
+
+              <div class="statement-detail">
+
+                <span>
+                  Saldo
+                </span>
+
+                <strong>
+                  ${
+                    formatarMoeda(
+                      selectedAccount.balance
+                    )
+                  }
+                </strong>
+
+              </div>
+
+            </div>
+
+          </div>
+        `
+        : ''
+    }
+
+
+    <div class="menu-grid">
 
       <div
         class="menu-item"
@@ -495,9 +2371,7 @@ function renderDashboard() {
 
         <div class="icon">
 
-          <span
-            class="material-symbols-outlined"
-          >
+          <span class="material-symbols-outlined">
             window
           </span>
 
@@ -517,9 +2391,7 @@ function renderDashboard() {
 
         <div class="icon">
 
-          <span
-            class="material-symbols-outlined"
-          >
+          <span class="material-symbols-outlined">
             sync_alt
           </span>
 
@@ -534,21 +2406,19 @@ function renderDashboard() {
 
       <div
         class="menu-item"
-        onclick="loadPage('invest')"
+        onclick="loadPage('extrato')"
       >
 
         <div class="icon">
 
-          <span
-            class="material-symbols-outlined"
-          >
-            monitoring
+          <span class="material-symbols-outlined">
+            receipt
           </span>
 
         </div>
 
         <span>
-          Renda Fixa
+          Extrato
         </span>
 
       </div>
@@ -556,21 +2426,19 @@ function renderDashboard() {
 
       <div
         class="menu-item"
-        onclick="loadPage('cartao')"
+        onclick="loadPage('profile')"
       >
 
         <div class="icon">
 
-          <span
-            class="material-symbols-outlined"
-          >
-            credit_card
+          <span class="material-symbols-outlined">
+            manage_accounts
           </span>
 
         </div>
 
         <span>
-          Cartões
+          Meus dados
         </span>
 
       </div>
@@ -580,18 +2448,7 @@ function renderDashboard() {
 
     <div class="card">
 
-      <h3>
-        Resumo financeiro
-      </h3>
-
-      <div id="graficoDash"></div>
-
-    </div>
-
-
-    <div class="card">
-
-      <div class="row">
+      <div class="header">
 
         <h3>
           Transações recentes
@@ -602,7 +2459,7 @@ function renderDashboard() {
           type="button"
           onclick="loadPage('extrato')"
         >
-          Ver mais
+          Ver extrato
         </button>
 
       </div>
@@ -610,59 +2467,52 @@ function renderDashboard() {
 
       ${
         recentEntries.length === 0
-
           ? `
             <p>
               Nenhuma movimentação registrada.
             </p>
           `
-
           : recentEntries
-              .map(item => `
+              .map(
+                item => `
+                  <div class="row">
 
-                <div class="row">
+                    <span>
+                      ${escapeHtml(item.tipo)}
+                    </span>
 
-                  <span>
-                    ${escapeHtml(item.tipo)}
-                  </span>
-
-                  <strong
-                    style="
-                      color:
-                      ${
+                    <strong
+                      class="${
                         item.valor < 0
-                          ? '#ef4444'
-                          : '#22c55e'
-                      }
-                    "
-                  >
-                    ${formatarMoeda(item.valor)}
-                  </strong>
+                          ? 'saida'
+                          : 'entrada'
+                      }"
+                    >
+                      ${formatarMoeda(item.valor)}
+                    </strong>
 
-                </div>
-
-              `)
+                  </div>
+                `
+              )
               .join('')
       }
 
     </div>
-
   `;
-
-
-  renderGraficoDashboard();
 }
 
-function renderTransferPage() {
 
+/* =========================================================
+   TRANSFERÊNCIA
+========================================================= */
+
+function renderTransferPage() {
   const content =
     document.getElementById(
       'content'
     );
 
-
   content.innerHTML = `
-
     <div class="card highlight">
 
       <h2>
@@ -831,59 +2681,28 @@ function renderTransferPage() {
 
       <dl class="review-list">
 
-        <dt>
-          Destinatário
-        </dt>
-
+        <dt>Destinatário</dt>
         <dd id="reviewRecipient"></dd>
 
-
-        <dt>
-          Instituição
-        </dt>
-
+        <dt>Instituição</dt>
         <dd id="reviewInstitution"></dd>
 
-
-        <dt>
-          Modalidade
-        </dt>
-
+        <dt>Modalidade</dt>
         <dd id="reviewType"></dd>
 
-
-        <dt>
-          Conta
-        </dt>
-
+        <dt>Conta</dt>
         <dd id="reviewAccount"></dd>
 
-
-        <dt>
-          Valor
-        </dt>
-
+        <dt>Valor</dt>
         <dd id="reviewAmount"></dd>
 
-
-        <dt>
-          Tarifa
-        </dt>
-
+        <dt>Tarifa</dt>
         <dd id="reviewFee"></dd>
 
-
-        <dt>
-          Total
-        </dt>
-
+        <dt>Total</dt>
         <dd id="reviewTotal"></dd>
 
-
-        <dt>
-          Data efetiva
-        </dt>
-
+        <dt>Data efetiva</dt>
         <dd id="reviewDate"></dd>
 
       </dl>
@@ -932,7 +2751,6 @@ function renderTransferPage() {
       </div>
 
     </dialog>
-
   `;
 
 
@@ -972,351 +2790,136 @@ function renderTransferPage() {
       loadBanks(),
       loadScheduledTransfers()
     ])
-    .catch(error =>
-
-      showApiError(
-        document.getElementById(
-          'transferError'
-        ),
-        error
-      )
-    );
-}
-
-function renderExtratoPage() {
-
-  const content =
-    document.getElementById(
-      'content'
-    );
-
-
-  content.innerHTML = `
-
-    <div class="card highlight">
-
-      <h2>
-        Extrato
-      </h2>
-
-    </div>
-
-
-    <div class="card">
-
-      <button
-        id="btnTodos"
-        class="filtro-btn ativo"
-        onclick="filtrarExtrato('todos', this)"
-      >
-        Todos
-      </button>
-
-
-      <button
-        id="btnTransfer"
-        class="filtro-btn"
-        onclick="filtrarExtrato('transfer', this)"
-      >
-        Transferências
-      </button>
-
-    </div>
-
-
-    <div class="card">
-
-      <h3>
-        Resumo do extrato
-      </h3>
-
-      <p
-        id="resumoContexto"
-        class="summary-context"
-      ></p>
-
-      <div id="graficoExtrato"></div>
-
-      <div
-        id="resumoValores"
-        class="resumo-valores"
-      ></div>
-
-    </div>
-
-
-    <div id="listaExtrato"></div>
-
-  `;
-
-
-  renderExtrato();
-
-  renderGraficoExtrato();
-
-  atualizarFiltroAtivo();
-
-
-  refreshOfficialStatement()
-
-    .then(() => {
-
-      if (
-        document.getElementById(
-          'listaExtrato'
-        )
-      ) {
-
-        renderExtrato();
-
-        renderGraficoExtrato();
-      }
-    })
-
-    .catch(error => {
-
-      const lista =
-        document.getElementById(
-          'listaExtrato'
-        );
-
-      if (lista) {
-
-        lista.innerHTML = `
-
-          <div class="card">
-
-            <p id="statementError"></p>
-
-          </div>
-
-        `;
-
+    .catch(
+      error =>
         showApiError(
           document.getElementById(
-            'statementError'
+            'transferError'
           ),
           error
-        );
-      }
-    });
+        )
+    );
 }
 
-function loadPage(page) {
-
-  if (page === 'dashboard') {
-
-    renderDashboard();
-
-    return;
-  }
-
-
-  if (page === 'transfer') {
-
-    renderTransferPage();
-
-    return;
-  }
-
-
-  if (page === 'extrato') {
-
-    renderExtratoPage();
-
-    return;
-  }
-
-
-  if (page === 'pix') {
-
-    renderFeaturePlaceholder(
-
-      'Pix',
-
-      'O módulo Pix do SPBank está em adaptação para integração com o backend oficial.'
-    );
-
-    return;
-  }
-
-
-  if (page === 'invest') {
-
-    renderFeaturePlaceholder(
-
-      'Investimentos',
-
-      'O módulo de investimentos do SPBank está em adaptação para integração com o backend oficial.'
-    );
-
-    return;
-  }
-
-
-  if (page === 'cartao') {
-
-    renderFeaturePlaceholder(
-
-      'Cartão',
-
-      'O módulo de cartão do SPBank está em adaptação para integração com o backend oficial.'
-    );
-
-    return;
-  }
-
-
-  renderDashboard();
-}
 
 async function submitTransfer(event) {
-
   event.preventDefault();
-
 
   const form =
     event.currentTarget;
-
 
   const button =
     form.querySelector(
       'button[type="submit"]'
     );
 
-
   const errorBox =
     document.getElementById(
       'transferError'
     );
-
 
   const data =
     Object.fromEntries(
       new FormData(form)
     );
 
-
   const payload = {
-
     ...data,
 
     recipientDocument:
-      data
-        .recipientDocument
-        .replace(/\D/g, ''),
+      data.recipientDocument.replace(
+        /\D/g,
+        ''
+      ),
 
     amount:
-      Number(data.amount),
+      Number(
+        data.amount
+      ),
 
     scheduledFor:
-      data.scheduledFor || null
+      data.scheduledFor ||
+      null
   };
 
-
-  button.disabled = true;
+  button.disabled =
+    true;
 
   button.textContent =
     'Calculando…';
 
-  errorBox.textContent = '';
-
+  clearMessage(
+    errorBox
+  );
 
   try {
-
     const preview =
       await api(
-
         '/api/v1/transfers/preview',
-
         {
           method: 'POST',
 
           body:
-            JSON.stringify(payload)
+            JSON.stringify(
+              payload
+            )
         }
       );
-
 
     pendingTransfer =
       payload;
 
-
     pendingIdempotencyKey =
       crypto.randomUUID();
 
-
     setText(
-
       'reviewRecipient',
-
       `${payload.recipientName} — ${payload.recipientDocument}`
     );
 
-
     setText(
-
       'reviewInstitution',
-
       preview.institutionName
     );
 
-
     setText(
-
       'reviewType',
-
       transferTypeLabels[
         preview.type
-      ] || preview.type
+      ] ||
+      preview.type
     );
 
-
     setText(
-
       'reviewAccount',
-
       `${payload.bankCode} / ${payload.branch} / ${payload.accountNumber}`
     );
 
-
     setText(
-
       'reviewAmount',
-
       formatarMoeda(
         preview.amount
       )
     );
 
-
     setText(
-
       'reviewFee',
-
       formatarMoeda(
         preview.fee
       )
     );
 
-
     setText(
-
       'reviewTotal',
-
       formatarMoeda(
         preview.total
       )
     );
 
-
     setText(
-
       'reviewDate',
-
       preview.effectiveDate
     );
-
 
     document
       .getElementById(
@@ -1324,13 +2927,11 @@ async function submitTransfer(event) {
       )
       .value = '';
 
-
-    document
-      .getElementById(
+    clearMessage(
+      document.getElementById(
         'reviewError'
       )
-      .textContent = '';
-
+    );
 
     document
       .getElementById(
@@ -1338,32 +2939,29 @@ async function submitTransfer(event) {
       )
       .showModal();
 
-
     document
       .getElementById(
         'transferConfirmationPassword'
       )
       .focus();
 
-
   } catch (error) {
-
     showApiError(
       errorBox,
       error
     );
 
   } finally {
-
-    button.disabled = false;
+    button.disabled =
+      false;
 
     button.textContent =
       'Revisar transferência';
   }
 }
 
-async function confirmTransfer() {
 
+async function confirmTransfer() {
   if (
     !pendingTransfer ||
     !pendingIdempotencyKey
@@ -1371,61 +2969,51 @@ async function confirmTransfer() {
     return;
   }
 
-
   const button =
     document.getElementById(
       'confirmTransfer'
     );
-
-
-  const errorBox =
-    document.getElementById(
-      'transferError'
-    );
-
 
   const reviewError =
     document.getElementById(
       'reviewError'
     );
 
-
   const passwordInput =
     document.getElementById(
       'transferConfirmationPassword'
     );
 
-
   const confirmationPassword =
     passwordInput.value;
 
-
   if (!confirmationPassword) {
-
-    reviewError.textContent =
-      'Informe sua senha para confirmar a transferência.';
+    showApiError(
+      reviewError,
+      new Error(
+        'Informe sua senha para confirmar a transferência.'
+      )
+    );
 
     passwordInput.focus();
 
     return;
   }
 
-
-  button.disabled = true;
+  button.disabled =
+    true;
 
   button.textContent =
     'Processando…';
 
-  reviewError.textContent = '';
-
+  clearMessage(
+    reviewError
+  );
 
   try {
-
     const transfer =
       await api(
-
         '/api/v1/transfers',
-
         {
           method: 'POST',
 
@@ -1444,121 +3032,95 @@ async function confirmTransfer() {
         }
       );
 
-
     document
       .getElementById(
         'transferReview'
       )
       .close();
 
-
     passwordInput.value = '';
 
-
     pendingTransfer = null;
-
     pendingIdempotencyKey = null;
-
 
     renderTransferReceipt(
       transfer
     );
 
-
     await Promise.all([
       loadAccountSummary(),
       loadEntries(),
-      loadScheduledTransfers()
+      loadScheduledTransfers(),
+      loadCustomerAccounts()
     ]);
 
-
   } catch (error) {
-
     passwordInput.value = '';
-
 
     showApiError(
       reviewError,
       error
     );
 
-
-    if (errorBox) {
-
-      errorBox.textContent = '';
-    }
-
-
     passwordInput.focus();
 
-
   } finally {
-
-    button.disabled = false;
+    button.disabled =
+      false;
 
     button.textContent =
       'Confirmar transferência';
   }
 }
 
-function cancelReview() {
 
+function cancelReview() {
   const dialog =
     document.getElementById(
       'transferReview'
     );
-
 
   const passwordInput =
     document.getElementById(
       'transferConfirmationPassword'
     );
 
-
   if (passwordInput) {
-
     passwordInput.value = '';
   }
 
-
   pendingTransfer = null;
-
   pendingIdempotencyKey = null;
-
 
   dialog.close();
 }
 
-async function loadScheduledTransfers() {
 
+async function loadScheduledTransfers() {
   const container =
     document.getElementById(
       'scheduledTransfers'
     );
 
-
   if (!container) {
     return;
   }
-
 
   const transfers =
     await api(
       '/api/v1/transfers/scheduled'
     );
 
-
-  if (transfers.length === 0) {
-
+  if (
+    transfers.length === 0
+  ) {
     container.innerHTML =
       '<p>Nenhuma transferência agendada.</p>';
 
     return;
   }
 
-
   container.innerHTML = `
-
     <div class="table-responsive">
 
       <table>
@@ -1566,27 +3128,11 @@ async function loadScheduledTransfers() {
         <thead>
 
           <tr>
-
-            <th>
-              Data
-            </th>
-
-            <th>
-              Destinatário
-            </th>
-
-            <th>
-              Modalidade
-            </th>
-
-            <th>
-              Valor
-            </th>
-
-            <th>
-              Ação
-            </th>
-
+            <th>Data</th>
+            <th>Destinatário</th>
+            <th>Modalidade</th>
+            <th>Valor</th>
+            <th>Ação</th>
           </tr>
 
         </thead>
@@ -1598,17 +3144,17 @@ async function loadScheduledTransfers() {
             transfers
               .map(
                 transfer => `
-
                   <tr>
 
                     <td>
                       ${
                         escapeHtml(
-                          transfer.scheduledFor
+                          formatDate(
+                            transfer.scheduledFor
+                          )
                         )
                       }
                     </td>
-
 
                     <td>
                       ${
@@ -1618,30 +3164,26 @@ async function loadScheduledTransfers() {
                       }
                     </td>
 
-
                     <td>
                       ${
                         escapeHtml(
-
                           transferTypeLabels[
                             transfer.type
-                          ] || transfer.type
+                          ] ||
+                          transfer.type
                         )
                       }
                     </td>
 
-
                     <td>
                       ${
                         escapeHtml(
-
                           formatarMoeda(
                             transfer.amount
                           )
                         )
                       }
                     </td>
-
 
                     <td>
 
@@ -1660,7 +3202,6 @@ async function loadScheduledTransfers() {
                     </td>
 
                   </tr>
-
                 `
               )
               .join('')
@@ -1671,7 +3212,6 @@ async function loadScheduledTransfers() {
       </table>
 
     </div>
-
   `;
 
 
@@ -1679,84 +3219,72 @@ async function loadScheduledTransfers() {
     .querySelectorAll(
       '[data-cancel-scheduled]'
     )
-    .forEach(button => {
-
-      button.addEventListener(
-
-        'click',
-
-        () =>
-          cancelScheduledTransfer(
-            button
-          )
-      );
-    });
+    .forEach(
+      button => {
+        button.addEventListener(
+          'click',
+          () =>
+            cancelScheduledTransfer(
+              button
+            )
+        );
+      }
+    );
 }
+
 
 async function cancelScheduledTransfer(
   button
 ) {
-
   const id =
-    button.dataset.cancelScheduled;
-
+    button.dataset
+      .cancelScheduled;
 
   const message =
     document.getElementById(
       'scheduledMessage'
     );
 
-
-  button.disabled = true;
-
+  button.disabled =
+    true;
 
   message.textContent =
     'Cancelando agendamento…';
 
-
   try {
-
     await api(
-
       `/api/v1/transfers/${id}`,
-
       {
         method: 'DELETE'
       }
     );
 
-
     message.textContent =
       'Transferência agendada cancelada.';
 
-
     await loadScheduledTransfers();
 
-
   } catch (error) {
-
     showApiError(
       message,
       error
     );
 
-
-    button.disabled = false;
+    button.disabled =
+      false;
   }
 }
+
 
 function renderTransferReceipt(
   transfer
 ) {
-
   const content =
     document.getElementById(
       'content'
     );
 
-
   content.innerHTML = `
-
     <section
       class="card receipt"
       aria-labelledby="receiptTitle"
@@ -1768,91 +3296,46 @@ function renderTransferReceipt(
 
 
       <p>
-
         Status:
-
         <strong id="receiptStatus"></strong>
-
       </p>
 
 
       <dl class="review-list">
 
-
-        <dt>
-          Identificador
-        </dt>
-
+        <dt>Identificador</dt>
         <dd id="receiptId"></dd>
 
-
-        <dt>
-          Destinatário
-        </dt>
-
+        <dt>Destinatário</dt>
         <dd id="receiptRecipient"></dd>
 
-
-        <dt>
-          Conta
-        </dt>
-
+        <dt>Conta</dt>
         <dd id="receiptAccount"></dd>
 
-
-        <dt>
-          Modalidade
-        </dt>
-
+        <dt>Modalidade</dt>
         <dd id="receiptType"></dd>
 
-
-        <dt>
-          Valor
-        </dt>
-
+        <dt>Valor</dt>
         <dd id="receiptAmount"></dd>
 
-
-        <dt>
-          Tarifa
-        </dt>
-
+        <dt>Tarifa</dt>
         <dd id="receiptFee"></dd>
 
-
-        <dt>
-          Data agendada
-        </dt>
-
+        <dt>Data agendada</dt>
         <dd id="receiptDate"></dd>
 
-
-        <dt>
-          Solicitada em
-        </dt>
-
+        <dt>Solicitada em</dt>
         <dd id="receiptRequestedAt"></dd>
 
-
-        <dt>
-          Processada em
-        </dt>
-
+        <dt>Processada em</dt>
         <dd id="receiptProcessedAt"></dd>
-
 
         ${
           transfer.type === 'TED'
-
             ? `
-              <dt>
-                Liquidação
-              </dt>
-
+              <dt>Liquidação</dt>
               <dd id="receiptSettlement"></dd>
             `
-
             : ''
         }
 
@@ -1860,13 +3343,11 @@ function renderTransferReceipt(
 
 
       <p>
-
         Saldo atualizado:
 
         <strong id="transferBalance">
           carregando…
         </strong>
-
       </p>
 
 
@@ -1895,35 +3376,13 @@ function renderTransferReceipt(
           <thead>
 
             <tr>
-
-              <th>
-                Data/hora
-              </th>
-
-              <th>
-                Descrição
-              </th>
-
-              <th>
-                Para/de
-              </th>
-
-              <th>
-                Modalidade
-              </th>
-
-              <th>
-                Movimento
-              </th>
-
-              <th>
-                Valor
-              </th>
-
-              <th>
-                Saldo após
-              </th>
-
+              <th>Data/hora</th>
+              <th>Descrição</th>
+              <th>Para/de</th>
+              <th>Modalidade</th>
+              <th>Movimento</th>
+              <th>Valor</th>
+              <th>Saldo após</th>
             </tr>
 
           </thead>
@@ -1935,132 +3394,96 @@ function renderTransferReceipt(
       </div>
 
     </section>
-
   `;
 
 
   setText(
-
     'receiptStatus',
-
     transferStatusLabels[
       transfer.status
-    ] || transfer.status
+    ] ||
+    transfer.status
   );
-
 
   setText(
     'receiptId',
     transfer.id
   );
 
-
   setText(
     'receiptRecipient',
     transfer.recipientName
   );
 
-
   setText(
-
     'receiptAccount',
-
     `${transfer.bankCode} / ${transfer.branch} / ${transfer.accountNumber}`
   );
 
-
   setText(
-
     'receiptType',
-
     transferTypeLabels[
       transfer.type
-    ] || transfer.type
+    ] ||
+    transfer.type
   );
 
-
   setText(
-
     'receiptAmount',
-
     formatarMoeda(
       transfer.amount
     )
   );
 
-
   setText(
-
     'receiptFee',
-
     formatarMoeda(
       transfer.fee
     )
   );
 
-
   setText(
-
     'receiptDate',
-
-    transfer.scheduledFor ||
-    'Imediata'
+    transfer.scheduledFor
+      ? formatDate(
+          transfer.scheduledFor
+        )
+      : 'Imediata'
   );
 
-
   setText(
-
     'receiptRequestedAt',
-
-    new Date(
+    formatDateTime(
       transfer.requestedAt
     )
-      .toLocaleString(
-        'pt-BR'
-      )
   );
 
-
   setText(
-
     'receiptProcessedAt',
-
     transfer.processedAt
-
-      ? new Date(
+      ? formatDateTime(
           transfer.processedAt
         )
-          .toLocaleString(
-            'pt-BR'
-          )
-
       : 'Aguardando'
   );
 
-
-  if (transfer.type === 'TED') {
-
+  if (
+    transfer.type === 'TED'
+  ) {
     setText(
-
       'receiptSettlement',
-
       transfer.settlementReference
-
         ? `${transfer.settlementReference} (ambiente simulado)`
-
         : 'Aguardando processamento'
     );
   }
-
 
   document
     .getElementById(
       'newTransfer'
     )
     .addEventListener(
-
       'click',
-
       () =>
         loadPage(
           'transfer'
@@ -2068,49 +3491,44 @@ function renderTransferReceipt(
     );
 }
 
-async function loadEntries() {
 
+/* =========================================================
+   EXTRATO
+========================================================= */
+
+async function loadEntries() {
   const tbody =
     document.getElementById(
       'recentEntries'
     );
-
 
   const entries =
     await api(
       '/api/v1/accounts/me/entries?limit=20'
     );
 
-
   replaceOfficialEntries(
     entries
   );
-
 
   if (!tbody) {
     return;
   }
 
-
   tbody.replaceChildren();
 
-
-  for (const entry of entries) {
-
+  for (
+    const entry of entries
+  ) {
     const row =
       document.createElement(
         'tr'
       );
 
-
     const values = [
-
-      new Date(
+      formatDateTime(
         entry.occurredAt
-      )
-        .toLocaleString(
-          'pt-BR'
-        ),
+      ),
 
       entry.description,
 
@@ -2134,24 +3552,21 @@ async function loadEntries() {
       )
     ];
 
-
-    for (const value of values) {
-
+    for (
+      const value of values
+    ) {
       const cell =
         document.createElement(
           'td'
         );
 
-
       cell.textContent =
         value;
-
 
       row.appendChild(
         cell
       );
     }
-
 
     tbody.appendChild(
       row
@@ -2159,14 +3574,13 @@ async function loadEntries() {
   }
 }
 
+
 function replaceOfficialEntries(
   entries
 ) {
-
   extrato =
     entries.map(
       entry => ({
-
         id:
           entry.id,
 
@@ -2226,60 +3640,54 @@ function replaceOfficialEntries(
     );
 }
 
-async function refreshOfficialStatement() {
 
+async function refreshOfficialStatement() {
   const entries =
     await api(
       '/api/v1/accounts/me/entries?limit=100'
     );
 
-
   replaceOfficialEntries(
     entries
   );
 
-
   return entries;
 }
+
 
 function filtrarExtrato(
   tipo,
   botao
 ) {
-
   filtroAtual =
     tipo;
-
 
   document
     .querySelectorAll(
       '.filtro-btn'
     )
-    .forEach(btn => {
-
-      btn.classList.remove(
-        'ativo'
-      );
-    });
-
+    .forEach(
+      btn => {
+        btn.classList.remove(
+          'ativo'
+        );
+      }
+    );
 
   if (botao) {
-
     botao.classList.add(
       'ativo'
     );
   }
 
-
   renderExtrato();
 
-  renderGraficoExtrato();
+  renderStatementSummary();
 }
 
+
 function atualizarFiltroAtivo() {
-
   const mapa = {
-
     todos:
       'btnTodos',
 
@@ -2287,566 +3695,133 @@ function atualizarFiltroAtivo() {
       'btnTransfer'
   };
 
-
   document
     .querySelectorAll(
       '.filtro-btn'
     )
-    .forEach(btn => {
-
-      btn.classList.remove(
-        'ativo'
-      );
-    });
-
+    .forEach(
+      btn => {
+        btn.classList.remove(
+          'ativo'
+        );
+      }
+    );
 
   const ativo =
     document.getElementById(
       mapa[filtroAtual]
     );
 
-
   if (ativo) {
-
     ativo.classList.add(
       'ativo'
     );
   }
 }
 
+
 function getFilteredStatementEntries() {
-
   return extrato
-
     .slice()
-
     .sort(
       (a, b) =>
         new Date(b.data) -
         new Date(a.data)
     )
+    .filter(
+      item => {
+        if (
+          filtroAtual ===
+          'todos'
+        ) {
+          return true;
+        }
 
-    .filter(item => {
-
-      if (
-        filtroAtual === 'todos'
-      ) {
-        return true;
-      }
-
-
-      if (
-        filtroAtual === 'transfer'
-      ) {
-
-        return (
-          item.category ===
+        if (
+          filtroAtual ===
           'transfer'
-        );
+        ) {
+          return (
+            item.category ===
+            'transfer'
+          );
+        }
+
+        return false;
       }
-
-
-      return false;
-    });
+    );
 }
 
-function renderExtrato() {
 
-  const lista =
+function renderStatementSummary() {
+  const movimentos =
     getFilteredStatementEntries();
 
-
-  const element =
-    document.getElementById(
-      'listaExtrato'
-    );
-
-
-  if (!element) {
-    return;
-  }
-
-
-  if (
-    lista.length === 0
-  ) {
-
-    element.innerHTML = `
-
-      <div class="card">
-
-        <p>
-          Nenhuma movimentação.
-        </p>
-
-      </div>
-
-    `;
-
-    return;
-  }
-
-
-  element.innerHTML =
-    lista
-      .map(item => {
-
-        const cor =
-          item.valor < 0
-            ? '#ef4444'
-            : '#22c55e';
-
-
-        const counterpartyLabel =
-
-          item.entryType === 'FEE'
-
-            ? 'Relacionado a'
-
-            : item.direction === 'CREDIT'
-
-              ? 'Recebido de'
-
-              : 'Enviado para';
-
-
-        return `
-
-          <div
-            class="
-              card
-              statement-card
-            "
-          >
-
-            <div class="row">
-
-              <strong>
-                ${
-                  escapeHtml(
-                    item.tipo
-                  )
-                }
-              </strong>
-
-
-              <span
-                style="
-                  color:${cor}
-                "
-              >
-                ${
-                  formatarMoeda(
-                    item.valor
-                  )
-                }
-              </span>
-
-            </div>
-
-
-            <div class="statement-details">
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Data e hora
-                </span>
-
-                <strong>
-                  ${
-                    escapeHtml(
-
-                      new Date(
-                        item.data
-                      )
-                        .toLocaleString(
-                          'pt-BR'
-                        )
-                    )
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  ${counterpartyLabel}
-                </span>
-
-                <strong>
-                  ${
-                    escapeHtml(
-                      item.counterpartyName
-                    )
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Banco
-                </span>
-
-                <strong>
-                  ${
-                    escapeHtml(
-                      item.counterpartyBankCode
-                    )
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Modalidade
-                </span>
-
-                <strong>
-                  ${
-                    escapeHtml(
-
-                      transferModalityLabel(
-                        item.operationType
-                      )
-                    )
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Natureza
-                </span>
-
-                <strong>
-                  ${
-                    item.direction === 'DEBIT'
-                      ? 'Débito'
-                      : 'Crédito'
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Saldo após
-                </span>
-
-                <strong>
-                  ${
-                    formatarMoeda(
-                      item.balanceAfter
-                    )
-                  }
-                </strong>
-
-              </div>
-
-
-              <div class="statement-detail">
-
-                <span>
-                  Identificador
-                </span>
-
-                <strong>
-                  ${
-                    escapeHtml(
-                      item.referenceId
-                    )
-                  }
-                </strong>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        `;
-      })
-      .join('');
-}
-
-function renderGraficoDashboard() {
-
-  const container =
-    document.getElementById(
-      'graficoDash'
-    );
-
-
-  if (!container) {
-    return;
-  }
-
-
-  if (
-    window.graficoDashboard &&
-    typeof window.graficoDashboard.destroy ===
-      'function'
-  ) {
-
-    window
-      .graficoDashboard
-      .destroy();
-  }
-
-
-  const movements =
-    extrato.slice(-9);
-
-
-  if (
-    movements.length === 0
-  ) {
-
-    container.innerHTML = `
-
-      <div
-        style="
-          height:280px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#94a3b8;
-        "
-      >
-        Nenhuma movimentação disponível
-      </div>
-
-    `;
-
-    return;
-  }
-
-
-  const entradas =
-    movements.map(
-      item =>
+  let entradas = 0;
+  let saidas = 0;
+
+  movimentos.forEach(
+    item => {
+      if (
         item.valor >= 0
-          ? item.valor
-          : 0
-    );
+      ) {
+        entradas +=
+          Number(
+            item.valor
+          );
 
-
-  const saidas =
-    movements.map(
-      item =>
-        item.valor < 0
-          ? Math.abs(
+      } else {
+        saidas +=
+          Math.abs(
+            Number(
               item.valor
             )
-          : 0
-    );
-
-
-  const categories =
-    movements.map(item =>
-
-      new Date(
-        item.data
-      )
-        .toLocaleDateString(
-          'pt-BR',
-          {
-            day: '2-digit',
-            month: '2-digit'
-          }
-        )
-    );
-
-
-  window.graficoDashboard =
-    new ApexCharts(
-
-      container,
-
-      {
-
-        chart: {
-
-          type:
-            'area',
-
-          height:
-            350,
-
-          toolbar: {
-            show: false
-          },
-
-          background:
-            'transparent'
-        },
-
-
-        series: [
-
-          {
-            name:
-              'Entradas',
-
-            data:
-              entradas
-          },
-
-          {
-            name:
-              'Saídas',
-
-            data:
-              saidas
-          }
-        ],
-
-
-        colors: [
-          '#22c55e',
-          '#E30E13'
-        ],
-
-
-        stroke: {
-
-          curve:
-            'smooth',
-
-          width:
-            3
-        },
-
-
-        fill: {
-
-          opacity: [
-            0.15,
-            0.05
-          ]
-        },
-
-
-        markers: {
-
-          size:
-            5,
-
-          strokeWidth:
-            2
-        },
-
-
-        xaxis: {
-
-          categories,
-
-          labels: {
-
-            style: {
-              colors:
-                '#94a3b8'
-            }
-          }
-        },
-
-
-        yaxis: {
-
-          labels: {
-
-            style: {
-
-              colors:
-                '#94a3b8'
-            },
-
-            formatter:
-              value =>
-                formatarMoeda(
-                  value
-                )
-          }
-        },
-
-
-        grid: {
-
-          borderColor:
-            'rgba(255,255,255,.08)'
-        },
-
-
-        legend: {
-
-          labels: {
-
-            colors:
-              '#ffffff'
-          }
-        },
-
-
-        tooltip: {
-
-          theme:
-            'dark'
-        }
+          );
       }
+    }
+  );
+
+  renderResumoValores(
+    entradas,
+    saidas
+  );
+
+  const contexto =
+    document.getElementById(
+      'resumoContexto'
     );
 
-
-  window
-    .graficoDashboard
-    .render();
+  if (contexto) {
+    contexto.textContent =
+      filtroAtual === 'todos'
+        ? 'Todas as movimentações carregadas'
+        : 'Somente transferências';
+  }
 }
+
 
 function renderResumoValores(
   entradas,
   saidas
 ) {
-
   const resultado =
     entradas - saidas;
 
-
   const resultadoClasse =
-
     resultado < 0
-
       ? 'saida'
-
       : 'resultado';
-
 
   const resumo =
     document.getElementById(
       'resumoValores'
     );
 
-
   if (!resumo) {
     return;
   }
 
-
   resumo.innerHTML = `
-
     <div class="resumo-item">
 
       <h4>
@@ -2854,11 +3829,7 @@ function renderResumoValores(
       </h4>
 
       <strong class="entrada">
-        ${
-          formatarMoeda(
-            entradas
-          )
-        }
+        ${formatarMoeda(entradas)}
       </strong>
 
     </div>
@@ -2871,11 +3842,7 @@ function renderResumoValores(
       </h4>
 
       <strong class="saida">
-        ${
-          formatarMoeda(
-            saidas
-          )
-        }
+        ${formatarMoeda(saidas)}
       </strong>
 
     </div>
@@ -2890,11 +3857,7 @@ function renderResumoValores(
       <strong
         class="${resultadoClasse}"
       >
-        ${
-          formatarMoeda(
-            resultado
-          )
-        }
+        ${formatarMoeda(resultado)}
       </strong>
 
     </div>
@@ -2903,432 +3866,2206 @@ function renderResumoValores(
     <div class="resumo-item">
 
       <h4>
-        Saldo atual da conta
+        Saldo atual
       </h4>
 
       <strong>
-        ${
-          formatarMoeda(
-            saldo
-          )
-        }
+        ${formatarMoeda(saldo)}
       </strong>
 
     </div>
-
   `;
 }
 
-function renderGraficoExtrato() {
 
-  const container =
+function renderExtrato() {
+  const lista =
+    getFilteredStatementEntries();
+
+  const element =
     document.getElementById(
-      'graficoExtrato'
+      'listaExtrato'
     );
 
+  if (!element) {
+    return;
+  }
+
+  if (
+    lista.length === 0
+  ) {
+    element.innerHTML = `
+      <div class="card">
+        <p>
+          Nenhuma movimentação.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+  element.innerHTML =
+    lista
+      .map(
+        item => {
+          const counterpartyLabel =
+            item.entryType === 'FEE'
+              ? 'Relacionado a'
+              : item.direction === 'CREDIT'
+                ? 'Recebido de'
+                : 'Enviado para';
+
+          return `
+            <div
+              class="
+                card
+                statement-card
+              "
+            >
+
+              <div class="row">
+
+                <strong>
+                  ${escapeHtml(item.tipo)}
+                </strong>
+
+                <span
+                  class="${
+                    item.valor < 0
+                      ? 'saida'
+                      : 'entrada'
+                  }"
+                >
+                  ${formatarMoeda(item.valor)}
+                </span>
+
+              </div>
+
+
+              <div class="statement-details">
+
+                <div class="statement-detail">
+
+                  <span>
+                    Data e hora
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        formatDateTime(
+                          item.data
+                        )
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    ${counterpartyLabel}
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        item.counterpartyName
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Banco
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        item.counterpartyBankCode
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Modalidade
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        transferModalityLabel(
+                          item.operationType
+                        )
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Natureza
+                  </span>
+
+                  <strong>
+                    ${
+                      item.direction === 'DEBIT'
+                        ? 'Débito'
+                        : 'Crédito'
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Saldo após
+                  </span>
+
+                  <strong>
+                    ${
+                      formatarMoeda(
+                        item.balanceAfter
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Identificador
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        item.referenceId
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+              </div>
+
+            </div>
+          `;
+        }
+      )
+      .join('');
+}
+
+
+function renderExtratoPage() {
+  const content =
+    document.getElementById(
+      'content'
+    );
+
+  content.innerHTML = `
+    <div class="card highlight">
+
+      <h2>
+        Extrato
+      </h2>
+
+      <p>
+        Movimentações oficiais da conta selecionada.
+      </p>
+
+    </div>
+
+
+    <div class="card statement-toolbar">
+
+      <button
+        id="btnTodos"
+        class="filtro-btn ativo"
+        type="button"
+        onclick="filtrarExtrato('todos', this)"
+      >
+        Todos
+      </button>
+
+
+      <button
+        id="btnTransfer"
+        class="filtro-btn"
+        type="button"
+        onclick="filtrarExtrato('transfer', this)"
+      >
+        Transferências
+      </button>
+
+    </div>
+
+
+    <div class="card">
+
+      <h3>
+        Resumo do extrato
+      </h3>
+
+      <p
+        id="resumoContexto"
+        class="summary-context"
+      ></p>
+
+      <div
+        id="resumoValores"
+        class="resumo-valores"
+      ></div>
+
+    </div>
+
+
+    <div id="listaExtrato"></div>
+  `;
+
+  atualizarFiltroAtivo();
+
+  renderExtrato();
+
+  renderStatementSummary();
+
+  Promise
+    .all([
+      loadAccountSummary(),
+      refreshOfficialStatement()
+    ])
+    .then(
+      () => {
+        if (
+          document.getElementById(
+            'listaExtrato'
+          )
+        ) {
+          renderExtrato();
+
+          renderStatementSummary();
+        }
+      }
+    )
+    .catch(
+      error => {
+        const lista =
+          document.getElementById(
+            'listaExtrato'
+          );
+
+        if (!lista) {
+          return;
+        }
+
+        lista.innerHTML = `
+          <div class="card">
+            <p id="statementError"></p>
+          </div>
+        `;
+
+        showApiError(
+          document.getElementById(
+            'statementError'
+          ),
+          error
+        );
+      }
+    );
+}
+
+
+/* =========================================================
+   PERFIL
+========================================================= */
+
+function renderProfilePage() {
+  const content =
+    document.getElementById(
+      'content'
+    );
+
+  content.innerHTML = `
+    <div class="card highlight">
+
+      <h2>
+        Meus dados
+      </h2>
+
+      <p>
+        Consulte seus dados cadastrais
+        e mantenha contato e endereço atualizados.
+      </p>
+
+    </div>
+
+
+    <form
+      id="profileForm"
+      class="card"
+    >
+
+      <div class="header">
+
+        <div>
+
+          <h3>
+            Dados cadastrais
+          </h3>
+
+          <p class="summary-context">
+            Nome, CPF e nascimento identificam
+            o cliente e não podem ser alterados.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <fieldset class="form-section">
+
+        <legend>
+          Identificação
+        </legend>
+
+
+        <div class="grid-2">
+
+          <label>
+
+            Nome completo
+
+            <input
+              id="profileFullName"
+              disabled
+            >
+
+          </label>
+
+
+          <label>
+
+            CPF
+
+            <input
+              id="profileCpf"
+              disabled
+            >
+
+          </label>
+
+        </div>
+
+
+        <label>
+
+          Data de nascimento
+
+          <input
+            id="profileBirthDate"
+            type="date"
+            disabled
+          >
+
+        </label>
+
+      </fieldset>
+
+
+      <fieldset class="form-section">
+
+        <legend>
+          Contato
+        </legend>
+
+
+        <div class="grid-2">
+
+          <label>
+
+            Celular
+
+            <input
+              id="profileMobile"
+              name="mobile"
+              type="tel"
+              required
+            >
+
+          </label>
+
+
+          <label>
+
+            E-mail
+
+            <input
+              id="profileEmail"
+              name="email"
+              type="email"
+              required
+            >
+
+          </label>
+
+        </div>
+
+      </fieldset>
+
+
+      <fieldset class="form-section">
+
+        <legend>
+          Endereço
+        </legend>
+
+
+        <div class="grid-2">
+
+          <label>
+
+            CEP
+
+            <input
+              id="profilePostalCode"
+              name="postalCode"
+              required
+            >
+
+          </label>
+
+
+          <label>
+
+            Estado
+
+            <input
+              id="profileState"
+              name="state"
+              maxlength="2"
+              required
+            >
+
+          </label>
+
+        </div>
+
+
+        <label>
+
+          Rua
+
+          <input
+            id="profileStreet"
+            name="street"
+            required
+          >
+
+        </label>
+
+
+        <div class="grid-2">
+
+          <label>
+
+            Número
+
+            <input
+              id="profileNumber"
+              name="number"
+              required
+            >
+
+          </label>
+
+
+          <label>
+
+            Complemento
+
+            <input
+              id="profileComplement"
+              name="complement"
+            >
+
+          </label>
+
+        </div>
+
+
+        <div class="grid-2">
+
+          <label>
+
+            Bairro
+
+            <input
+              id="profileDistrict"
+              name="district"
+              required
+            >
+
+          </label>
+
+
+          <label>
+
+            Cidade
+
+            <input
+              id="profileCity"
+              name="city"
+              required
+            >
+
+          </label>
+
+        </div>
+
+      </fieldset>
+
+
+      <div
+        id="profileMessage"
+        class="error-message"
+        role="status"
+      ></div>
+
+
+      <button
+        class="btn"
+        type="submit"
+      >
+        Salvar alterações
+      </button>
+
+    </form>
+
+
+    <form
+      id="passwordForm"
+      class="card"
+    >
+
+      <div class="header">
+
+        <div>
+
+          <h3>
+            Alterar senha
+          </h3>
+
+          <p class="summary-context">
+            Confirme sua senha atual antes
+            de definir uma nova.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <label>
+
+        Senha atual
+
+        <input
+          name="currentPassword"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+
+      </label>
+
+
+      <div class="grid-2">
+
+        <label>
+
+          Nova senha
+
+          <input
+            name="newPassword"
+            type="password"
+            minlength="8"
+            maxlength="72"
+            autocomplete="new-password"
+            required
+          >
+
+        </label>
+
+
+        <label>
+
+          Confirmar nova senha
+
+          <input
+            name="newPasswordConfirmation"
+            type="password"
+            minlength="8"
+            maxlength="72"
+            autocomplete="new-password"
+            required
+          >
+
+        </label>
+
+      </div>
+
+
+      <div
+        id="passwordMessage"
+        class="error-message"
+        role="status"
+      ></div>
+
+
+      <button
+        class="btn"
+        type="submit"
+      >
+        Alterar senha
+      </button>
+
+    </form>
+  `;
+
+
+  document
+    .getElementById(
+      'profileForm'
+    )
+    .addEventListener(
+      'submit',
+      handleProfileUpdate
+    );
+
+
+  document
+    .getElementById(
+      'passwordForm'
+    )
+    .addEventListener(
+      'submit',
+      handlePasswordChange
+    );
+
+
+  loadProfile()
+    .catch(
+      error =>
+        showApiError(
+          document.getElementById(
+            'profileMessage'
+          ),
+          error
+        )
+    );
+}
+
+
+async function loadProfile() {
+  const profile =
+    await api(
+      '/api/v1/auth/profile'
+    );
+
+  document
+    .getElementById(
+      'profileFullName'
+    )
+    .value =
+      profile.fullName ??
+      '';
+
+  document
+    .getElementById(
+      'profileCpf'
+    )
+    .value =
+      formatCpf(
+        profile.cpf
+      );
+
+  document
+    .getElementById(
+      'profileBirthDate'
+    )
+    .value =
+      profile.birthDate ??
+      '';
+
+  document
+    .getElementById(
+      'profileMobile'
+    )
+    .value =
+      profile.mobile ??
+      '';
+
+  document
+    .getElementById(
+      'profileEmail'
+    )
+    .value =
+      profile.email ??
+      '';
+
+  document
+    .getElementById(
+      'profilePostalCode'
+    )
+    .value =
+      profile.address?.postalCode ??
+      '';
+
+  document
+    .getElementById(
+      'profileStreet'
+    )
+    .value =
+      profile.address?.street ??
+      '';
+
+  document
+    .getElementById(
+      'profileNumber'
+    )
+    .value =
+      profile.address?.number ??
+      '';
+
+  document
+    .getElementById(
+      'profileComplement'
+    )
+    .value =
+      profile.address?.complement ??
+      '';
+
+  document
+    .getElementById(
+      'profileDistrict'
+    )
+    .value =
+      profile.address?.district ??
+      '';
+
+  document
+    .getElementById(
+      'profileCity'
+    )
+    .value =
+      profile.address?.city ??
+      '';
+
+  document
+    .getElementById(
+      'profileState'
+    )
+    .value =
+      profile.address?.state ??
+      '';
+
+  return profile;
+}
+
+
+async function handleProfileUpdate(
+  event
+) {
+  event.preventDefault();
+
+  const form =
+    event.currentTarget;
+
+  const button =
+    form.querySelector(
+      'button[type="submit"]'
+    );
+
+  const message =
+    document.getElementById(
+      'profileMessage'
+    );
+
+  const data =
+    Object.fromEntries(
+      new FormData(form)
+    );
+
+  const payload = {
+    mobile:
+      data.mobile.trim(),
+
+    email:
+      data.email.trim(),
+
+    address: {
+      postalCode:
+        data.postalCode.replace(
+          /\D/g,
+          ''
+        ),
+
+      street:
+        data.street.trim(),
+
+      number:
+        data.number.trim(),
+
+      complement:
+        data.complement?.trim()
+          ? data.complement.trim()
+          : null,
+
+      district:
+        data.district.trim(),
+
+      city:
+        data.city.trim(),
+
+      state:
+        data.state
+          .trim()
+          .toUpperCase()
+    }
+  };
+
+  clearMessage(
+    message
+  );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    'Salvando…';
+
+  try {
+    await api(
+      '/api/v1/auth/profile',
+      {
+        method: 'PUT',
+
+        body:
+          JSON.stringify(
+            payload
+          )
+      }
+    );
+
+    await loadProfile();
+
+    showSuccess(
+      message,
+      'Dados atualizados com sucesso.'
+    );
+
+  } catch (error) {
+    showApiError(
+      message,
+      error
+    );
+
+  } finally {
+    button.disabled =
+      false;
+
+    button.textContent =
+      'Salvar alterações';
+  }
+}
+
+
+async function handlePasswordChange(
+  event
+) {
+  event.preventDefault();
+
+  const form =
+    event.currentTarget;
+
+  const button =
+    form.querySelector(
+      'button[type="submit"]'
+    );
+
+  const message =
+    document.getElementById(
+      'passwordMessage'
+    );
+
+  const data =
+    Object.fromEntries(
+      new FormData(form)
+    );
+
+  clearMessage(
+    message
+  );
+
+  if (
+    data.newPassword !==
+    data.newPasswordConfirmation
+  ) {
+    showApiError(
+      message,
+      new Error(
+        'A confirmação da nova senha deve ser igual à nova senha.'
+      )
+    );
+
+    return;
+  }
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    'Alterando…';
+
+  try {
+    await api(
+      '/api/v1/auth/password',
+      {
+        method: 'PUT',
+
+        body:
+          JSON.stringify({
+            currentPassword:
+              data.currentPassword,
+
+            newPassword:
+              data.newPassword,
+
+            newPasswordConfirmation:
+              data.newPasswordConfirmation
+          })
+      }
+    );
+
+    showSuccess(
+      message,
+      'Senha alterada com sucesso.'
+    );
+
+  } catch (error) {
+    showApiError(
+      message,
+      error
+    );
+
+  } finally {
+    form.reset();
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      'Alterar senha';
+  }
+}
+
+
+/* =========================================================
+   NAVEGAÇÃO DO CLIENTE
+========================================================= */
+
+function loadPage(page) {
+  if (
+    page === 'dashboard'
+  ) {
+    renderDashboard();
+    return;
+  }
+
+  if (
+    page === 'transfer'
+  ) {
+    renderTransferPage();
+    return;
+  }
+
+  if (
+    page === 'extrato'
+  ) {
+    renderExtratoPage();
+    return;
+  }
+
+  if (
+    page === 'profile'
+  ) {
+    renderProfilePage();
+    return;
+  }
+
+  if (
+    page === 'pix'
+  ) {
+    renderFeaturePlaceholder(
+      'Pix',
+      'O módulo Pix do SPBank será integrado ao backend em sua etapa própria.'
+    );
+
+    return;
+  }
+
+  if (
+    page === 'invest'
+  ) {
+    renderFeaturePlaceholder(
+      'Investimentos',
+      'O módulo de investimentos do SPBank ainda não possui API oficial.'
+    );
+
+    return;
+  }
+
+  if (
+    page === 'cartao'
+  ) {
+    renderFeaturePlaceholder(
+      'Cartão',
+      'O módulo de cartão do SPBank ainda não possui API oficial.'
+    );
+
+    return;
+  }
+
+  renderDashboard();
+}
+
+
+/* =========================================================
+   LOGIN GERENCIAL
+========================================================= */
+
+function showAdminApp(
+  administrator
+) {
+  document
+    .getElementById(
+      'loginScreen'
+    )
+    .classList
+    .add('hidden');
+
+  document
+    .getElementById(
+      'appShell'
+    )
+    .classList
+    .add('hidden');
+
+  document
+    .getElementById(
+      'adminShell'
+    )
+    .classList
+    .remove('hidden');
+
+  document
+    .getElementById(
+      'currentAdministratorName'
+    )
+    .textContent =
+      administrator.displayName ??
+      'Gerente SPBank';
+}
+
+
+async function handleAdminLogin(
+  event
+) {
+  event.preventDefault();
+
+  const form =
+    event.currentTarget;
+
+  const button =
+    form.querySelector(
+      'button[type="submit"]'
+    );
+
+  const errorBox =
+    document.getElementById(
+      'adminLoginError'
+    );
+
+  const data =
+    Object.fromEntries(
+      new FormData(form)
+    );
+
+  clearMessage(
+    errorBox
+  );
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    'Entrando…';
+
+  try {
+    const session =
+      await adminApi(
+        '/api/v1/admin/auth/login',
+        {
+          method: 'POST',
+
+          body:
+            JSON.stringify({
+              username:
+                data.username,
+
+              password:
+                data.password
+            })
+        }
+      );
+
+    sessionStorage.setItem(
+      adminAuthTokenKey,
+      session.accessToken
+    );
+
+    sessionStorage.setItem(
+      adminNameKey,
+      session.displayName
+    );
+
+    sessionStorage.setItem(
+      activeContextKey,
+      'admin'
+    );
+
+    showAdminApp(
+      session
+    );
+
+    form.reset();
+
+    await loadAdminAccounts();
+
+  } catch (error) {
+    showApiError(
+      errorBox,
+      error
+    );
+
+  } finally {
+    button.disabled =
+      false;
+
+    button.textContent =
+      'Entrar na área gerencial';
+  }
+}
+
+
+/* =========================================================
+   LOGOUT GERENCIAL
+========================================================= */
+
+async function performAdminLogout() {
+  try {
+    await adminApi(
+      '/api/v1/admin/auth/logout',
+      {
+        method: 'POST'
+      }
+    );
+
+  } catch (_) {
+    /*
+     * O contexto local será encerrado
+     * mesmo que o backend não responda.
+     */
+
+  } finally {
+    clearAdminSession();
+
+    showPublicArea(
+      'admin'
+    );
+  }
+}
+
+
+/* =========================================================
+   CONTAS DA ADMINISTRAÇÃO
+========================================================= */
+
+async function loadAdminAccounts() {
+  const container =
+    document.getElementById(
+      'adminAccounts'
+    );
+
+  const errorBox =
+    document.getElementById(
+      'adminGlobalError'
+    );
+
+  clearMessage(
+    errorBox
+  );
+
+  if (container) {
+    container.innerHTML = `
+      <p>
+        Carregando contas…
+      </p>
+    `;
+  }
+
+  try {
+    adminAccounts =
+      await adminApi(
+        '/api/v1/admin/accounts'
+      );
+
+    renderAdminAccounts();
+
+  } catch (error) {
+    if (container) {
+      container.innerHTML = `
+        <p>
+          Não foi possível carregar as contas.
+        </p>
+      `;
+    }
+
+    showApiError(
+      errorBox,
+      error
+    );
+
+    throw error;
+  }
+}
+
+
+function renderAdminAccounts() {
+  const container =
+    document.getElementById(
+      'adminAccounts'
+    );
 
   if (!container) {
     return;
   }
 
-
-  const contexto =
-    document.getElementById(
-      'resumoContexto'
-    );
-
-
-  const nomesDosFiltros = {
-
-    todos:
-      'Todas as movimentações carregadas',
-
-    transfer:
-      'Somente transferências'
-  };
-
-
-  if (contexto) {
-
-    contexto.textContent =
-      `Filtro: ${
-        nomesDosFiltros[
-          filtroAtual
-        ]
-      }`;
-  }
-
-
   if (
-    window.graficoExtrato &&
-    typeof window.graficoExtrato.destroy ===
-      'function'
+    adminAccounts.length === 0
   ) {
-
-    window
-      .graficoExtrato
-      .destroy();
-  }
-
-
-  const movimentos =
-    getFilteredStatementEntries();
-
-
-  let entradas = 0;
-
-  let saidas = 0;
-
-
-  movimentos.forEach(
-    item => {
-
-      if (
-        item.valor >= 0
-      ) {
-
-        entradas +=
-          Number(
-            item.valor
-          );
-
-      } else {
-
-        saidas +=
-          Math.abs(
-            Number(
-              item.valor
-            )
-          );
-      }
-    }
-  );
-
-
-  if (
-    entradas === 0 &&
-    saidas === 0
-  ) {
-
     container.innerHTML = `
-
-      <div
-        style="
-          height:350px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          color:#94a3b8;
-        "
-      >
-        Nenhuma movimentação
-        para o filtro selecionado
-      </div>
-
+      <p>
+        Nenhuma conta disponível.
+      </p>
     `;
-
-
-    renderResumoValores(
-      0,
-      0
-    );
-
 
     return;
   }
 
+  container.innerHTML =
+    adminAccounts
+      .map(
+        account => {
+          const targetPlan =
+            account.accountPlan ===
+            'PLUS'
+              ? 'STANDARD'
+              : 'PLUS';
 
-  container.innerHTML = '';
+          const actionLabel =
+            targetPlan === 'PLUS'
+              ? 'Promover para Plus'
+              : 'Rebaixar para Standard';
 
+          return `
+            <article class="admin-account-card">
 
-  window.graficoExtrato =
-    new ApexCharts(
+              <div class="admin-account-head">
 
-      container,
+                <div>
 
-      {
-
-        chart: {
-
-          type:
-            'donut',
-
-          height:
-            350
-        },
-
-
-        series: [
-          entradas,
-          saidas
-        ],
-
-
-        labels: [
-          'Entradas',
-          'Saídas'
-        ],
-
-
-        colors: [
-          '#22c55e',
-          '#ef4444'
-        ],
-
-
-        legend: {
-
-          position:
-            'bottom',
-
-          labels: {
-
-            colors:
-              '#fff'
-          }
-        },
-
-
-        dataLabels: {
-
-          enabled:
-            true
-        },
-
-
-        plotOptions: {
-
-          pie: {
-
-            donut: {
-
-              size:
-                '70%',
-
-              labels: {
-
-                show:
-                  true,
-
-                name: {
-
-                  show:
-                    true
-                },
-
-                value: {
-
-                  show:
-                    true,
-
-                  formatter:
-                    value =>
-                      formatarMoeda(
-                        value
+                  <h3>
+                    ${
+                      escapeHtml(
+                        account.holderName
                       )
-                },
+                    }
+                  </h3>
 
-                total: {
-
-                  show:
-                    true,
-
-                  label:
-                    'Total movimentado',
-
-                  formatter:
-                    () =>
-                      formatarMoeda(
-                        entradas +
-                        saidas
+                  <p class="summary-context">
+                    CPF:
+                    ${
+                      escapeHtml(
+                        account.maskedDocument
                       )
-                }
-              }
-            }
-          }
-        },
-
-
-        tooltip: {
-
-          theme:
-            'dark',
-
-          custom:
-            function ({
-              series,
-              seriesIndex,
-              w
-            }) {
-
-              const valor =
-                series[
-                  seriesIndex
-                ];
-
-
-              const total =
-                series.reduce(
-                  (a, b) =>
-                    a + b,
-                  0
-                );
-
-
-              const percentual =
-
-                total === 0
-
-                  ? '0.0'
-
-                  : (
-                      valor /
-                      total *
-                      100
-                    )
-                      .toFixed(1);
-
-
-              const label =
-                w
-                  .globals
-                  .labels[
-                    seriesIndex
-                  ];
-
-
-              return `
-
-                <div
-                  style="
-                    padding:12px;
-                    background:#111111;
-                    color:#fff;
-                    border-radius:10px;
-                  "
-                >
-
-                  <strong>
-                    ${label}
-                  </strong>
-
-                  <br>
-
-                  ${
-                    formatarMoeda(
-                      valor
-                    )
-                  }
-
-                  <br>
-
-                  ${percentual}%
+                    }
+                  </p>
 
                 </div>
 
-              `;
-            }
+
+                <span
+                  class="
+                    plan-badge
+                    ${
+                      account.accountPlan ===
+                      'PLUS'
+                        ? 'plus'
+                        : 'standard'
+                    }
+                  "
+                >
+                  ${
+                    escapeHtml(
+                      accountPlanLabel(
+                        account.accountPlan
+                      )
+                    )
+                  }
+                </span>
+
+              </div>
+
+
+              <div class="statement-details">
+
+                <div class="statement-detail">
+
+                  <span>
+                    Modalidade
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        accountTypeLabel(
+                          account.accountType
+                        )
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Agência
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        account.branch
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Conta
+                  </span>
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        account.accountNumber
+                      )
+                    }
+                  </strong>
+
+                </div>
+
+
+                <div class="statement-detail">
+
+                  <span>
+                    Situação
+                  </span>
+
+                  <strong>
+                    ${
+                      account.active
+                        ? 'Ativa'
+                        : 'Inativa'
+                    }
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div class="admin-plan-action">
+
+                <label>
+
+                  Motivo da alteração
+
+                  <input
+                    type="text"
+                    maxlength="240"
+                    data-plan-reason="${
+                      escapeHtml(
+                        account.accountId
+                      )
+                    }"
+                    placeholder="Informe o motivo da decisão"
+                    ${
+                      account.active
+                        ? ''
+                        : 'disabled'
+                    }
+                  >
+
+                </label>
+
+
+                <div class="actions">
+
+                  <button
+                    class="btn"
+                    type="button"
+                    data-plan-action="${
+                      escapeHtml(
+                        account.accountId
+                      )
+                    }"
+                    data-target-plan="${
+                      escapeHtml(
+                        targetPlan
+                      )
+                    }"
+                    ${
+                      account.active
+                        ? ''
+                        : 'disabled'
+                    }
+                  >
+                    ${actionLabel}
+                  </button>
+
+
+                  <button
+                    class="btn-outline"
+                    type="button"
+                    data-plan-history="${
+                      escapeHtml(
+                        account.accountId
+                      )
+                    }"
+                    data-account-name="${
+                      escapeHtml(
+                        account.holderName
+                      )
+                    }"
+                  >
+                    Ver histórico
+                  </button>
+
+                </div>
+
+
+                <p
+                  class="error-message admin-row-message"
+                  data-plan-message="${
+                    escapeHtml(
+                      account.accountId
+                    )
+                  }"
+                ></p>
+
+              </div>
+
+            </article>
+          `;
         }
+      )
+      .join('');
+
+
+  container
+    .querySelectorAll(
+      '[data-plan-action]'
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          'click',
+          () =>
+            changeAdminAccountPlan(
+              button
+            )
+        );
       }
     );
 
 
-  window
-    .graficoExtrato
-    .render();
+  container
+    .querySelectorAll(
+      '[data-plan-history]'
+    )
+    .forEach(
+      button => {
+        button.addEventListener(
+          'click',
+          () =>
+            openPlanHistory(
+              button.dataset
+                .planHistory,
 
-
-  renderResumoValores(
-    entradas,
-    saidas
-  );
+              button.dataset
+                .accountName
+            )
+        );
+      }
+    );
 }
 
+
+async function changeAdminAccountPlan(
+  button
+) {
+  const accountId =
+    button.dataset
+      .planAction;
+
+  const targetPlan =
+    button.dataset
+      .targetPlan;
+
+  const reasonInput =
+    document.querySelector(
+      `[data-plan-reason="${accountId}"]`
+    );
+
+  const message =
+    document.querySelector(
+      `[data-plan-message="${accountId}"]`
+    );
+
+  const reason =
+    reasonInput?.value
+      .trim() ??
+    '';
+
+  clearMessage(
+    message
+  );
+
+  if (!reason) {
+    showApiError(
+      message,
+      new Error(
+        'Informe o motivo da alteração do plano.'
+      )
+    );
+
+    reasonInput?.focus();
+
+    return;
+  }
+
+  button.disabled =
+    true;
+
+  const originalLabel =
+    button.textContent;
+
+  button.textContent =
+    'Salvando…';
+
+  try {
+    await adminApi(
+      `/api/v1/admin/accounts/${accountId}/plan`,
+      {
+        method: 'PUT',
+
+        body:
+          JSON.stringify({
+            accountPlan:
+              targetPlan,
+
+            reason
+          })
+      }
+    );
+
+
+    /*
+     * Primeiro atualizamos a lista.
+     * Só depois mostramos a mensagem,
+     * evitando que loadAdminAccounts()
+     * a apague imediatamente.
+     */
+    await loadAdminAccounts();
+
+
+    showSuccess(
+      document.getElementById(
+        'adminGlobalError'
+      ),
+      'Plano alterado e histórico registrado com sucesso.'
+    );
+
+  } catch (error) {
+    showApiError(
+      message,
+      error
+    );
+
+  } finally {
+    button.disabled =
+      false;
+
+    button.textContent =
+      originalLabel;
+  }
+}
+
+
+/* =========================================================
+   HISTÓRICO DE PLANOS
+========================================================= */
+
+async function openPlanHistory(
+  accountId,
+  accountName
+) {
+  const dialog =
+    document.getElementById(
+      'planHistoryDialog'
+    );
+
+  const content =
+    document.getElementById(
+      'planHistoryContent'
+    );
+
+  const account =
+    document.getElementById(
+      'planHistoryAccount'
+    );
+
+  account.textContent =
+    accountName ||
+    '';
+
+  content.innerHTML = `
+    <p>
+      Carregando histórico…
+    </p>
+  `;
+
+  dialog.showModal();
+
+  try {
+    const history =
+      await adminApi(
+        `/api/v1/admin/accounts/${accountId}/plan-history`
+      );
+
+    renderPlanHistory(
+      history
+    );
+
+  } catch (error) {
+    content.innerHTML = `
+      <p
+        id="planHistoryError"
+        class="error-message"
+      ></p>
+    `;
+
+    showApiError(
+      document.getElementById(
+        'planHistoryError'
+      ),
+      error
+    );
+  }
+}
+
+
+function renderPlanHistory(
+  history
+) {
+  const content =
+    document.getElementById(
+      'planHistoryContent'
+    );
+
+  if (
+    history.length === 0
+  ) {
+    content.innerHTML = `
+      <p>
+        Nenhuma alteração de plano registrada.
+      </p>
+    `;
+
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="plan-history-list">
+
+      ${
+        history
+          .map(
+            change => `
+              <article class="plan-history-item">
+
+                <div class="row">
+
+                  <strong>
+                    ${
+                      escapeHtml(
+                        accountPlanLabel(
+                          change.previousPlan
+                        )
+                      )
+                    }
+                    →
+                    ${
+                      escapeHtml(
+                        accountPlanLabel(
+                          change.newPlan
+                        )
+                      )
+                    }
+                  </strong>
+
+                  <span>
+                    ${
+                      escapeHtml(
+                        formatDateTime(
+                          change.changedAt
+                        )
+                      )
+                    }
+                  </span>
+
+                </div>
+
+
+                <div class="statement-details">
+
+                  <div class="statement-detail">
+
+                    <span>
+                      Gerente
+                    </span>
+
+                    <strong>
+                      ${
+                        escapeHtml(
+                          change.administratorName
+                        )
+                      }
+                    </strong>
+
+                  </div>
+
+
+                  <div class="statement-detail">
+
+                    <span>
+                      Motivo
+                    </span>
+
+                    <strong>
+                      ${
+                        escapeHtml(
+                          change.reason
+                        )
+                      }
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </article>
+            `
+          )
+          .join('')
+      }
+
+    </div>
+  `;
+}
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
+
 async function initializeApp() {
+  /* -------------------------------------------------------
+     TEMA
+  ------------------------------------------------------- */
+
+  initializeTheme();
+
+
+  /* -------------------------------------------------------
+     ACESSOS DA TELA PÚBLICA
+  ------------------------------------------------------- */
+
+  document
+    .querySelectorAll(
+      '[data-public-tab]'
+    )
+    .forEach(
+      control => {
+        control.addEventListener(
+          'click',
+          () =>
+            showAccessPanel(
+              control.dataset
+                .publicTab
+            )
+        );
+      }
+    );
+
+
+  /* -------------------------------------------------------
+     FORMULÁRIOS PÚBLICOS
+  ------------------------------------------------------- */
 
   document
     .getElementById(
       'loginForm'
     )
     .addEventListener(
-
       'submit',
-
       handleLogin
     );
 
 
   document
     .getElementById(
+      'registerForm'
+    )
+    .addEventListener(
+      'submit',
+      handleRegistration
+    );
+
+
+  document
+    .getElementById(
+      'adminLoginForm'
+    )
+    .addEventListener(
+      'submit',
+      handleAdminLogin
+    );
+
+
+  /* -------------------------------------------------------
+     CLIENTE
+  ------------------------------------------------------- */
+
+  document
+    .getElementById(
       'logoutButton'
     )
     .addEventListener(
-
       'click',
-
       performLogout
     );
 
 
-  const token =
+  document
+    .getElementById(
+      'accountSelector'
+    )
+    .addEventListener(
+      'change',
+      handleAccountSelection
+    );
+
+
+  document
+    .getElementById(
+      'openMissingAccountButton'
+    )
+    .addEventListener(
+      'click',
+      openMissingAccountDialog
+    );
+
+
+  document
+    .getElementById(
+      'openAccountForm'
+    )
+    .addEventListener(
+      'submit',
+      handleOpenAccount
+    );
+
+
+  document
+    .getElementById(
+      'cancelOpenAccountButton'
+    )
+    .addEventListener(
+      'click',
+      () => {
+        document
+          .getElementById(
+            'openAccountDialog'
+          )
+          .close();
+      }
+    );
+
+
+  /* -------------------------------------------------------
+     ADMINISTRAÇÃO
+  ------------------------------------------------------- */
+
+  document
+    .getElementById(
+      'adminLogoutButton'
+    )
+    .addEventListener(
+      'click',
+      performAdminLogout
+    );
+
+
+  document
+    .getElementById(
+      'refreshAdminAccountsButton'
+    )
+    .addEventListener(
+      'click',
+      () =>
+        loadAdminAccounts()
+          .catch(
+            () => {}
+          )
+    );
+
+
+  document
+    .getElementById(
+      'closePlanHistoryButton'
+    )
+    .addEventListener(
+      'click',
+      () => {
+        document
+          .getElementById(
+            'planHistoryDialog'
+          )
+          .close();
+      }
+    );
+
+
+  /* -------------------------------------------------------
+     RECUPERAÇÃO DO CONTEXTO
+  ------------------------------------------------------- */
+
+  const context =
+    sessionStorage.getItem(
+      activeContextKey
+    );
+
+  const clientToken =
     sessionStorage.getItem(
       authTokenKey
     );
 
-
-  if (!token) {
-
-    showLogin();
-
-    return;
-  }
+  const adminToken =
+    sessionStorage.getItem(
+      adminAuthTokenKey
+    );
 
 
-  try {
+  /* -------------------------------------------------------
+     ADMIN ATIVO
+  ------------------------------------------------------- */
 
-    const user =
-      await api(
-        '/api/v1/auth/me'
+  if (
+    context === 'admin' &&
+    adminToken
+  ) {
+    const displayName =
+      sessionStorage.getItem(
+        adminNameKey
+      ) ||
+      'Gerente SPBank';
+
+    showAdminApp({
+      displayName
+    });
+
+    try {
+      await loadAdminAccounts();
+
+      return;
+
+    } catch (error) {
+      if (
+        error.status === 401
+      ) {
+        return;
+      }
+
+      showApiError(
+        document.getElementById(
+          'adminGlobalError'
+        ),
+        error
       );
 
-
-    saldo = 0;
-
-    extrato = [];
-
-
-    showAuthenticatedApp(
-      user
-    );
-
-
-    await Promise.all([
-      loadAccountSummary(),
-      refreshOfficialStatement()
-    ]);
-
-
-    loadPage(
-      'dashboard'
-    );
-
-
-  } catch (error) {
-
-    sessionStorage.removeItem(
-      authTokenKey
-    );
-
-
-    showLogin(
-
-      error.status === 401
-
-        ? 'Sua sessão expirou. Entre novamente.'
-
-        : 'Não foi possível conectar ao SPBank. Verifique o backend.'
-    );
+      return;
+    }
   }
+
+
+  /* -------------------------------------------------------
+     CLIENTE ATIVO
+  ------------------------------------------------------- */
+
+  if (clientToken) {
+    try {
+      const user =
+        await api(
+          '/api/v1/auth/me'
+        );
+
+      sessionStorage.setItem(
+        activeContextKey,
+        'client'
+      );
+
+      saldo = 0;
+      extrato = [];
+
+      showAuthenticatedApp(
+        user
+      );
+
+      await Promise.all([
+        loadCustomerAccounts(),
+        loadAccountSummary(),
+        refreshOfficialStatement()
+      ]);
+
+      loadPage(
+        'dashboard'
+      );
+
+      return;
+
+    } catch (error) {
+      clearClientSession();
+
+      showLogin(
+        error.status === 401
+          ? 'Sua sessão expirou. Entre novamente.'
+          : 'Não foi possível conectar ao SPBank. Verifique o backend.'
+      );
+
+      return;
+    }
+  }
+
+
+  /* -------------------------------------------------------
+     ADMIN SEM CONTEXTO SALVO
+  ------------------------------------------------------- */
+
+  if (adminToken) {
+    const displayName =
+      sessionStorage.getItem(
+        adminNameKey
+      ) ||
+      'Gerente SPBank';
+
+    try {
+      sessionStorage.setItem(
+        activeContextKey,
+        'admin'
+      );
+
+      showAdminApp({
+        displayName
+      });
+
+      await loadAdminAccounts();
+
+      return;
+
+    } catch (_) {
+      clearAdminSession();
+
+      showPublicArea(
+        'admin'
+      );
+
+      return;
+    }
+  }
+
+
+  /* -------------------------------------------------------
+     SEM SESSÃO
+  ------------------------------------------------------- */
+
+  showPublicArea(
+    'login'
+  );
 }
+
+
+/* =========================================================
+   START
+========================================================= */
 
 initializeApp();

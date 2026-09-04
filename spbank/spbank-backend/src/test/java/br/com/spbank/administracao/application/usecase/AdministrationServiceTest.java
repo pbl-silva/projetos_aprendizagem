@@ -38,44 +38,86 @@ class AdministrationServiceTest {
     private AccountPersistence accounts;
     private AdministrationService service;
 
+
     @BeforeEach
     void setUp() {
-        administration = mock(AdministrationPersistence.class);
-        accounts = mock(AccountPersistence.class);
 
-        service = new AdministrationService(
-            administration,
-            accounts,
-            Clock.fixed(NOW, ZoneOffset.UTC),
-            8
-        );
+        administration =
+            mock(AdministrationPersistence.class);
 
-        when(administration.findCredentialById(ADMIN_ID))
-            .thenReturn(Optional.of(administrator()));
+        accounts =
+            mock(AccountPersistence.class);
+
+        service =
+            new AdministrationService(
+                administration,
+                accounts,
+                Clock.fixed(
+                    NOW,
+                    ZoneOffset.UTC
+                ),
+                8
+            );
+
+        when(
+            administration.findCredentialById(
+                ADMIN_ID
+            )
+        )
+            .thenReturn(
+                Optional.of(
+                    administrator()
+                )
+            );
     }
+
 
     @Test
     void shouldAuthenticateManagerAndCreateAnIndependentSession() {
-        when(administration.findCredential("gerente"))
-            .thenReturn(Optional.of(administrator()));
 
-        AdministratorLoginResult result = service.login(
-            " GERENTE ",
-            "SPBankAdmin@123"
-        );
+        when(
+            administration.findCredential(
+                "gerente"
+            )
+        )
+            .thenReturn(
+                Optional.of(
+                    administrator()
+                )
+            );
 
-        assertThat(result.administratorId())
-            .isEqualTo(ADMIN_ID);
+        AdministratorLoginResult result =
+            service.login(
+                " GERENTE ",
+                "SPBankAdmin@123"
+            );
 
-        assertThat(result.displayName())
-            .isEqualTo("Gerente SPBank");
+        assertThat(
+            result.administratorId()
+        )
+            .isEqualTo(
+                ADMIN_ID
+            );
 
-        assertThat(result.accessToken())
+        assertThat(
+            result.displayName()
+        )
+            .isEqualTo(
+                "Gerente SPBank"
+            );
+
+        assertThat(
+            result.accessToken()
+        )
             .isNotBlank();
 
-        assertThat(result.expiresAt())
+        assertThat(
+            result.expiresAt()
+        )
             .isEqualTo(
-                NOW.plus(Duration.ofHours(8))
+                NOW.plus(
+                    Duration.ofHours(8)
+                )
             );
 
         ArgumentCaptor<AdministratorSession> session =
@@ -83,42 +125,77 @@ class AdministrationServiceTest {
                 AdministratorSession.class
             );
 
-        verify(administration)
-            .saveSession(session.capture());
+        verify(
+            administration
+        )
+            .saveSession(
+                session.capture()
+            );
 
-        assertThat(session.getValue().tokenHash())
-            .doesNotContain(result.accessToken());
+        assertThat(
+            session
+                .getValue()
+                .tokenHash()
+        )
+            .doesNotContain(
+                result.accessToken()
+            );
     }
+
 
     @Test
     void shouldRejectInvalidManagerCredentials() {
-        when(administration.findCredential("gerente"))
-            .thenReturn(Optional.of(administrator()));
 
-        assertThatThrownBy(() ->
-            service.login(
-                "gerente",
-                "senha-incorreta"
+        when(
+            administration.findCredential(
+                "gerente"
             )
+        )
+            .thenReturn(
+                Optional.of(
+                    administrator()
+                )
+            );
+
+        assertThatThrownBy(
+            () ->
+                service.login(
+                    "gerente",
+                    "senha-incorreta"
+                )
         )
             .isInstanceOf(
                 UnauthorizedException.class
             );
 
-        verify(administration, never())
-            .saveSession(any());
+        verify(
+            administration,
+            never()
+        )
+            .saveSession(
+                any()
+            );
     }
+
 
     @Test
     void shouldResolveOnlyAnActiveAdministrativeSession() {
+
         String accessToken =
             "admin-access-token";
 
         String tokenHash =
             br.com.spbank.autenticacao.application.service
-                .PasswordHasher.tokenHash(accessToken);
+                .PasswordHasher
+                .tokenHash(
+                    accessToken
+                );
 
-        when(administration.findSession(tokenHash))
+        when(
+            administration.findSession(
+                tokenHash
+            )
+        )
             .thenReturn(
                 Optional.of(
                     new AdministratorSession(
@@ -133,23 +210,39 @@ class AdministrationServiceTest {
             );
 
         AuthenticatedAdministrator result =
-            service.resolveSession(accessToken);
+            service.resolveSession(
+                accessToken
+            );
 
-        assertThat(result.id())
-            .isEqualTo(ADMIN_ID);
+        assertThat(
+            result.id()
+        )
+            .isEqualTo(
+                ADMIN_ID
+            );
 
-        assertThat(result.displayName())
-            .isEqualTo("Gerente SPBank");
+        assertThat(
+            result.displayName()
+        )
+            .isEqualTo(
+                "Gerente SPBank"
+            );
     }
+
 
     @Test
     void shouldPromoteAndAuditAStandardAccount() {
+
         Account account =
-            account(AccountPlan.STANDARD);
+            account(
+                AccountPlan.STANDARD
+            );
 
         when(
             accounts.findAllForUpdate(
-                List.of(ACCOUNT_ID)
+                List.of(
+                    ACCOUNT_ID
+                )
             )
         )
             .thenReturn(
@@ -169,33 +262,65 @@ class AdministrationServiceTest {
                 )
             );
 
-        assertThat(account.getAccountPlan())
-            .isEqualTo(AccountPlan.PLUS);
+        assertThat(
+            account.getAccountPlan()
+        )
+            .isEqualTo(
+                AccountPlan.PLUS
+            );
 
-        assertThat(change.previousPlan())
-            .isEqualTo(AccountPlan.STANDARD);
+        assertThat(
+            change.previousPlan()
+        )
+            .isEqualTo(
+                AccountPlan.STANDARD
+            );
 
-        assertThat(change.newPlan())
-            .isEqualTo(AccountPlan.PLUS);
+        assertThat(
+            change.newPlan()
+        )
+            .isEqualTo(
+                AccountPlan.PLUS
+            );
 
-        assertThat(change.administratorId())
-            .isEqualTo(ADMIN_ID);
+        assertThat(
+            change.administratorId()
+        )
+            .isEqualTo(
+                ADMIN_ID
+            );
 
-        verify(accounts)
-            .saveAll(List.of(account));
+        verify(
+            accounts
+        )
+            .saveAll(
+                List.of(
+                    account
+                )
+            );
 
-        verify(administration)
-            .savePlanChange(change);
+        verify(
+            administration
+        )
+            .savePlanChange(
+                change
+            );
     }
+
 
     @Test
     void shouldAllowDowngradeAndKeepTheReason() {
+
         Account account =
-            account(AccountPlan.PLUS);
+            account(
+                AccountPlan.PLUS
+            );
 
         when(
             accounts.findAllForUpdate(
-                List.of(ACCOUNT_ID)
+                List.of(
+                    ACCOUNT_ID
+                )
             )
         )
             .thenReturn(
@@ -215,23 +340,35 @@ class AdministrationServiceTest {
                 )
             );
 
-        assertThat(change.newPlan())
-            .isEqualTo(AccountPlan.STANDARD);
+        assertThat(
+            change.newPlan()
+        )
+            .isEqualTo(
+                AccountPlan.STANDARD
+            );
 
-        assertThat(change.reason())
+        assertThat(
+            change.reason()
+        )
             .isEqualTo(
                 "Conta deixou de atender aos critérios do PLUS"
             );
     }
 
+
     @Test
     void shouldRejectAnUnchangedPlan() {
+
         Account account =
-            account(AccountPlan.STANDARD);
+            account(
+                AccountPlan.STANDARD
+            );
 
         when(
             accounts.findAllForUpdate(
-                List.of(ACCOUNT_ID)
+                List.of(
+                    ACCOUNT_ID
+                )
             )
         )
             .thenReturn(
@@ -241,61 +378,81 @@ class AdministrationServiceTest {
                 )
             );
 
-        assertThatThrownBy(() ->
-            service.changeAccountPlan(
-                ADMIN_ID,
-                ACCOUNT_ID,
-                new ChangeAccountPlanCommand(
-                    AccountPlan.STANDARD,
-                    "Sem mudança"
+        assertThatThrownBy(
+            () ->
+                service.changeAccountPlan(
+                    ADMIN_ID,
+                    ACCOUNT_ID,
+                    new ChangeAccountPlanCommand(
+                        AccountPlan.STANDARD,
+                        "Sem mudança"
+                    )
                 )
-            )
         )
             .isInstanceOf(
                 BusinessException.class
             )
-            .extracting(error ->
-                ((BusinessException) error)
-                    .getCode()
+            .extracting(
+                error ->
+                    ((BusinessException) error)
+                        .getCode()
             )
             .isEqualTo(
                 "ACCOUNT_PLAN_UNCHANGED"
             );
 
-        verify(administration, never())
-            .savePlanChange(any());
+        verify(
+            administration,
+            never()
+        )
+            .savePlanChange(
+                any()
+            );
     }
+
 
     @Test
     void shouldRejectAPlanChangeWithoutReason() {
-        assertThatThrownBy(() ->
-            service.changeAccountPlan(
-                ADMIN_ID,
-                ACCOUNT_ID,
-                new ChangeAccountPlanCommand(
-                    AccountPlan.PLUS,
-                    "   "
+
+        assertThatThrownBy(
+            () ->
+                service.changeAccountPlan(
+                    ADMIN_ID,
+                    ACCOUNT_ID,
+                    new ChangeAccountPlanCommand(
+                        AccountPlan.PLUS,
+                        "   "
+                    )
                 )
-            )
         )
             .isInstanceOf(
                 BusinessException.class
             )
-            .extracting(error ->
-                ((BusinessException) error)
-                    .getCode()
+            .extracting(
+                error ->
+                    ((BusinessException) error)
+                        .getCode()
             )
             .isEqualTo(
                 "ACCOUNT_PLAN_REASON_REQUIRED"
             );
 
-        verifyNoInteractions(accounts);
+        verifyNoInteractions(
+            accounts
+        );
 
-        verify(administration, never())
-            .savePlanChange(any());
+        verify(
+            administration,
+            never()
+        )
+            .savePlanChange(
+                any()
+            );
     }
 
+
     private static AdministratorCredential administrator() {
+
         return new AdministratorCredential(
             ADMIN_ID,
             "Gerente SPBank",
@@ -305,20 +462,24 @@ class AdministrationServiceTest {
         );
     }
 
+
     private static Account account(
-            AccountPlan plan
+        AccountPlan plan
     ) {
+
         return new Account(
             ACCOUNT_ID,
             UUID.randomUUID(),
-            "Roberta Lima",
+            "Marina Costa",
             "12345678909",
             "001",
             "0001",
             "123456-7",
             AccountType.CURRENT,
             plan,
-            new BigDecimal("2500.00"),
+            new BigDecimal(
+                "2500.00"
+            ),
             true
         );
     }

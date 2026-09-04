@@ -24,26 +24,24 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <meta
+    name="color-scheme"
+    content="dark light"
+  >
+
   <title>SPBank</title>
 
 
   <!-- =========================================
        FAVICON
-       Padrão para tema claro
-       Versão clara/vermelha para tema escuro
+       O app.js atualiza conforme o tema.
   ========================================== -->
 
   <link
-    rel="icon"
-    type="image/png"
-    href="img/favicon-spbank.png"
-  >
-
-  <link
+    id="appFavicon"
     rel="icon"
     type="image/png"
     href="img/favicon-spbank-dark.png"
-    media="(prefers-color-scheme: dark)"
   >
 
 
@@ -53,20 +51,13 @@
 
   <link
     rel="stylesheet"
-    href="style.css?v=20260827-2"
+    href="style.css?v=20260904-3"
   >
 
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
   >
-
-
-  <!-- =========================================
-       GRÁFICOS
-  ========================================== -->
-
-  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
 </head>
 
@@ -75,115 +66,971 @@
 
 
   <!-- =========================================
-       LOGIN
+       CONTROLE DE TEMA
+  ========================================== -->
+
+  <div
+    id="themeControl"
+    class="theme-control"
+  >
+
+    <button
+      id="themeMenuButton"
+      class="theme-menu-button"
+      type="button"
+      aria-haspopup="menu"
+      aria-expanded="false"
+      aria-controls="themeMenu"
+    >
+
+      <span
+        id="themeIcon"
+        class="material-symbols-outlined"
+        aria-hidden="true"
+      >
+        contrast
+      </span>
+
+
+      <span id="themeCurrentLabel">
+        Sistema
+      </span>
+
+
+      <span
+        class="material-symbols-outlined theme-chevron"
+        aria-hidden="true"
+      >
+        expand_more
+      </span>
+
+    </button>
+
+
+    <div
+      id="themeMenu"
+      class="theme-menu hidden"
+      role="menu"
+      aria-label="Escolher tema"
+    >
+
+
+      <button
+        class="theme-option active"
+        type="button"
+        role="menuitem"
+        data-theme-option="system"
+      >
+
+        <span
+          class="material-symbols-outlined"
+          aria-hidden="true"
+        >
+          contrast
+        </span>
+
+        <span>
+          Sistema
+        </span>
+
+        <span
+          class="material-symbols-outlined theme-check"
+          aria-hidden="true"
+        >
+          check
+        </span>
+
+      </button>
+
+
+      <button
+        class="theme-option"
+        type="button"
+        role="menuitem"
+        data-theme-option="light"
+      >
+
+        <span
+          class="material-symbols-outlined"
+          aria-hidden="true"
+        >
+          light_mode
+        </span>
+
+        <span>
+          Claro
+        </span>
+
+        <span
+          class="material-symbols-outlined theme-check"
+          aria-hidden="true"
+        >
+          check
+        </span>
+
+      </button>
+
+
+      <button
+        class="theme-option"
+        type="button"
+        role="menuitem"
+        data-theme-option="dark"
+      >
+
+        <span
+          class="material-symbols-outlined"
+          aria-hidden="true"
+        >
+          dark_mode
+        </span>
+
+        <span>
+          Escuro
+        </span>
+
+        <span
+          class="material-symbols-outlined theme-check"
+          aria-hidden="true"
+        >
+          check
+        </span>
+
+      </button>
+
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================
+       ÁREA PÚBLICA
   ========================================== -->
 
   <section
     id="loginScreen"
-    class="login-screen"
+    class="public-screen"
   >
 
-    <div class="login-card">
+    <div class="public-layout">
 
 
-      <!--
-        O login possui fundo escuro.
-        Portanto usamos a versão do logo
-        preparada para fundo escuro.
-      -->
+      <!-- =====================================
+           APRESENTAÇÃO DO SPBANK
+      ====================================== -->
 
-      <div class="login-brand">
+      <div class="public-hero">
 
-        <img
-          src="img/logo-spbank-dark.png"
-          alt="SPBank"
-        >
+
+        <div class="public-brand">
+
+          <img
+            class="theme-logo"
+            src="img/logo-spbank-dark.png"
+            alt="SPBank"
+          >
+
+        </div>
+
+
+        <span class="public-eyebrow">
+          Seu banco. Suas escolhas.
+        </span>
+
+
+        <h1>
+          Uma experiência bancária simples,
+          segura e conectada.
+        </h1>
+
+
+        <p>
+          Consulte suas contas, acompanhe o
+          extrato e realize transferências
+          utilizando os dados oficiais
+          fornecidos pelo SPBank.
+        </p>
+
+
+        <div class="public-features">
+
+
+          <div class="public-feature">
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              account_balance_wallet
+            </span>
+
+
+            <div>
+
+              <strong>
+                Conta corrente e poupança
+              </strong>
+
+              <span>
+                Um único acesso para suas contas.
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div class="public-feature">
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              security
+            </span>
+
+
+            <div>
+
+              <strong>
+                Sessão autenticada
+              </strong>
+
+              <span>
+                Operações vinculadas à conta selecionada.
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div class="public-feature">
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              sync_alt
+            </span>
+
+
+            <div>
+
+              <strong>
+                Transferências com transparência
+              </strong>
+
+              <span>
+                Confira a modalidade, a tarifa e o valor total antes de confirmar.
+              </span>
+
+            </div>
+
+          </div>
+
+
+        </div>
 
       </div>
 
 
-      <h1>
-        Entre na sua conta
-      </h1>
+      <!-- =====================================
+           CARTÃO DE ACESSO
+      ====================================== -->
+
+      <div class="access-card">
 
 
-      <p>
-        Use seu acesso para consultar saldo,
-        extrato e transferências.
-      </p>
-
-
-      <form id="loginForm">
-
-
-        <label for="loginUsername">
-          Usuário
-        </label>
-
-
-        <input
-          id="loginUsername"
-          name="username"
-          autocomplete="username"
-          required
-        >
-
-
-        <label for="loginPassword">
-          Senha
-        </label>
-
-
-        <input
-          id="loginPassword"
-          name="password"
-          type="password"
-          autocomplete="current-password"
-          required
-        >
-
+        <!-- ===================================
+             ABAS PRINCIPAIS DO CLIENTE
+        ==================================== -->
 
         <div
-          id="loginError"
-          class="error-message"
-          role="alert"
-        ></div>
-
-
-        <button
-          class="btn login-button"
-          type="submit"
+          class="access-tabs"
+          role="tablist"
+          aria-label="Acesso do cliente"
         >
-          Entrar
-        </button>
 
 
-      </form>
+          <button
+            id="clientLoginTab"
+            class="access-tab active"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            data-public-tab="login"
+          >
+            Faça login
+          </button>
 
 
-      <small class="login-help">
+          <button
+            id="registerTab"
+            class="access-tab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            data-public-tab="register"
+          >
+            Cadastre-se
+          </button>
 
-        Ambiente local:
-        usuários
 
-        <strong>
-          joao
-        </strong>
+        </div>
 
-        e
 
-        <strong>
-          maria
-        </strong>
+        <!-- ===================================
+             LOGIN DO CLIENTE
+        ==================================== -->
 
-        · senha de estudo
+        <div
+          id="loginPanel"
+          class="access-panel"
+        >
 
-        <strong>
-          SPBank@123
-        </strong>.
 
-      </small>
+          <div class="access-heading">
 
+            <h2>
+              Entre na sua conta
+            </h2>
+
+            <p>
+              Use seu acesso para consultar
+              saldo, extrato e transferências.
+            </p>
+
+          </div>
+
+
+          <form id="loginForm">
+
+
+            <label for="loginUsername">
+              Usuário
+            </label>
+
+
+            <input
+              id="loginUsername"
+              name="username"
+              autocomplete="username"
+              required
+            >
+
+
+            <label for="loginPassword">
+              Senha
+            </label>
+
+
+            <input
+              id="loginPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            >
+
+
+            <div
+              id="loginError"
+              class="error-message"
+              role="alert"
+            ></div>
+
+
+            <button
+              class="btn login-button"
+              type="submit"
+            >
+              Entrar
+            </button>
+
+
+          </form>
+
+
+          <small class="login-help">
+
+            Ambiente de desenvolvimento:
+            usuários
+
+            <strong>
+              lucas
+            </strong>
+
+            e
+
+            <strong>
+              marina
+            </strong>
+
+            · senha
+
+            <strong>
+              SPBank@123
+            </strong>.
+
+          </small>
+
+
+        </div>
+
+
+        <!-- ===================================
+             CADASTRO
+        ==================================== -->
+
+        <div
+          id="registerPanel"
+          class="access-panel hidden"
+        >
+
+
+          <div class="access-heading">
+
+            <h2>
+              Abra sua conta
+            </h2>
+
+            <p>
+              Faça seu cadastro e escolha sua
+              primeira modalidade de conta.
+            </p>
+
+          </div>
+
+
+          <form
+            id="registerForm"
+            class="registration-form"
+          >
+
+
+            <!-- ===============================
+                 DADOS PESSOAIS
+            ================================ -->
+
+            <fieldset class="form-section">
+
+
+              <legend>
+                Dados pessoais
+              </legend>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  Nome completo
+
+                  <input
+                    name="fullName"
+                    maxlength="120"
+                    autocomplete="name"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  CPF
+
+                  <input
+                    name="cpf"
+                    inputmode="numeric"
+                    maxlength="14"
+                    autocomplete="off"
+                    placeholder="Somente números"
+                    required
+                  >
+
+                </label>
+
+
+              </div>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  Data de nascimento
+
+                  <input
+                    name="birthDate"
+                    type="date"
+                    autocomplete="bday"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Celular
+
+                  <input
+                    name="mobile"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="DDD + número"
+                    required
+                  >
+
+                </label>
+
+
+              </div>
+
+
+              <label>
+
+                E-mail
+
+                <input
+                  name="email"
+                  type="email"
+                  maxlength="160"
+                  autocomplete="email"
+                  required
+                >
+
+              </label>
+
+
+            </fieldset>
+
+
+            <!-- ===============================
+                 ENDEREÇO
+            ================================ -->
+
+            <fieldset class="form-section">
+
+
+              <legend>
+                Endereço
+              </legend>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  CEP
+
+                  <input
+                    name="postalCode"
+                    inputmode="numeric"
+                    maxlength="9"
+                    autocomplete="postal-code"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Estado
+
+                  <input
+                    name="state"
+                    maxlength="2"
+                    autocomplete="address-level1"
+                    placeholder="SP"
+                    required
+                  >
+
+                </label>
+
+
+              </div>
+
+
+              <label>
+
+                Rua
+
+                <input
+                  name="street"
+                  maxlength="160"
+                  autocomplete="address-line1"
+                  required
+                >
+
+              </label>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  Número
+
+                  <input
+                    name="number"
+                    maxlength="20"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Complemento
+
+                  <input
+                    name="complement"
+                    maxlength="80"
+                    autocomplete="address-line2"
+                  >
+
+                </label>
+
+
+              </div>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  Bairro
+
+                  <input
+                    name="district"
+                    maxlength="100"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Cidade
+
+                  <input
+                    name="city"
+                    maxlength="120"
+                    autocomplete="address-level2"
+                    required
+                  >
+
+                </label>
+
+
+              </div>
+
+
+            </fieldset>
+
+
+            <!-- ===============================
+                 ACESSO E CONTA
+            ================================ -->
+
+            <fieldset class="form-section">
+
+
+              <legend>
+                Acesso e conta
+              </legend>
+
+
+              <label>
+
+                Usuário
+
+                <input
+                  name="username"
+                  maxlength="80"
+                  autocomplete="username"
+                  required
+                >
+
+              </label>
+
+
+              <div class="grid-2">
+
+
+                <label>
+
+                  Senha
+
+                  <input
+                    name="password"
+                    type="password"
+                    minlength="8"
+                    maxlength="72"
+                    autocomplete="new-password"
+                    required
+                  >
+
+                </label>
+
+
+                <label>
+
+                  Confirmar senha
+
+                  <input
+                    name="passwordConfirmation"
+                    type="password"
+                    minlength="8"
+                    maxlength="72"
+                    autocomplete="new-password"
+                    required
+                  >
+
+                </label>
+
+
+              </div>
+
+
+              <label>
+
+                Primeira conta
+
+                <select
+                  name="accountType"
+                  required
+                >
+
+                  <option
+                    value=""
+                    selected
+                    disabled
+                  >
+                    Selecione a modalidade
+                  </option>
+
+                  <option value="CURRENT">
+                    Conta corrente
+                  </option>
+
+                  <option value="SAVINGS">
+                    Conta poupança
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <p class="form-hint">
+                Sua conta será criada no plano STANDARD.
+              </p>
+
+
+            </fieldset>
+
+
+            <div
+              id="registerError"
+              class="error-message"
+              role="alert"
+            ></div>
+
+
+            <div
+              id="registerSuccess"
+              class="success-message"
+              role="status"
+            ></div>
+
+
+            <button
+              class="btn login-button"
+              type="submit"
+            >
+              Criar cadastro
+            </button>
+
+
+          </form>
+
+
+        </div>
+
+
+        <!-- ===================================
+             LOGIN GERENCIAL
+        ==================================== -->
+
+        <div
+          id="adminLoginPanel"
+          class="access-panel hidden"
+        >
+
+
+          <div class="access-heading">
+
+
+            <div class="admin-access-label">
+
+              <span
+                class="material-symbols-outlined"
+                aria-hidden="true"
+              >
+                admin_panel_settings
+              </span>
+
+              Área restrita
+
+            </div>
+
+
+            <h2>
+              Acesso gerencial
+            </h2>
+
+
+            <p>
+              Ambiente separado para
+              administração e auditoria
+              dos planos das contas.
+            </p>
+
+
+          </div>
+
+
+          <form id="adminLoginForm">
+
+
+            <label for="adminUsername">
+              Usuário gerencial
+            </label>
+
+
+            <input
+              id="adminUsername"
+              name="username"
+              autocomplete="username"
+              required
+            >
+
+
+            <label for="adminPassword">
+              Senha
+            </label>
+
+
+            <input
+              id="adminPassword"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            >
+
+
+            <div
+              id="adminLoginError"
+              class="error-message"
+              role="alert"
+            ></div>
+
+
+            <button
+              class="btn login-button"
+              type="submit"
+            >
+              Entrar na área gerencial
+            </button>
+
+
+          </form>
+
+
+          <small class="login-help">
+
+            Ambiente de desenvolvimento:
+
+            <strong>
+              gerente
+            </strong>
+
+            · senha
+
+            <strong>
+              SPBankAdmin@123
+            </strong>.
+
+          </small>
+
+
+        </div>
+
+
+        <!-- ===================================
+             ACESSO SECUNDÁRIO
+        ==================================== -->
+
+        <div class="access-secondary-actions">
+
+
+          <button
+            id="adminLoginTab"
+            class="manager-access-link manager-entry"
+            type="button"
+            data-public-tab="admin"
+          >
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              admin_panel_settings
+            </span>
+
+            Acesso gerencial
+
+          </button>
+
+
+          <button
+            id="clientAccessBackButton"
+            class="manager-access-link client-return hidden"
+            type="button"
+            data-public-tab="login"
+          >
+
+            <span
+              class="material-symbols-outlined"
+              aria-hidden="true"
+            >
+              arrow_back
+            </span>
+
+            Voltar ao acesso do cliente
+
+          </button>
+
+
+        </div>
+
+
+      </div>
 
     </div>
 
@@ -191,7 +1038,7 @@
 
 
   <!-- =========================================
-       APLICAÇÃO
+       APLICAÇÃO DO CLIENTE
   ========================================== -->
 
   <div
@@ -207,23 +1054,16 @@
     <aside class="sidebar">
 
 
-      <!--
-        A sidebar possui fundo escuro.
-        Portanto também utiliza
-        logo-spbank-dark.png.
-      -->
-
       <div class="logo">
 
         <img
+          class="theme-logo"
           src="img/logo-spbank-dark.png"
           alt="SPBank"
         >
 
       </div>
 
-
-      <!-- Dashboard -->
 
       <button
         type="button"
@@ -241,8 +1081,6 @@
 
       </button>
 
-
-      <!-- Pix -->
 
       <button
         type="button"
@@ -262,8 +1100,6 @@
       </button>
 
 
-      <!-- Transferência -->
-
       <button
         type="button"
         onclick="loadPage('transfer')"
@@ -280,8 +1116,6 @@
 
       </button>
 
-
-      <!-- Investimentos -->
 
       <button
         type="button"
@@ -300,8 +1134,6 @@
       </button>
 
 
-      <!-- Cartão -->
-
       <button
         type="button"
         onclick="loadPage('cartao')"
@@ -318,8 +1150,6 @@
 
       </button>
 
-
-      <!-- Extrato -->
 
       <button
         type="button"
@@ -338,6 +1168,23 @@
       </button>
 
 
+      <button
+        type="button"
+        onclick="loadPage('profile')"
+      >
+
+        <span
+          class="material-symbols-outlined menu-icon"
+          aria-hidden="true"
+        >
+          manage_accounts
+        </span>
+
+        Meus dados
+
+      </button>
+
+
     </aside>
 
 
@@ -349,10 +1196,40 @@
 
 
       <!-- =====================================
-           CABEÇALHO
+           HEADER
       ====================================== -->
 
-      <header>
+      <header class="app-header">
+
+
+        <div
+          id="accountContext"
+          class="account-context hidden"
+        >
+
+
+          <label for="accountSelector">
+            Conta
+          </label>
+
+
+          <select
+            id="accountSelector"
+            aria-label="Selecionar conta"
+          >
+          </select>
+
+
+          <button
+            id="openMissingAccountButton"
+            class="btn-outline btn-compact hidden"
+            type="button"
+          >
+            Abrir outra conta
+          </button>
+
+
+        </div>
 
 
         <div class="user-session">
@@ -398,10 +1275,6 @@
       </header>
 
 
-      <!-- =====================================
-           CONTEÚDO DINÂMICO
-      ====================================== -->
-
       <section id="content"></section>
 
 
@@ -412,10 +1285,300 @@
 
 
   <!-- =========================================
+       ÁREA ADMINISTRATIVA
+  ========================================== -->
+
+  <div
+    id="adminShell"
+    class="admin-shell hidden"
+  >
+
+
+    <header class="admin-header">
+
+
+      <div class="admin-brand">
+
+        <img
+          class="theme-logo"
+          src="img/logo-spbank-dark.png"
+          alt="SPBank"
+        >
+
+
+        <span>
+          Administração
+        </span>
+
+      </div>
+
+
+      <div class="user-session">
+
+
+        <span
+          class="material-symbols-outlined"
+          aria-hidden="true"
+        >
+          admin_panel_settings
+        </span>
+
+
+        <span
+          id="currentAdministratorName"
+          class="user"
+        >
+          Gerente
+        </span>
+
+
+        <button
+          id="adminLogoutButton"
+          class="logout-button"
+          type="button"
+        >
+
+          <span
+            class="material-symbols-outlined"
+            aria-hidden="true"
+          >
+            logout
+          </span>
+
+          Sair
+
+        </button>
+
+
+      </div>
+
+
+    </header>
+
+
+    <main class="admin-main">
+
+
+      <section class="admin-intro">
+
+
+        <div>
+
+          <span class="public-eyebrow">
+            Área gerencial
+          </span>
+
+
+          <h1>
+            Administração de planos
+          </h1>
+
+
+          <p>
+            Consulte as contas do SPBank,
+            altere entre STANDARD e PLUS
+            mediante justificativa e acompanhe
+            o histórico de alterações.
+          </p>
+
+        </div>
+
+
+      </section>
+
+
+      <div
+        id="adminGlobalError"
+        class="error-message"
+        role="alert"
+      ></div>
+
+
+      <section class="card">
+
+
+        <div class="header">
+
+
+          <div>
+
+            <h2>
+              Contas
+            </h2>
+
+            <p class="summary-context">
+              Dados pessoais sensíveis são
+              apresentados de forma mascarada.
+            </p>
+
+          </div>
+
+
+          <button
+            id="refreshAdminAccountsButton"
+            class="btn-outline btn-compact"
+            type="button"
+          >
+            Atualizar
+          </button>
+
+
+        </div>
+
+
+        <div
+          id="adminAccounts"
+          class="admin-accounts"
+        >
+
+          <p>
+            Carregando contas…
+          </p>
+
+        </div>
+
+
+      </section>
+
+
+    </main>
+
+
+  </div>
+
+
+  <!-- =========================================
+       DIALOG — ABERTURA DE CONTA
+  ========================================== -->
+
+  <dialog
+    id="openAccountDialog"
+    class="transfer-dialog"
+    aria-labelledby="openAccountTitle"
+  >
+
+
+    <h2 id="openAccountTitle">
+      Abrir outra conta
+    </h2>
+
+
+    <p>
+      Você pode possuir no máximo uma
+      conta corrente e uma conta poupança.
+    </p>
+
+
+    <form id="openAccountForm">
+
+
+      <label>
+
+        Modalidade disponível
+
+        <select
+          id="newAccountType"
+          name="accountType"
+          required
+        >
+        </select>
+
+      </label>
+
+
+      <div
+        id="openAccountError"
+        class="error-message"
+        role="alert"
+      ></div>
+
+
+      <div class="dialog-actions">
+
+
+        <button
+          id="cancelOpenAccountButton"
+          class="btn-secondary"
+          type="button"
+        >
+          Cancelar
+        </button>
+
+
+        <button
+          class="btn"
+          type="submit"
+        >
+          Abrir conta
+        </button>
+
+
+      </div>
+
+
+    </form>
+
+
+  </dialog>
+
+
+  <!-- =========================================
+       DIALOG — HISTÓRICO DE PLANO
+  ========================================== -->
+
+  <dialog
+    id="planHistoryDialog"
+    class="transfer-dialog admin-history-dialog"
+    aria-labelledby="planHistoryTitle"
+  >
+
+
+    <div class="header">
+
+
+      <div>
+
+        <h2 id="planHistoryTitle">
+          Histórico do plano
+        </h2>
+
+        <p
+          id="planHistoryAccount"
+          class="summary-context"
+        ></p>
+
+      </div>
+
+
+      <button
+        id="closePlanHistoryButton"
+        class="btn-outline btn-compact"
+        type="button"
+      >
+        Fechar
+      </button>
+
+
+    </div>
+
+
+    <div id="planHistoryContent">
+
+      <p>
+        Carregando histórico…
+      </p>
+
+    </div>
+
+
+  </dialog>
+
+
+  <!-- =========================================
        JAVASCRIPT
   ========================================== -->
 
-  <script src="app.js?v=20260827-2"></script>
+  <script src="app.js?v=20260904-3"></script>
 
 
 </body>
