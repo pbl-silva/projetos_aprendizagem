@@ -33,16 +33,45 @@ public final class PixFavorite {
         String maskedDocument,
         Instant createdAt
     ) {
-        this.id = Objects.requireNonNull(id);
-        this.originAccountId = Objects.requireNonNull(originAccountId);
-        this.normalizedKeyValue = Objects.requireNonNull(normalizedKeyValue);
-        this.destinationScope = Objects.requireNonNull(destinationScope);
-        this.holderName = Objects.requireNonNull(holderName);
-        this.maskedKey = Objects.requireNonNull(maskedKey);
-        this.keyType = Objects.requireNonNull(keyType);
-        this.bankCode = Objects.requireNonNull(bankCode);
-        this.bankName = Objects.requireNonNull(bankName);
-        this.createdAt = Objects.requireNonNull(createdAt);
+        this.id = Objects.requireNonNull(
+            id
+        );
+
+        this.originAccountId = Objects.requireNonNull(
+            originAccountId
+        );
+
+        this.normalizedKeyValue = Objects.requireNonNull(
+            normalizedKeyValue
+        );
+
+        this.destinationScope = Objects.requireNonNull(
+            destinationScope
+        );
+
+        this.holderName = Objects.requireNonNull(
+            holderName
+        );
+
+        this.maskedKey = Objects.requireNonNull(
+            maskedKey
+        );
+
+        this.keyType = Objects.requireNonNull(
+            keyType
+        );
+
+        this.bankCode = Objects.requireNonNull(
+            bankCode
+        );
+
+        this.bankName = Objects.requireNonNull(
+            bankName
+        );
+
+        this.createdAt = Objects.requireNonNull(
+            createdAt
+        );
 
         if (destinationScope == PixDestinationScope.INTERNAL
             && pixKeyId == null) {
@@ -56,17 +85,23 @@ public final class PixFavorite {
             throw new IllegalArgumentException(
                 "Chave PIX não deve ser informada para favorito externo"
             );
-
         }
 
-        if (maskedDocument == null || maskedDocument.isBlank()) {
+        if (destinationScope == PixDestinationScope.INTERNAL
+            && (maskedDocument == null
+                || maskedDocument.isBlank())) {
             throw new IllegalArgumentException(
-                "Documento mascarado é obrigatório"
+                "Documento mascarado é obrigatório para favorito interno"
             );
         }
 
         this.pixKeyId = pixKeyId;
-        this.maskedDocument = maskedDocument;
+
+        this.maskedDocument =
+            maskedDocument == null
+                || maskedDocument.isBlank()
+                ? null
+                : maskedDocument;
     }
 
     public UUID getId() {
@@ -118,11 +153,13 @@ public final class PixFavorite {
     }
 
     public boolean isInternal() {
-        return destinationScope == PixDestinationScope.INTERNAL;
+        return destinationScope
+            == PixDestinationScope.INTERNAL;
     }
 
     public boolean isExternal() {
-        return destinationScope == PixDestinationScope.EXTERNAL;
+        return destinationScope
+            == PixDestinationScope.EXTERNAL;
     }
 
     public static PixFavorite external(
@@ -154,19 +191,19 @@ public final class PixFavorite {
 
     @Override
     public String toString() {
-        return "PixFavorite[" +
-            "id=" + id +
-            ", originAccountId=" + originAccountId +
-            ", pixKeyId=" + pixKeyId +
-            ", normalizedKeyValue=[REDACTED]" +
-            ", destinationScope=" + destinationScope +
-            ", holderName=" + holderName +
-            ", maskedKey=" + maskedKey +
-            ", keyType=" + keyType +
-            ", bankCode=" + bankCode +
-            ", bankName=" + bankName +
-            ", maskedDocument=" + maskedDocument +
-            ", createdAt=" + createdAt +
-            ']';
+        return "PixFavorite["
+            + "id=" + id
+            + ", originAccountId=" + originAccountId
+            + ", pixKeyId=" + pixKeyId
+            + ", normalizedKeyValue=[REDACTED]"
+            + ", destinationScope=" + destinationScope
+            + ", holderName=" + holderName
+            + ", maskedKey=" + maskedKey
+            + ", keyType=" + keyType
+            + ", bankCode=" + bankCode
+            + ", bankName=" + bankName
+            + ", maskedDocument=" + maskedDocument
+            + ", createdAt=" + createdAt
+            + "]";
     }
 }

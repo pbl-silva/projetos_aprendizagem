@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
-public final class Pix {
+public final class PixPayment {
 
     private final UUID id;
     private final UUID originAccountId;
@@ -34,7 +34,7 @@ public final class Pix {
     private final Integer totalOccurrences;
     private String settlementReference;
 
-    public Pix(
+    public PixPayment(
         UUID id,
         UUID originAccountId,
         UUID destinationAccountId,
@@ -61,21 +61,61 @@ public final class Pix {
         Integer totalOccurrences,
         String settlementReference
     ) {
-        this.id = Objects.requireNonNull(id);
-        this.originAccountId = Objects.requireNonNull(originAccountId);
-        this.destinationScope = Objects.requireNonNull(destinationScope);
-        this.keyType = Objects.requireNonNull(keyType);
-        this.maskedKey = Objects.requireNonNull(maskedKey);
-        this.keyHash = Objects.requireNonNull(keyHash);
-        this.holderName = Objects.requireNonNull(holderName);
-        this.maskedDocument = Objects.requireNonNull(maskedDocument);
-        this.bankCode = Objects.requireNonNull(bankCode);
-        this.bankName = Objects.requireNonNull(bankName);
-        this.amount = Objects.requireNonNull(amount);
-        this.status = Objects.requireNonNull(status);
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey);
-        this.requestHash = Objects.requireNonNull(requestHash);
-        this.requestedAt = Objects.requireNonNull(requestedAt);
+        this.id = Objects.requireNonNull(
+            id
+        );
+
+        this.originAccountId = Objects.requireNonNull(
+            originAccountId
+        );
+
+        this.destinationScope = Objects.requireNonNull(
+            destinationScope
+        );
+
+        this.keyType = Objects.requireNonNull(
+            keyType
+        );
+
+        this.maskedKey = Objects.requireNonNull(
+            maskedKey
+        );
+
+        this.keyHash = Objects.requireNonNull(
+            keyHash
+        );
+
+        this.holderName = Objects.requireNonNull(
+            holderName
+        );
+
+        this.bankCode = Objects.requireNonNull(
+            bankCode
+        );
+
+        this.bankName = Objects.requireNonNull(
+            bankName
+        );
+
+        this.amount = Objects.requireNonNull(
+            amount
+        );
+
+        this.status = Objects.requireNonNull(
+            status
+        );
+
+        this.idempotencyKey = Objects.requireNonNull(
+            idempotencyKey
+        );
+
+        this.requestHash = Objects.requireNonNull(
+            requestHash
+        );
+
+        this.requestedAt = Objects.requireNonNull(
+            requestedAt
+        );
 
         if (amount.signum() <= 0) {
             throw new IllegalArgumentException(
@@ -97,6 +137,14 @@ public final class Pix {
             );
         }
 
+        if (destinationScope == PixDestinationScope.INTERNAL
+            && (maskedDocument == null
+                || maskedDocument.isBlank())) {
+            throw new IllegalArgumentException(
+                "Documento mascarado é obrigatório para PIX interno"
+            );
+        }
+
         if ((recurrenceId == null)
             != (recurrenceFrequency == null)) {
             throw new IllegalArgumentException(
@@ -105,13 +153,15 @@ public final class Pix {
         }
 
         if (recurrenceId == null) {
-            if (occurrenceNumber != null || totalOccurrences != null) {
+            if (occurrenceNumber != null
+                || totalOccurrences != null) {
                 throw new IllegalArgumentException(
                     "Ocorrência não deve ser informada sem recorrência"
                 );
             }
         } else {
-            if (occurrenceNumber == null || totalOccurrences == null) {
+            if (occurrenceNumber == null
+                || totalOccurrences == null) {
                 throw new IllegalArgumentException(
                     "Ocorrência e total são obrigatórios para recorrência"
                 );
@@ -128,6 +178,13 @@ public final class Pix {
         }
 
         this.destinationAccountId = destinationAccountId;
+
+        this.maskedDocument =
+            maskedDocument == null
+                || maskedDocument.isBlank()
+                ? null
+                : maskedDocument;
+
         this.scheduledFor = scheduledFor;
         this.processedAt = processedAt;
         this.failureCode = failureCode;
@@ -264,7 +321,9 @@ public final class Pix {
     }
 
     public void markProcessing() {
-        ensureStatus(PixStatus.SCHEDULED);
+        ensureStatus(
+            PixStatus.SCHEDULED
+        );
 
         this.status = PixStatus.PROCESSING;
     }
@@ -273,7 +332,9 @@ public final class Pix {
         Instant processedAt,
         String settlementReference
     ) {
-        Objects.requireNonNull(processedAt);
+        Objects.requireNonNull(
+            processedAt
+        );
 
         if (status != PixStatus.PROCESSING
             && status != PixStatus.SCHEDULED) {
@@ -294,9 +355,17 @@ public final class Pix {
         String failureCode,
         String failureMessage
     ) {
-        Objects.requireNonNull(processedAt);
-        Objects.requireNonNull(failureCode);
-        Objects.requireNonNull(failureMessage);
+        Objects.requireNonNull(
+            processedAt
+        );
+
+        Objects.requireNonNull(
+            failureCode
+        );
+
+        Objects.requireNonNull(
+            failureMessage
+        );
 
         if (status != PixStatus.PROCESSING
             && status != PixStatus.SCHEDULED) {
@@ -321,7 +390,9 @@ public final class Pix {
         this.status = PixStatus.CANCELLED;
     }
 
-    private void ensureStatus(PixStatus expectedStatus) {
+    private void ensureStatus(
+        PixStatus expectedStatus
+    ) {
         if (status != expectedStatus) {
             throw new IllegalStateException(
                 "Estado atual do PIX não permite esta operação"
@@ -331,32 +402,32 @@ public final class Pix {
 
     @Override
     public String toString() {
-        return "Pix[" +
-            "id=" + id +
-            ", originAccountId=" + originAccountId +
-            ", destinationAccountId=" + destinationAccountId +
-            ", destinationScope=" + destinationScope +
-            ", keyType=" + keyType +
-            ", maskedKey=" + maskedKey +
-            ", keyHash=[REDACTED]" +
-            ", holderName=" + holderName +
-            ", maskedDocument=" + maskedDocument +
-            ", bankCode=" + bankCode +
-            ", bankName=" + bankName +
-            ", amount=" + amount +
-            ", status=" + status +
-            ", idempotencyKey=" + idempotencyKey +
-            ", requestHash=[REDACTED]" +
-            ", requestedAt=" + requestedAt +
-            ", scheduledFor=" + scheduledFor +
-            ", processedAt=" + processedAt +
-            ", failureCode=" + failureCode +
-            ", failureMessage=" + failureMessage +
-            ", recurrenceId=" + recurrenceId +
-            ", recurrenceFrequency=" + recurrenceFrequency +
-            ", occurrenceNumber=" + occurrenceNumber +
-            ", totalOccurrences=" + totalOccurrences +
-            ", settlementReference=" + settlementReference +
-            ']';
+        return "PixPayment["
+            + "id=" + id
+            + ", originAccountId=" + originAccountId
+            + ", destinationAccountId=" + destinationAccountId
+            + ", destinationScope=" + destinationScope
+            + ", keyType=" + keyType
+            + ", maskedKey=" + maskedKey
+            + ", keyHash=[REDACTED]"
+            + ", holderName=" + holderName
+            + ", maskedDocument=" + maskedDocument
+            + ", bankCode=" + bankCode
+            + ", bankName=" + bankName
+            + ", amount=" + amount
+            + ", status=" + status
+            + ", idempotencyKey=" + idempotencyKey
+            + ", requestHash=[REDACTED]"
+            + ", requestedAt=" + requestedAt
+            + ", scheduledFor=" + scheduledFor
+            + ", processedAt=" + processedAt
+            + ", failureCode=" + failureCode
+            + ", failureMessage=" + failureMessage
+            + ", recurrenceId=" + recurrenceId
+            + ", recurrenceFrequency=" + recurrenceFrequency
+            + ", occurrenceNumber=" + occurrenceNumber
+            + ", totalOccurrences=" + totalOccurrences
+            + ", settlementReference=" + settlementReference
+            + "]";
     }
 }
