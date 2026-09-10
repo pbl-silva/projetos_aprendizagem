@@ -1,7 +1,6 @@
 package br.com.spbank.pix.application.port.in;
 
 import br.com.spbank.pix.application.model.PixKeyType;
-import br.com.spbank.pix.application.model.PixRecurrenceFrequency;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,12 +13,9 @@ public record PixPreviewCommand(
     String keyValue,
     BigDecimal amount,
     LocalDate scheduledFor,
-    PixRecurrenceFrequency recurrenceFrequency,
+    String recurrenceFrequency,
     Integer totalOccurrences,
-    boolean saveFavorite,
-    String recipientName,
-    String bankCode,
-    String recipientDocument
+    boolean saveFavorite
 ) {
 
     public PixPreviewCommand {
@@ -73,11 +69,6 @@ public record PixPreviewCommand(
             + totalOccurrences
             + ", saveFavorite="
             + saveFavorite
-            + ", recipientName="
-            + recipientName
-            + ", bankCode="
-            + bankCode
-            + ", recipientDocument=[REDACTED]"
             + "]";
     }
 }

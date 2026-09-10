@@ -1,7 +1,6 @@
 package br.com.spbank.pix.application.port.in;
 
 import br.com.spbank.pix.application.model.PixKeyType;
-import br.com.spbank.pix.application.model.PixRecurrenceFrequency;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,39 +14,17 @@ public record PixCreationCommand(
     String keyValue,
     BigDecimal amount,
     LocalDate scheduledFor,
-    PixRecurrenceFrequency recurrenceFrequency,
+    String recurrenceFrequency,
     Integer totalOccurrences,
-    boolean saveFavorite,
-    String recipientName,
-    String bankCode,
-    String recipientDocument
+    boolean saveFavorite
 ) {
 
     public PixCreationCommand {
-        Objects.requireNonNull(
-            sourceAccountId,
-            "sourceAccountId"
-        );
-
-        Objects.requireNonNull(
-            idempotencyKey,
-            "idempotencyKey"
-        );
-
-        Objects.requireNonNull(
-            keyType,
-            "keyType"
-        );
-
-        Objects.requireNonNull(
-            keyValue,
-            "keyValue"
-        );
-
-        Objects.requireNonNull(
-            amount,
-            "amount"
-        );
+        Objects.requireNonNull(sourceAccountId, "sourceAccountId");
+        Objects.requireNonNull(idempotencyKey, "idempotencyKey");
+        Objects.requireNonNull(keyType, "keyType");
+        Objects.requireNonNull(keyValue, "keyValue");
+        Objects.requireNonNull(amount, "amount");
 
         if (keyValue.isBlank()) {
             throw new IllegalArgumentException(
@@ -64,28 +41,15 @@ public record PixCreationCommand(
 
     @Override
     public String toString() {
-        return "PixCreationCommand[sourceAccountId="
-            + sourceAccountId
-            + ", idempotencyKey="
-            + idempotencyKey
-            + ", keyType="
-            + keyType
+        return "PixCreationCommand[sourceAccountId=" + sourceAccountId
+            + ", idempotencyKey=" + idempotencyKey
+            + ", keyType=" + keyType
             + ", keyValue=[REDACTED]"
-            + ", amount="
-            + amount
-            + ", scheduledFor="
-            + scheduledFor
-            + ", recurrenceFrequency="
-            + recurrenceFrequency
-            + ", totalOccurrences="
-            + totalOccurrences
-            + ", saveFavorite="
-            + saveFavorite
-            + ", recipientName="
-            + recipientName
-            + ", bankCode="
-            + bankCode
-            + ", recipientDocument=[REDACTED]"
+            + ", amount=" + amount
+            + ", scheduledFor=" + scheduledFor
+            + ", recurrenceFrequency=" + recurrenceFrequency
+            + ", totalOccurrences=" + totalOccurrences
+            + ", saveFavorite=" + saveFavorite
             + "]";
     }
 }
