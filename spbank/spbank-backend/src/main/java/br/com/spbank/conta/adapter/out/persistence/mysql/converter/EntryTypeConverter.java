@@ -18,6 +18,8 @@ public final class EntryTypeConverter
         return switch (value) {
             case TRANSFER_OUT -> "TRANSFERENCIA_SAIDA";
             case TRANSFER_IN -> "TRANSFERENCIA_ENTRADA";
+            case PIX_OUT -> "PIX_SAIDA";
+            case PIX_IN -> "PIX_ENTRADA";
             case FEE -> "TAXA";
         };
     }
@@ -32,6 +34,8 @@ public final class EntryTypeConverter
         return switch (value) {
             case "TRANSFERENCIA_SAIDA" -> EntryType.TRANSFER_OUT;
             case "TRANSFERENCIA_ENTRADA" -> EntryType.TRANSFER_IN;
+            case "PIX_SAIDA" -> EntryType.PIX_OUT;
+            case "PIX_ENTRADA" -> EntryType.PIX_IN;
             case "TAXA" -> EntryType.FEE;
 
             default -> throw new IllegalArgumentException(
