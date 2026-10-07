@@ -59,10 +59,14 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
 
     @Override
     @Transactional
-    public Transfer create(CreateTransferCommand command) {
+    public Transfer create(
+            CreateTransferCommand command
+    ) {
 
         String fingerprint =
-                TransferRequestFingerprint.calculate(command);
+                TransferRequestFingerprint.calculate(
+                        command
+                );
 
         Optional<Transfer> previous =
                 transfers.findBySourceAndIdempotencyKey(
@@ -78,23 +82,28 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
         }
 
         BigDecimal amount =
-                money(command.amount());
+                money(
+                        command.amount()
+                );
 
-        Account source = active(
-                accounts.findById(
-                        command.sourceAccountId()
-                ).orElseThrow(() ->
-                        new NotFoundException(
-                                "SOURCE_ACCOUNT_NOT_FOUND"
+        Account source =
+                active(
+                        accounts.findById(
+                                command.sourceAccountId()
+                        ).orElseThrow(
+                                () ->
+                                        new NotFoundException(
+                                                "SOURCE_ACCOUNT_NOT_FOUND"
+                                        )
                         )
-                )
-        );
+                );
 
-        TransferRoute route = routing.resolve(
-                command.target(),
-                command.recipientName(),
-                command.recipientDocument()
-        );
+        TransferRoute route =
+                routing.resolve(
+                        command.target(),
+                        command.recipientName(),
+                        command.recipientDocument()
+                );
 
         TransferType type =
                 route.type();
@@ -104,7 +113,9 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
 
         if (target.isPresent()
                 && source.getId()
-                .equals(target.get().getId())) {
+                .equals(
+                        target.get().getId()
+                )) {
 
             throw new BusinessException(
                     "SAME_ACCOUNT",
@@ -121,16 +132,18 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
 
         if (target.isPresent()) {
 
-            accountIds = List.of(
-                    source.getId(),
-                    target.get().getId()
-            );
+            accountIds =
+                    List.of(
+                            source.getId(),
+                            target.get().getId()
+                    );
 
         } else {
 
-            accountIds = List.of(
-                    source.getId()
-            );
+            accountIds =
+                    List.of(
+                            source.getId()
+                    );
         }
 
         Map<UUID, Account> locked =
@@ -138,19 +151,21 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
                         accountIds
                 );
 
-        source = active(
-                locked.get(
-                        source.getId()
-                )
-        );
+        source =
+                active(
+                        locked.get(
+                                source.getId()
+                        )
+                );
 
         if (target.isPresent()) {
 
-            Account lockedTarget = active(
-                    locked.get(
-                            target.get().getId()
-                    )
-            );
+            Account lockedTarget =
+                    active(
+                            locked.get(
+                                    target.get().getId()
+                            )
+                    );
 
             routing.validateRecipient(
                     lockedTarget,
@@ -158,9 +173,10 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
                     command.recipientDocument()
             );
 
-            target = Optional.of(
-                    lockedTarget
-            );
+            target =
+                    Optional.of(
+                            lockedTarget
+                    );
         }
 
         Optional<Transfer> createdWhileWaiting =
@@ -191,9 +207,13 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
                         command.target().accountType()
                 );
 
-        UUID targetId = target
-                .map(Account::getId)
-                .orElse(null);
+        UUID targetId =
+                target
+                        .map(
+                                account ->
+                                        account.getId()
+                        )
+                        .orElse(null);
 
         var now =
                 clock.instant();
@@ -202,7 +222,9 @@ public class CreateTransferUseCaseImpl implements CreateTransferUseCase {
                 command.scheduledFor() != null
                         || (
                         type == TransferType.TED
-                                && !calendar.isTedWindowOpen(now)
+                                && !calendar.isTedWindowOpen(
+                                now
+                        )
                 );
 
         if (mustSchedule) {

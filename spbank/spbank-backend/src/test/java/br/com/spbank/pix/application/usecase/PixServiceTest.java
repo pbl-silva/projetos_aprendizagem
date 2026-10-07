@@ -441,7 +441,8 @@ class PixServiceTest {
                             series
                                 .stream()
                                 .map(
-                                    PixPayment::getScheduledFor
+                                    payment ->
+                                        payment.getScheduledFor()
                                 )
                                 .toList();
 
