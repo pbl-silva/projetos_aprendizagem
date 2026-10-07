@@ -6,5 +6,7 @@ import java.util.UUID;
 
 public interface ExecuteScheduledPixUseCase {
 
-    PixPayment execute(UUID paymentId);
+    PixPayment execute(
+        UUID id
+    );
 }

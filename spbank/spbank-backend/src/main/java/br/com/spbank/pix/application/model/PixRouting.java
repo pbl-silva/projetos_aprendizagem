@@ -1,6 +1,6 @@
 package br.com.spbank.pix.application.model;
 
-public enum PixDestinationScope {
+public enum PixRouting {
 
     INTERNAL,
     EXTERNAL

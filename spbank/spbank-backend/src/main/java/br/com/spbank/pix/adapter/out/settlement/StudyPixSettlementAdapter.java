@@ -1,8 +1,11 @@
 package br.com.spbank.pix.adapter.out.settlement;
 
-import br.com.spbank.pix.application.model.PixPayment;
+import br.com.spbank.pix.application.port.out.PixSettlementInstruction;
 import br.com.spbank.pix.application.port.out.PixSettlementPort;
 
+import java.time.Clock;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -11,11 +14,32 @@ import org.springframework.stereotype.Component;
 public final class StudyPixSettlementAdapter
         implements PixSettlementPort {
 
+    private static final DateTimeFormatter DATE =
+        DateTimeFormatter
+            .ofPattern("yyyyMMddHHmmss")
+            .withZone(ZoneOffset.UTC);
+
+    private final Clock clock;
+
+    public StudyPixSettlementAdapter(
+        Clock clock
+    ) {
+        this.clock = clock;
+    }
+
     @Override
     public String settle(
-        PixPayment payment
+        PixSettlementInstruction instruction
     ) {
-        return "PIX-STUDY-"
-            + UUID.randomUUID();
+        String random =
+            UUID.randomUUID()
+                .toString()
+                .replace("-", "")
+                .substring(0, 9)
+                .toUpperCase();
+
+        return "E00090001"
+            + DATE.format(clock.instant())
+            + random;
     }
 }

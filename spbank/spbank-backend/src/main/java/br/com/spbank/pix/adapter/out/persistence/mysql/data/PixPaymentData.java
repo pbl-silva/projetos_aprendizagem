@@ -1,12 +1,12 @@
 package br.com.spbank.pix.adapter.out.persistence.mysql.data;
 
-import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixDestinationScopeConverter;
+import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixFrequencyConverter;
 import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixKeyTypeConverter;
-import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixRecurrenceFrequencyConverter;
+import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixRoutingConverter;
 import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixStatusConverter;
-import br.com.spbank.pix.application.model.PixDestinationScope;
+import br.com.spbank.pix.application.model.PixFrequency;
 import br.com.spbank.pix.application.model.PixKeyType;
-import br.com.spbank.pix.application.model.PixRecurrenceFrequency;
+import br.com.spbank.pix.application.model.PixRouting;
 import br.com.spbank.pix.application.model.PixStatus;
 
 import jakarta.persistence.Column;
@@ -29,9 +29,7 @@ public class PixPaymentData {
 
     @Id
     @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(
-        columnDefinition = "CHAR(36)"
-    )
+    @Column(columnDefinition = "CHAR(36)")
     private UUID id;
 
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -39,32 +37,24 @@ public class PixPaymentData {
         name = "conta_origem_id",
         columnDefinition = "CHAR(36)"
     )
-    private UUID originAccountId;
+    private UUID sourceAccountId;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
         name = "conta_destino_id",
         columnDefinition = "CHAR(36)"
     )
-    private UUID destinationAccountId;
+    private UUID targetAccountId;
 
-    @Convert(
-        converter =
-            PixDestinationScopeConverter.class
-    )
+    @Convert(converter = PixRoutingConverter.class)
     @Column(name = "escopo_destino")
-    private PixDestinationScope destinationScope;
+    private PixRouting routing;
 
-    @Convert(
-        converter = PixKeyTypeConverter.class
-    )
+    @Convert(converter = PixKeyTypeConverter.class)
     @Column(name = "tipo_chave")
     private PixKeyType keyType;
 
-    @Column(
-        name = "chave_mascarada",
-        length = 120
-    )
+    @Column(name = "chave_mascarada")
     private String maskedKey;
 
     @Column(
@@ -73,36 +63,24 @@ public class PixPaymentData {
     )
     private String keyHash;
 
-    @Column(
-        name = "nome_destinatario",
-        length = 120
-    )
-    private String holderName;
+    @Column(name = "nome_destinatario")
+    private String recipientName;
 
     @Column(
-        name = "documento_destinatario_mascarado",
-        length = 24
+        name = "documento_destinatario_mascarado"
     )
-    private String maskedDocument;
+    private String maskedRecipientDocument;
 
-    @Column(
-        name = "codigo_banco_destino",
-        length = 20
-    )
-    private String bankCode;
+    @Column(name = "codigo_banco_destino")
+    private String destinationBankCode;
 
-    @Column(
-        name = "nome_banco_destino",
-        length = 120
-    )
-    private String bankName;
+    @Column(name = "nome_banco_destino")
+    private String destinationBankName;
 
     @Column(name = "valor")
     private BigDecimal amount;
 
-    @Convert(
-        converter = PixStatusConverter.class
-    )
+    @Convert(converter = PixStatusConverter.class)
     @Column(name = "situacao")
     private PixStatus status;
 
@@ -117,7 +95,7 @@ public class PixPaymentData {
         name = "hash_requisicao",
         length = 64
     )
-    private String requestHash;
+    private String requestFingerprint;
 
     @Column(name = "solicitada_em")
     private Instant requestedAt;
@@ -128,23 +106,14 @@ public class PixPaymentData {
     @Column(name = "processada_em")
     private Instant processedAt;
 
-    @Column(
-        name = "referencia_liquidacao",
-        length = 120
-    )
+    @Column(name = "referencia_liquidacao")
     private String settlementReference;
 
-    @Column(
-        name = "codigo_falha",
-        length = 60
-    )
+    @Column(name = "codigo_falha")
     private String failureCode;
 
-    @Column(
-        name = "mensagem_falha",
-        length = 240
-    )
-    private String failureMessage;
+    @Column(name = "mensagem_falha")
+    private String failureMessageKey;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
@@ -153,12 +122,9 @@ public class PixPaymentData {
     )
     private UUID recurrenceId;
 
-    @Convert(
-        converter =
-            PixRecurrenceFrequencyConverter.class
-    )
+    @Convert(converter = PixFrequencyConverter.class)
     @Column(name = "frequencia_recorrencia")
-    private PixRecurrenceFrequency recurrenceFrequency;
+    private PixFrequency frequency;
 
     @Column(name = "numero_ocorrencia")
     private Integer occurrenceNumber;
@@ -171,61 +137,60 @@ public class PixPaymentData {
 
     public PixPaymentData(
         UUID id,
-        UUID originAccountId,
-        UUID destinationAccountId,
-        PixDestinationScope destinationScope,
+        UUID sourceAccountId,
+        UUID targetAccountId,
+        PixRouting routing,
         PixKeyType keyType,
         String maskedKey,
         String keyHash,
-        String holderName,
-        String maskedDocument,
-        String bankCode,
-        String bankName,
+        String recipientName,
+        String maskedRecipientDocument,
+        String destinationBankCode,
+        String destinationBankName,
         BigDecimal amount,
         PixStatus status,
         UUID idempotencyKey,
-        String requestHash,
+        String requestFingerprint,
         Instant requestedAt,
         LocalDate scheduledFor,
         Instant processedAt,
         String settlementReference,
         String failureCode,
-        String failureMessage,
+        String failureMessageKey,
         UUID recurrenceId,
-        PixRecurrenceFrequency recurrenceFrequency,
+        PixFrequency frequency,
         Integer occurrenceNumber,
         Integer totalOccurrences
     ) {
         this.id = id;
-        this.originAccountId = originAccountId;
-        this.destinationAccountId =
-            destinationAccountId;
-        this.destinationScope =
-            destinationScope;
+        this.sourceAccountId = sourceAccountId;
+        this.targetAccountId = targetAccountId;
+        this.routing = routing;
         this.keyType = keyType;
         this.maskedKey = maskedKey;
         this.keyHash = keyHash;
-        this.holderName = holderName;
-        this.maskedDocument =
-            maskedDocument;
-        this.bankCode = bankCode;
-        this.bankName = bankName;
+        this.recipientName = recipientName;
+        this.maskedRecipientDocument =
+            maskedRecipientDocument;
+        this.destinationBankCode =
+            destinationBankCode;
+        this.destinationBankName =
+            destinationBankName;
         this.amount = amount;
         this.status = status;
-        this.idempotencyKey =
-            idempotencyKey;
-        this.requestHash = requestHash;
+        this.idempotencyKey = idempotencyKey;
+        this.requestFingerprint =
+            requestFingerprint;
         this.requestedAt = requestedAt;
         this.scheduledFor = scheduledFor;
         this.processedAt = processedAt;
         this.settlementReference =
             settlementReference;
         this.failureCode = failureCode;
-        this.failureMessage =
-            failureMessage;
+        this.failureMessageKey =
+            failureMessageKey;
         this.recurrenceId = recurrenceId;
-        this.recurrenceFrequency =
-            recurrenceFrequency;
+        this.frequency = frequency;
         this.occurrenceNumber =
             occurrenceNumber;
         this.totalOccurrences =
@@ -236,16 +201,16 @@ public class PixPaymentData {
         return id;
     }
 
-    public UUID getOriginAccountId() {
-        return originAccountId;
+    public UUID getSourceAccountId() {
+        return sourceAccountId;
     }
 
-    public UUID getDestinationAccountId() {
-        return destinationAccountId;
+    public UUID getTargetAccountId() {
+        return targetAccountId;
     }
 
-    public PixDestinationScope getDestinationScope() {
-        return destinationScope;
+    public PixRouting getRouting() {
+        return routing;
     }
 
     public PixKeyType getKeyType() {
@@ -260,20 +225,20 @@ public class PixPaymentData {
         return keyHash;
     }
 
-    public String getHolderName() {
-        return holderName;
+    public String getRecipientName() {
+        return recipientName;
     }
 
-    public String getMaskedDocument() {
-        return maskedDocument;
+    public String getMaskedRecipientDocument() {
+        return maskedRecipientDocument;
     }
 
-    public String getBankCode() {
-        return bankCode;
+    public String getDestinationBankCode() {
+        return destinationBankCode;
     }
 
-    public String getBankName() {
-        return bankName;
+    public String getDestinationBankName() {
+        return destinationBankName;
     }
 
     public BigDecimal getAmount() {
@@ -288,8 +253,8 @@ public class PixPaymentData {
         return idempotencyKey;
     }
 
-    public String getRequestHash() {
-        return requestHash;
+    public String getRequestFingerprint() {
+        return requestFingerprint;
     }
 
     public Instant getRequestedAt() {
@@ -312,16 +277,16 @@ public class PixPaymentData {
         return failureCode;
     }
 
-    public String getFailureMessage() {
-        return failureMessage;
+    public String getFailureMessageKey() {
+        return failureMessageKey;
     }
 
     public UUID getRecurrenceId() {
         return recurrenceId;
     }
 
-    public PixRecurrenceFrequency getRecurrenceFrequency() {
-        return recurrenceFrequency;
+    public PixFrequency getFrequency() {
+        return frequency;
     }
 
     public Integer getOccurrenceNumber() {

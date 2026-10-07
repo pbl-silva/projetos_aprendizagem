@@ -13,20 +13,21 @@ import java.util.UUID;
 
 public interface PixPersistence {
 
-    Optional<PixKey> findActiveKeyByNormalizedValue(
+    Optional<PixKey> findActiveKey(
+        PixKeyType type,
         String normalizedValue
     );
 
-    Optional<PixKey> findKeyByIdAndAccountId(
+    Optional<PixKey> findKey(
         UUID keyId,
         UUID accountId
     );
 
-    List<PixKey> findActiveKeysByAccountId(
+    long countActiveKeys(
         UUID accountId
     );
 
-    long countActiveKeysByAccountId(
+    List<PixKey> findActiveKeys(
         UUID accountId
     );
 
@@ -34,30 +35,30 @@ public interface PixPersistence {
         PixKey key
     );
 
-    Optional<PixPayment> findPaymentById(
-        UUID paymentId
+    Optional<PixPayment> findPayment(
+        UUID id
     );
 
     Optional<PixPayment> findPaymentForUpdate(
-        UUID paymentId
+        UUID id
     );
 
-    Optional<PixPayment> findPaymentBySourceAndIdempotencyKey(
-        UUID sourceAccountId,
-        UUID idempotencyKey
+    Optional<PixPayment> findBySourceAndIdempotencyKey(
+        UUID sourceId,
+        UUID key
     );
 
-    List<PixPayment> findScheduledPaymentsBySource(
-        UUID sourceAccountId,
+    List<PixPayment> findScheduled(
+        UUID sourceId,
         int limit
     );
 
-    List<PixPayment> findScheduledPaymentsByRecurrence(
-        UUID sourceAccountId,
+    List<PixPayment> findScheduledByRecurrence(
+        UUID sourceId,
         UUID recurrenceId
     );
 
-    List<UUID> findDuePaymentIds(
+    List<UUID> findDueIds(
         LocalDate today,
         int limit
     );
@@ -70,25 +71,25 @@ public interface PixPersistence {
         Collection<PixPayment> payments
     );
 
-    List<PixFavorite> findFavoritesBySource(
-        UUID sourceAccountId
-    );
-
-    Optional<PixFavorite> findFavoriteByIdAndSource(
-        UUID favoriteId,
-        UUID sourceAccountId
-    );
-
-    Optional<PixFavorite> findFavoriteBySourceAndKey(
-        UUID sourceAccountId,
-        PixKeyType keyType,
+    Optional<PixFavorite> findFavorite(
+        UUID sourceId,
+        PixKeyType type,
         String normalizedKey
     );
 
     Optional<PixFavorite> findUsableFavorite(
-        UUID sourceAccountId,
-        PixKeyType keyType,
+        UUID sourceId,
+        PixKeyType type,
         String normalizedKey
+    );
+
+    Optional<PixFavorite> findFavoriteById(
+        UUID favoriteId,
+        UUID sourceId
+    );
+
+    List<PixFavorite> findFavorites(
+        UUID sourceId
     );
 
     PixFavorite saveFavorite(
@@ -96,8 +97,7 @@ public interface PixPersistence {
     );
 
     void deleteFavorite(
-        UUID favoriteId,
-        UUID sourceAccountId
+        PixFavorite favorite
     );
 
     void deleteFavoritesByPixKeyId(

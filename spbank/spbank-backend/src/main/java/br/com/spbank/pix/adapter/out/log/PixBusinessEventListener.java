@@ -26,36 +26,34 @@ public final class PixBusinessEventListener {
     ) {
         LOG.info(
             "businessEvent=PIX_STATUS_CHANGED "
-                + "paymentId={} status={} "
+                + "pixId={} status={} "
                 + "sourceAccountRef={} amount={} "
-                + "occurredAt={} failureCode={} "
-                + "maskedKey={} maskedDocument={} "
-                + "keyHashRef={}",
-            event.paymentId(),
+                + "keyType={} keyFingerprint={} "
+                + "occurredAt={} failureCode={}",
+            event.pixId(),
             event.status(),
             maskedReference(
                 event.sourceAccountId()
             ),
             event.amount(),
+            event.keyType(),
+            fingerprint(
+                event.keyFingerprint()
+            ),
             event.occurredAt(),
-            event.failureCode(),
-            event.maskedKey(),
-            event.maskedDocument(),
-            maskedHash(
-                event.keyHash()
-            )
+            event.failureCode()
         );
     }
 
     static String maskedReference(
-        UUID accountId
+        UUID id
     ) {
-        if (accountId == null) {
+        if (id == null) {
             return "unknown";
         }
 
         String value =
-            accountId.toString();
+            id.toString();
 
         return "***"
             + value.substring(
@@ -63,16 +61,17 @@ public final class PixBusinessEventListener {
             );
     }
 
-    static String maskedHash(
+    static String fingerprint(
         String hash
     ) {
-        if (hash == null || hash.length() < 8) {
-            return "unknown";
-        }
+        return hash == null
+            || hash.length() < 12
 
-        return "***"
-            + hash.substring(
-                hash.length() - 8
+            ? "unknown"
+
+            : hash.substring(
+                0,
+                12
             );
     }
 }

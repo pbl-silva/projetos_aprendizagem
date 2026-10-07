@@ -1,10 +1,11 @@
 package br.com.spbank.pix.adapter.out.persistence.mysql.boundary;
 
-import br.com.spbank.pix.adapter.out.persistence.mysql.mapper.PixPersistenceMapper;
+import br.com.spbank.pix.adapter.out.persistence.mysql.data.PixFavoriteData;
+import br.com.spbank.pix.adapter.out.persistence.mysql.data.PixKeyData;
+import br.com.spbank.pix.adapter.out.persistence.mysql.data.PixPaymentData;
 import br.com.spbank.pix.adapter.out.persistence.mysql.repository.PixFavoriteJpaRepository;
 import br.com.spbank.pix.adapter.out.persistence.mysql.repository.PixKeyJpaRepository;
 import br.com.spbank.pix.adapter.out.persistence.mysql.repository.PixPaymentJpaRepository;
-import br.com.spbank.pix.application.model.PixDestinationScope;
 import br.com.spbank.pix.application.model.PixFavorite;
 import br.com.spbank.pix.application.model.PixKey;
 import br.com.spbank.pix.application.model.PixKeyType;
@@ -40,120 +41,116 @@ public final class PixMysqlPersistenceImpl
     }
 
     @Override
-    public Optional<PixKey> findActiveKeyByNormalizedValue(
-        String normalizedValue
+    public Optional<PixKey> findActiveKey(
+        PixKeyType type,
+        String value
     ) {
         return keys
-            .findByNormalizedValueAndActiveTrue(
-                normalizedValue
+            .findByTypeAndNormalizedValueAndActiveTrue(
+                type,
+                value
             )
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::key
             );
     }
 
     @Override
-    public Optional<PixKey> findKeyByIdAndAccountId(
-        UUID keyId,
-        UUID accountId
+    public Optional<PixKey> findKey(
+        UUID id,
+        UUID account
     ) {
         return keys
             .findByIdAndAccountId(
-                keyId,
-                accountId
+                id,
+                account
             )
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::key
             );
     }
 
     @Override
-    public List<PixKey> findActiveKeysByAccountId(
-        UUID accountId
+    public long countActiveKeys(
+        UUID account
+    ) {
+        return keys
+            .countByAccountIdAndActiveTrue(
+                account
+            );
+    }
+
+    @Override
+    public List<PixKey> findActiveKeys(
+        UUID account
     ) {
         return keys
             .findByAccountIdAndActiveTrueOrderByCreatedAtAsc(
-                accountId
+                account
             )
             .stream()
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::key
             )
             .toList();
     }
 
     @Override
-    public long countActiveKeysByAccountId(
-        UUID accountId
-    ) {
-        return keys
-            .countByAccountIdAndActiveTrue(
-                accountId
-            );
-    }
-
-    @Override
     public PixKey saveKey(
-        PixKey key
+        PixKey value
     ) {
-        return PixPersistenceMapper.toDomain(
+        return key(
             keys.save(
-                PixPersistenceMapper.toData(
-                    key
-                )
+                data(value)
             )
         );
     }
 
     @Override
-    public Optional<PixPayment> findPaymentById(
-        UUID paymentId
+    public Optional<PixPayment> findPayment(
+        UUID id
     ) {
         return payments
-            .findById(paymentId)
+            .findById(id)
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             );
     }
 
     @Override
     public Optional<PixPayment> findPaymentForUpdate(
-        UUID paymentId
+        UUID id
     ) {
         return payments
-            .findForUpdate(paymentId)
+            .findForUpdate(id)
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             );
     }
 
     @Override
-    public Optional<PixPayment>
-            findPaymentBySourceAndIdempotencyKey(
-                UUID sourceAccountId,
-                UUID idempotencyKey
-            ) {
-
+    public Optional<PixPayment> findBySourceAndIdempotencyKey(
+        UUID source,
+        UUID key
+    ) {
         return payments
-            .findByOriginAccountIdAndIdempotencyKey(
-                sourceAccountId,
-                idempotencyKey
+            .findBySourceAccountIdAndIdempotencyKey(
+                source,
+                key
             )
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             );
     }
 
     @Override
-    public List<PixPayment>
-            findScheduledPaymentsBySource(
-                UUID sourceAccountId,
-                int limit
-            ) {
-
+    public List<PixPayment> findScheduled(
+        UUID source,
+        int limit
+    ) {
         return payments
-            .findByOriginAccountIdAndStatusOrderByScheduledForAscRequestedAtAsc(
-                sourceAccountId,
+            .findBySourceAccountIdAndStatusOrderByScheduledForAscRequestedAtAsc(
+                source,
                 PixStatus.SCHEDULED,
                 PageRequest.of(
                     0,
@@ -162,33 +159,31 @@ public final class PixMysqlPersistenceImpl
             )
             .stream()
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             )
             .toList();
     }
 
     @Override
-    public List<PixPayment>
-            findScheduledPaymentsByRecurrence(
-                UUID sourceAccountId,
-                UUID recurrenceId
-            ) {
-
+    public List<PixPayment> findScheduledByRecurrence(
+        UUID source,
+        UUID recurrence
+    ) {
         return payments
-            .findByOriginAccountIdAndRecurrenceIdAndStatusOrderByOccurrenceNumberAsc(
-                sourceAccountId,
-                recurrenceId,
+            .findBySourceAccountIdAndRecurrenceIdAndStatusOrderByScheduledForAsc(
+                source,
+                recurrence,
                 PixStatus.SCHEDULED
             )
             .stream()
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             )
             .toList();
     }
 
     @Override
-    public List<UUID> findDuePaymentIds(
+    public List<UUID> findDueIds(
         LocalDate today,
         int limit
     ) {
@@ -204,128 +199,116 @@ public final class PixMysqlPersistenceImpl
 
     @Override
     public PixPayment savePayment(
-        PixPayment payment
+        PixPayment value
     ) {
-        return PixPersistenceMapper.toDomain(
+        return payment(
             payments.save(
-                PixPersistenceMapper.toData(
-                    payment
-                )
+                data(value)
             )
         );
     }
 
     @Override
     public List<PixPayment> savePayments(
-        Collection<PixPayment> pixPayments
+        Collection<PixPayment> values
     ) {
         return payments
             .saveAll(
-                pixPayments
+                values
                     .stream()
                     .map(
-                        PixPersistenceMapper::toData
+                        PixMysqlPersistenceImpl::data
                     )
                     .toList()
             )
             .stream()
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::payment
             )
             .toList();
     }
 
     @Override
-    public List<PixFavorite> findFavoritesBySource(
-        UUID sourceAccountId
+    public Optional<PixFavorite> findFavorite(
+        UUID source,
+        PixKeyType type,
+        String normalizedKey
     ) {
         return favorites
-            .findByOriginAccountIdOrderByCreatedAtAsc(
-                sourceAccountId
-            )
-            .stream()
-            .map(
-                PixPersistenceMapper::toDomain
-            )
-            .toList();
-    }
-
-    @Override
-    public Optional<PixFavorite>
-            findFavoriteByIdAndSource(
-                UUID favoriteId,
-                UUID sourceAccountId
-            ) {
-
-        return favorites
-            .findByIdAndOriginAccountId(
-                favoriteId,
-                sourceAccountId
-            )
-            .map(
-                PixPersistenceMapper::toDomain
-            );
-    }
-
-    @Override
-    public Optional<PixFavorite>
-            findFavoriteBySourceAndKey(
-                UUID sourceAccountId,
-                PixKeyType keyType,
-                String normalizedKey
-            ) {
-
-        return favorites
-            .findByOriginAccountIdAndKeyTypeAndNormalizedKeyValue(
-                sourceAccountId,
-                keyType,
+            .findBySourceAccountIdAndKeyTypeAndNormalizedKey(
+                source,
+                type,
                 normalizedKey
             )
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::favorite
             );
     }
 
     @Override
     public Optional<PixFavorite> findUsableFavorite(
-        UUID sourceAccountId,
-        PixKeyType keyType,
+        UUID source,
+        PixKeyType type,
         String normalizedKey
     ) {
         return favorites
-            .findUsableFavorite(
-                sourceAccountId,
-                keyType,
-                normalizedKey,
-                PixDestinationScope.INTERNAL,
-                PixDestinationScope.EXTERNAL
+            .findUsable(
+                source,
+                type,
+                normalizedKey
             )
             .map(
-                PixPersistenceMapper::toDomain
+                PixMysqlPersistenceImpl::favorite
             );
     }
 
     @Override
-    public PixFavorite saveFavorite(
-        PixFavorite favorite
+    public Optional<PixFavorite> findFavoriteById(
+        UUID id,
+        UUID source
     ) {
-        return PixPersistenceMapper.toDomain(
+        return favorites
+            .findByIdAndSourceAccountId(
+                id,
+                source
+            )
+            .map(
+                PixMysqlPersistenceImpl::favorite
+            );
+    }
+
+    @Override
+    public List<PixFavorite> findFavorites(
+        UUID source
+    ) {
+        return favorites
+            .findActiveBySource(
+                source
+            )
+            .stream()
+            .map(
+                PixMysqlPersistenceImpl::favorite
+            )
+            .toList();
+    }
+
+    @Override
+    public PixFavorite saveFavorite(
+        PixFavorite value
+    ) {
+        return favorite(
             favorites.save(
-                PixPersistenceMapper.toData(
-                    favorite
-                )
+                data(value)
             )
         );
     }
 
     @Override
     public void deleteFavorite(
-        UUID favoriteId,
-        UUID sourceAccountId
+        PixFavorite value
     ) {
-        favorites.deleteByIdAndOriginAccountId(
-            favoriteId,
-            sourceAccountId
+        favorites.delete(
+            data(value)
         );
     }
 
@@ -335,6 +318,134 @@ public final class PixMysqlPersistenceImpl
     ) {
         favorites.deleteByPixKeyId(
             pixKeyId
+        );
+    }
+
+    private static PixKey key(
+        PixKeyData data
+    ) {
+        return new PixKey(
+            data.getId(),
+            data.getAccountId(),
+            data.getType(),
+            data.getNormalizedValue(),
+            data.isActive(),
+            data.getCreatedAt()
+        );
+    }
+
+    private static PixKeyData data(
+        PixKey key
+    ) {
+        return new PixKeyData(
+            key.getId(),
+            key.getAccountId(),
+            key.getType(),
+            key.getNormalizedValue(),
+            key.isActive(),
+            key.getCreatedAt()
+        );
+    }
+
+    private static PixFavorite favorite(
+        PixFavoriteData data
+    ) {
+        return new PixFavorite(
+            data.getId(),
+            data.getSourceAccountId(),
+            data.getPixKeyId(),
+            data.getRecipientName(),
+            data.getNormalizedKey(),
+            data.getMaskedKey(),
+            data.getKeyType(),
+            data.getRouting(),
+            data.getBankCode(),
+            data.getBankName(),
+            data.getMaskedRecipientDocument(),
+            data.getCreatedAt()
+        );
+    }
+
+    private static PixFavoriteData data(
+        PixFavorite favorite
+    ) {
+        return new PixFavoriteData(
+            favorite.id(),
+            favorite.sourceAccountId(),
+            favorite.pixKeyId(),
+            favorite.keyValue(),
+            favorite.routing(),
+            favorite.recipientName(),
+            favorite.bankCode(),
+            favorite.bankName(),
+            favorite.maskedRecipientDocument(),
+            favorite.maskedKey(),
+            favorite.keyType(),
+            favorite.createdAt()
+        );
+    }
+
+    private static PixPayment payment(
+        PixPaymentData data
+    ) {
+        return new PixPayment(
+            data.getId(),
+            data.getSourceAccountId(),
+            data.getTargetAccountId(),
+            data.getRouting(),
+            data.getKeyType(),
+            data.getMaskedKey(),
+            data.getKeyHash(),
+            data.getRecipientName(),
+            data.getMaskedRecipientDocument(),
+            data.getDestinationBankCode(),
+            data.getDestinationBankName(),
+            data.getAmount(),
+            data.getStatus(),
+            data.getIdempotencyKey(),
+            data.getRequestFingerprint(),
+            data.getRequestedAt(),
+            data.getScheduledFor(),
+            data.getProcessedAt(),
+            data.getSettlementReference(),
+            data.getFailureCode(),
+            data.getFailureMessageKey(),
+            data.getRecurrenceId(),
+            data.getFrequency(),
+            data.getOccurrenceNumber(),
+            data.getTotalOccurrences()
+        );
+    }
+
+    private static PixPaymentData data(
+        PixPayment payment
+    ) {
+        return new PixPaymentData(
+            payment.getId(),
+            payment.getSourceAccountId(),
+            payment.getTargetAccountId(),
+            payment.getRouting(),
+            payment.getKeyType(),
+            payment.getMaskedKey(),
+            payment.getKeyHash(),
+            payment.getRecipientName(),
+            payment.getMaskedRecipientDocument(),
+            payment.getDestinationBankCode(),
+            payment.getDestinationBankName(),
+            payment.getAmount(),
+            payment.getStatus(),
+            payment.getIdempotencyKey(),
+            payment.getRequestFingerprint(),
+            payment.getRequestedAt(),
+            payment.getScheduledFor(),
+            payment.getProcessedAt(),
+            payment.getSettlementReference(),
+            payment.getFailureCode(),
+            payment.getFailureMessageKey(),
+            payment.getRecurrenceId(),
+            payment.getFrequency(),
+            payment.getOccurrenceNumber(),
+            payment.getTotalOccurrences()
         );
     }
 }

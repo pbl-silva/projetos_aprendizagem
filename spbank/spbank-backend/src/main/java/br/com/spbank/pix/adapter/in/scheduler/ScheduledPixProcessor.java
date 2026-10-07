@@ -20,52 +20,52 @@ public final class ScheduledPixProcessor {
             ScheduledPixProcessor.class
         );
 
-    private static final int BATCH_SIZE = 100;
-
     private final PixPersistence pix;
     private final ExecuteScheduledPixUseCase execute;
-    private final PixProperties properties;
     private final Clock clock;
+    private final PixProperties properties;
 
     public ScheduledPixProcessor(
         PixPersistence pix,
         ExecuteScheduledPixUseCase execute,
-        PixProperties properties,
-        Clock clock
+        Clock clock,
+        PixProperties properties
     ) {
         this.pix = pix;
         this.execute = execute;
-        this.properties = properties;
         this.clock = clock;
+        this.properties = properties;
     }
 
     public void processDueBatch() {
-
         LocalDate today =
-            LocalDate.now(
-                clock.withZone(
+            clock
+                .instant()
+                .atZone(
                     ZoneId.of(
                         properties.zone()
                     )
                 )
-            );
+                .toLocalDate();
 
-        pix.findDuePaymentIds(
+        pix.findDueIds(
             today,
-            BATCH_SIZE
-        ).forEach(paymentId -> {
+            100
+        ).forEach(
+            id -> {
+                try {
+                    execute.execute(id);
 
-            try {
-                execute.execute(paymentId);
-
-            } catch (RuntimeException ex) {
-
-                LOG.error(
-                    "Falha ao processar PIX agendado {}",
-                    paymentId,
-                    ex
-                );
+                } catch (
+                    RuntimeException ex
+                ) {
+                    LOG.error(
+                        "Falha ao processar Pix agendado {}",
+                        id,
+                        ex
+                    );
+                }
             }
-        });
+        );
     }
 }

@@ -1,158 +1,267 @@
 package br.com.spbank.pix.application.model;
 
+import br.com.spbank.shared.application.exception.BusinessException;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.UUID;
 
 public final class PixPayment {
 
     private final UUID id;
-    private final UUID originAccountId;
-    private final UUID destinationAccountId;
-    private final PixDestinationScope destinationScope;
+    private final UUID sourceAccountId;
+    private final UUID targetAccountId;
+    private final PixRouting routing;
     private final PixKeyType keyType;
     private final String maskedKey;
     private final String keyHash;
-    private final String holderName;
-    private final String maskedDocument;
-    private final String bankCode;
-    private final String bankName;
+    private final String recipientName;
+    private final String maskedRecipientDocument;
+    private final String destinationBankCode;
+    private final String destinationBankName;
     private final BigDecimal amount;
+
     private PixStatus status;
+
     private final UUID idempotencyKey;
-    private final String requestHash;
+    private final String requestFingerprint;
     private final Instant requestedAt;
     private final LocalDate scheduledFor;
+
     private Instant processedAt;
+    private String settlementReference;
     private String failureCode;
-    private String failureMessage;
+    private String failureMessageKey;
+
     private final UUID recurrenceId;
-    private final PixRecurrenceFrequency recurrenceFrequency;
+    private final PixFrequency frequency;
     private final Integer occurrenceNumber;
     private final Integer totalOccurrences;
-    private String settlementReference;
 
     public PixPayment(
         UUID id,
-        UUID originAccountId,
-        UUID destinationAccountId,
-        PixDestinationScope destinationScope,
+        UUID sourceAccountId,
+        UUID targetAccountId,
+        PixRouting routing,
         PixKeyType keyType,
         String maskedKey,
         String keyHash,
-        String holderName,
-        String maskedDocument,
-        String bankCode,
-        String bankName,
+        String recipientName,
+        String maskedRecipientDocument,
+        String destinationBankCode,
+        String destinationBankName,
         BigDecimal amount,
         PixStatus status,
         UUID idempotencyKey,
-        String requestHash,
+        String requestFingerprint,
         Instant requestedAt,
         LocalDate scheduledFor,
         Instant processedAt,
+        String settlementReference,
         String failureCode,
-        String failureMessage,
+        String failureMessageKey,
         UUID recurrenceId,
-        PixRecurrenceFrequency recurrenceFrequency,
+        PixFrequency frequency,
         Integer occurrenceNumber,
-        Integer totalOccurrences,
-        String settlementReference
+        Integer totalOccurrences
     ) {
-        this.id = Objects.requireNonNull(id);
-        this.originAccountId = Objects.requireNonNull(originAccountId);
-        this.destinationScope = Objects.requireNonNull(destinationScope);
-        this.keyType = Objects.requireNonNull(keyType);
-        this.maskedKey = Objects.requireNonNull(maskedKey);
-        this.keyHash = Objects.requireNonNull(keyHash);
-        this.holderName = Objects.requireNonNull(holderName);
-        this.maskedDocument = Objects.requireNonNull(maskedDocument);
-        this.bankCode = Objects.requireNonNull(bankCode);
-        this.bankName = Objects.requireNonNull(bankName);
-        this.amount = Objects.requireNonNull(amount);
-        this.status = Objects.requireNonNull(status);
-        this.idempotencyKey = Objects.requireNonNull(idempotencyKey);
-        this.requestHash = Objects.requireNonNull(requestHash);
-        this.requestedAt = Objects.requireNonNull(requestedAt);
-
-        if (amount.signum() <= 0) {
-            throw new IllegalArgumentException(
-                "Valor do PIX deve ser maior que zero"
-            );
-        }
-
-        if (destinationScope == PixDestinationScope.INTERNAL
-            && destinationAccountId == null) {
-            throw new IllegalArgumentException(
-                "Conta de destino é obrigatória para PIX interno"
-            );
-        }
-
-        if (destinationScope == PixDestinationScope.EXTERNAL
-            && destinationAccountId != null) {
-            throw new IllegalArgumentException(
-                "Conta de destino não deve ser informada para PIX externo"
-            );
-        }
-
-        if ((recurrenceId == null)
-            != (recurrenceFrequency == null)) {
-            throw new IllegalArgumentException(
-                "Dados de recorrência devem ser informados em conjunto"
-            );
-        }
-
-        if (recurrenceId == null) {
-            if (occurrenceNumber != null || totalOccurrences != null) {
-                throw new IllegalArgumentException(
-                    "Ocorrência não deve ser informada sem recorrência"
-                );
-            }
-        } else {
-            if (occurrenceNumber == null || totalOccurrences == null) {
-                throw new IllegalArgumentException(
-                    "Ocorrência e total são obrigatórios para recorrência"
-                );
-            }
-
-            if (occurrenceNumber < 1
-                || totalOccurrences < 2
-                || totalOccurrences > 24
-                || occurrenceNumber > totalOccurrences) {
-                throw new IllegalArgumentException(
-                    "Dados de recorrência inválidos"
-                );
-            }
-        }
-
-        this.destinationAccountId = destinationAccountId;
+        this.id = id;
+        this.sourceAccountId = sourceAccountId;
+        this.targetAccountId = targetAccountId;
+        this.routing = routing;
+        this.keyType = keyType;
+        this.maskedKey = maskedKey;
+        this.keyHash = keyHash;
+        this.recipientName = recipientName;
+        this.maskedRecipientDocument =
+            maskedRecipientDocument;
+        this.destinationBankCode =
+            destinationBankCode;
+        this.destinationBankName =
+            destinationBankName;
+        this.amount = amount;
+        this.status = status;
+        this.idempotencyKey = idempotencyKey;
+        this.requestFingerprint =
+            requestFingerprint;
+        this.requestedAt = requestedAt;
         this.scheduledFor = scheduledFor;
         this.processedAt = processedAt;
+        this.settlementReference =
+            settlementReference;
         this.failureCode = failureCode;
-        this.failureMessage = failureMessage;
+        this.failureMessageKey =
+            failureMessageKey;
         this.recurrenceId = recurrenceId;
-        this.recurrenceFrequency = recurrenceFrequency;
-        this.occurrenceNumber = occurrenceNumber;
-        this.totalOccurrences = totalOccurrences;
-        this.settlementReference = settlementReference;
+        this.frequency = frequency;
+        this.occurrenceNumber =
+            occurrenceNumber;
+        this.totalOccurrences =
+            totalOccurrences;
+    }
+
+    public static PixPayment processing(
+        UUID sourceId,
+        PixDestination destination,
+        PixKeyType keyType,
+        String maskedKey,
+        String keyHash,
+        BigDecimal amount,
+        UUID idempotencyKey,
+        String fingerprint,
+        Instant now
+    ) {
+        return new PixPayment(
+            UUID.randomUUID(),
+            sourceId,
+            destination.accountId(),
+            destination.routing(),
+            keyType,
+            maskedKey,
+            keyHash,
+            destination.recipientName(),
+            destination.maskedRecipientDocument(),
+            destination.bankCode(),
+            destination.bankName(),
+            amount,
+            PixStatus.PROCESSING,
+            idempotencyKey,
+            fingerprint,
+            now,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    public static PixPayment scheduled(
+        UUID sourceId,
+        PixDestination destination,
+        PixKeyType keyType,
+        String maskedKey,
+        String keyHash,
+        BigDecimal amount,
+        UUID idempotencyKey,
+        String fingerprint,
+        Instant now,
+        LocalDate date,
+        UUID recurrenceId,
+        PixFrequency frequency,
+        Integer occurrence,
+        Integer total
+    ) {
+        return new PixPayment(
+            UUID.randomUUID(),
+            sourceId,
+            destination.accountId(),
+            destination.routing(),
+            keyType,
+            maskedKey,
+            keyHash,
+            destination.recipientName(),
+            destination.maskedRecipientDocument(),
+            destination.bankCode(),
+            destination.bankName(),
+            amount,
+            PixStatus.SCHEDULED,
+            idempotencyKey,
+            fingerprint,
+            now,
+            date,
+            null,
+            null,
+            null,
+            null,
+            recurrenceId,
+            frequency,
+            occurrence,
+            total
+        );
+    }
+
+    public void requireDue(
+        LocalDate today
+    ) {
+        if (status != PixStatus.SCHEDULED) {
+            throw new BusinessException(
+                "PIX_NOT_SCHEDULED",
+                "pix.not-scheduled"
+            );
+        }
+
+        if (scheduledFor == null
+            || scheduledFor.isAfter(today)) {
+
+            throw new BusinessException(
+                "PIX_NOT_DUE",
+                "pix.not-due"
+            );
+        }
+    }
+
+    public void startProcessing() {
+        status = PixStatus.PROCESSING;
+    }
+
+    public void complete(
+        Instant at,
+        String reference
+    ) {
+        status = PixStatus.COMPLETED;
+        processedAt = at;
+        settlementReference = reference;
+    }
+
+    public void fail(
+        String code,
+        String key,
+        Instant at
+    ) {
+        status = PixStatus.FAILED;
+        failureCode = code;
+        failureMessageKey = key;
+        processedAt = at;
+    }
+
+    public void cancel(
+        Instant at,
+        LocalDate today
+    ) {
+        if (status != PixStatus.SCHEDULED
+            || scheduledFor == null
+            || !scheduledFor.isAfter(today)) {
+
+            throw new BusinessException(
+                "PIX_CANNOT_BE_CANCELLED",
+                "pix.cannot-cancel"
+            );
+        }
+
+        status = PixStatus.CANCELLED;
+        processedAt = at;
     }
 
     public UUID getId() {
         return id;
     }
 
-    public UUID getOriginAccountId() {
-        return originAccountId;
+    public UUID getSourceAccountId() {
+        return sourceAccountId;
     }
 
-    public UUID getDestinationAccountId() {
-        return destinationAccountId;
+    public UUID getTargetAccountId() {
+        return targetAccountId;
     }
 
-    public PixDestinationScope getDestinationScope() {
-        return destinationScope;
+    public PixRouting getRouting() {
+        return routing;
     }
 
     public PixKeyType getKeyType() {
@@ -167,20 +276,20 @@ public final class PixPayment {
         return keyHash;
     }
 
-    public String getHolderName() {
-        return holderName;
+    public String getRecipientName() {
+        return recipientName;
     }
 
-    public String getMaskedDocument() {
-        return maskedDocument;
+    public String getMaskedRecipientDocument() {
+        return maskedRecipientDocument;
     }
 
-    public String getBankCode() {
-        return bankCode;
+    public String getDestinationBankCode() {
+        return destinationBankCode;
     }
 
-    public String getBankName() {
-        return bankName;
+    public String getDestinationBankName() {
+        return destinationBankName;
     }
 
     public BigDecimal getAmount() {
@@ -195,8 +304,8 @@ public final class PixPayment {
         return idempotencyKey;
     }
 
-    public String getRequestHash() {
-        return requestHash;
+    public String getRequestFingerprint() {
+        return requestFingerprint;
     }
 
     public Instant getRequestedAt() {
@@ -211,20 +320,24 @@ public final class PixPayment {
         return processedAt;
     }
 
+    public String getSettlementReference() {
+        return settlementReference;
+    }
+
     public String getFailureCode() {
         return failureCode;
     }
 
-    public String getFailureMessage() {
-        return failureMessage;
+    public String getFailureMessageKey() {
+        return failureMessageKey;
     }
 
     public UUID getRecurrenceId() {
         return recurrenceId;
     }
 
-    public PixRecurrenceFrequency getRecurrenceFrequency() {
-        return recurrenceFrequency;
+    public PixFrequency getFrequency() {
+        return frequency;
     }
 
     public Integer getOccurrenceNumber() {
@@ -233,130 +346,5 @@ public final class PixPayment {
 
     public Integer getTotalOccurrences() {
         return totalOccurrences;
-    }
-
-    public String getSettlementReference() {
-        return settlementReference;
-    }
-
-    public boolean isScheduled() {
-        return status == PixStatus.SCHEDULED;
-    }
-
-    public boolean isProcessing() {
-        return status == PixStatus.PROCESSING;
-    }
-
-    public boolean isCompleted() {
-        return status == PixStatus.COMPLETED;
-    }
-
-    public boolean isFailed() {
-        return status == PixStatus.FAILED;
-    }
-
-    public boolean isCancelled() {
-        return status == PixStatus.CANCELLED;
-    }
-
-    public boolean isRecurring() {
-        return recurrenceId != null;
-    }
-
-    public void markProcessing() {
-        ensureStatus(PixStatus.SCHEDULED);
-
-        this.status = PixStatus.PROCESSING;
-    }
-
-    public void markCompleted(
-        Instant processedAt,
-        String settlementReference
-    ) {
-        Objects.requireNonNull(processedAt);
-
-        if (status != PixStatus.PROCESSING
-            && status != PixStatus.SCHEDULED) {
-            throw new IllegalStateException(
-                "PIX não pode ser concluído a partir do estado atual"
-            );
-        }
-
-        this.status = PixStatus.COMPLETED;
-        this.processedAt = processedAt;
-        this.settlementReference = settlementReference;
-        this.failureCode = null;
-        this.failureMessage = null;
-    }
-
-    public void markFailed(
-        Instant processedAt,
-        String failureCode,
-        String failureMessage
-    ) {
-        Objects.requireNonNull(processedAt);
-        Objects.requireNonNull(failureCode);
-        Objects.requireNonNull(failureMessage);
-
-        if (status != PixStatus.PROCESSING
-            && status != PixStatus.SCHEDULED) {
-            throw new IllegalStateException(
-                "PIX não pode entrar em falha a partir do estado atual"
-            );
-        }
-
-        this.status = PixStatus.FAILED;
-        this.processedAt = processedAt;
-        this.failureCode = failureCode;
-        this.failureMessage = failureMessage;
-    }
-
-    public void cancel() {
-        if (status != PixStatus.SCHEDULED) {
-            throw new IllegalStateException(
-                "Somente PIX agendado pode ser cancelado"
-            );
-        }
-
-        this.status = PixStatus.CANCELLED;
-    }
-
-    private void ensureStatus(PixStatus expectedStatus) {
-        if (status != expectedStatus) {
-            throw new IllegalStateException(
-                "Estado atual do PIX não permite esta operação"
-            );
-        }
-    }
-
-    @Override
-    public String toString() {
-        return "PixPayment[" +
-            "id=" + id +
-            ", originAccountId=" + originAccountId +
-            ", destinationAccountId=" + destinationAccountId +
-            ", destinationScope=" + destinationScope +
-            ", keyType=" + keyType +
-            ", maskedKey=" + maskedKey +
-            ", keyHash=[REDACTED]" +
-            ", holderName=" + holderName +
-            ", maskedDocument=" + maskedDocument +
-            ", bankCode=" + bankCode +
-            ", bankName=" + bankName +
-            ", amount=" + amount +
-            ", status=" + status +
-            ", idempotencyKey=" + idempotencyKey +
-            ", requestHash=[REDACTED]" +
-            ", requestedAt=" + requestedAt +
-            ", scheduledFor=" + scheduledFor +
-            ", processedAt=" + processedAt +
-            ", failureCode=" + failureCode +
-            ", failureMessage=" + failureMessage +
-            ", recurrenceId=" + recurrenceId +
-            ", recurrenceFrequency=" + recurrenceFrequency +
-            ", occurrenceNumber=" + occurrenceNumber +
-            ", totalOccurrences=" + totalOccurrences +
-            ", settlementReference=" + settlementReference +
-            ']';
     }
 }

@@ -1,7 +1,6 @@
 package br.com.spbank.pix.application.model;
 
 import java.time.Instant;
-import java.util.Objects;
 import java.util.UUID;
 
 public final class PixKey {
@@ -21,12 +20,32 @@ public final class PixKey {
         boolean active,
         Instant createdAt
     ) {
-        this.id = Objects.requireNonNull(id);
-        this.accountId = Objects.requireNonNull(accountId);
-        this.type = Objects.requireNonNull(type);
-        this.normalizedValue = Objects.requireNonNull(normalizedValue);
+        this.id = id;
+        this.accountId = accountId;
+        this.type = type;
+        this.normalizedValue = normalizedValue;
         this.active = active;
-        this.createdAt = Objects.requireNonNull(createdAt);
+        this.createdAt = createdAt;
+    }
+
+    public static PixKey create(
+        UUID accountId,
+        PixKeyType type,
+        String normalizedValue,
+        Instant now
+    ) {
+        return new PixKey(
+            UUID.randomUUID(),
+            accountId,
+            type,
+            normalizedValue,
+            true,
+            now
+        );
+    }
+
+    public void deactivate() {
+        active = false;
     }
 
     public UUID getId() {
@@ -51,21 +70,5 @@ public final class PixKey {
 
     public Instant getCreatedAt() {
         return createdAt;
-    }
-
-    public void deactivate() {
-        this.active = false;
-    }
-
-    @Override
-    public String toString() {
-        return "PixKey[" +
-            "id=" + id +
-            ", accountId=" + accountId +
-            ", type=" + type +
-            ", normalizedValue=[REDACTED]" +
-            ", active=" + active +
-            ", createdAt=" + createdAt +
-            ']';
     }
 }

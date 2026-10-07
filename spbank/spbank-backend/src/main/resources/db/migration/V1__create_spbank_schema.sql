@@ -3,9 +3,17 @@ CREATE TABLE instituicoes_bancarias (
   nome VARCHAR(120) NOT NULL,
   interna TINYINT(1) NOT NULL,
   ativa TINYINT(1) NOT NULL DEFAULT 1,
-  CONSTRAINT chk_instituicao_codigo CHECK (codigo_estudo REGEXP '^[0-9]{5}$'),
-  CONSTRAINT chk_instituicao_flags CHECK (interna IN (0,1) AND ativa IN (0,1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT chk_instituicao_codigo CHECK (
+    codigo_estudo REGEXP '^[0-9]{5}$'
+  ),
+  CONSTRAINT chk_instituicao_flags CHECK (
+    interna IN (0,1)
+    AND ativa IN (0,1)
+  )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE clientes (
   id CHAR(36) PRIMARY KEY,
@@ -22,15 +30,41 @@ CREATE TABLE clientes (
   cidade VARCHAR(80) NOT NULL,
   uf CHAR(2) NOT NULL,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
-  CONSTRAINT uk_cliente_cpf UNIQUE (cpf),
-  CONSTRAINT chk_cliente_cpf CHECK (cpf REGEXP '^[0-9]{11}$'),
-  CONSTRAINT chk_cliente_nascimento CHECK (data_nascimento >= '1900-01-01'),
-  CONSTRAINT chk_cliente_celular CHECK (celular REGEXP '^[1-9][0-9]9[0-9]{8}$'),
-  CONSTRAINT chk_cliente_email CHECK (email LIKE '%_@_%._%'),
-  CONSTRAINT chk_cliente_cep CHECK (cep REGEXP '^[0-9]{8}$'),
-  CONSTRAINT chk_cliente_uf CHECK (uf REGEXP '^[A-Z]{2}$'),
-  CONSTRAINT chk_cliente_ativo CHECK (ativo IN (0,1))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+  CONSTRAINT uk_cliente_cpf
+    UNIQUE (cpf),
+
+  CONSTRAINT chk_cliente_cpf CHECK (
+    cpf REGEXP '^[0-9]{11}$'
+  ),
+
+  CONSTRAINT chk_cliente_nascimento CHECK (
+    data_nascimento >= '1900-01-01'
+  ),
+
+  CONSTRAINT chk_cliente_celular CHECK (
+    celular REGEXP '^[1-9][0-9]9[0-9]{8}$'
+  ),
+
+  CONSTRAINT chk_cliente_email CHECK (
+    email LIKE '%_@_%._%'
+  ),
+
+  CONSTRAINT chk_cliente_cep CHECK (
+    cep REGEXP '^[0-9]{8}$'
+  ),
+
+  CONSTRAINT chk_cliente_uf CHECK (
+    uf REGEXP '^[A-Z]{2}$'
+  ),
+
+  CONSTRAINT chk_cliente_ativo CHECK (
+    ativo IN (0,1)
+  )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE contas (
   id CHAR(36) PRIMARY KEY,
@@ -44,29 +78,61 @@ CREATE TABLE contas (
   plano_conta VARCHAR(20) NOT NULL,
   saldo DECIMAL(19,2) NOT NULL,
   ativa TINYINT(1) NOT NULL DEFAULT 1,
-  CONSTRAINT fk_conta_instituicao FOREIGN KEY (codigo_banco)
+
+  CONSTRAINT fk_conta_instituicao
+    FOREIGN KEY (codigo_banco)
     REFERENCES instituicoes_bancarias(codigo_estudo),
-  CONSTRAINT fk_conta_cliente FOREIGN KEY (cliente_id) REFERENCES clientes(id),
-  CONSTRAINT chk_tipo_conta CHECK (tipo_conta IN ('CORRENTE','POUPANCA')),
-  CONSTRAINT chk_plano_conta CHECK (plano_conta IN ('STANDARD','PLUS')),
-  CONSTRAINT chk_documento_titular CHECK (CHAR_LENGTH(documento_titular) IN (11,14)),
-  CONSTRAINT chk_saldo_conta CHECK (saldo >= 0),
-  CONSTRAINT chk_conta_ativa CHECK (ativa IN (0,1)),
+
+  CONSTRAINT fk_conta_cliente
+    FOREIGN KEY (cliente_id)
+    REFERENCES clientes(id),
+
+  CONSTRAINT chk_tipo_conta CHECK (
+    tipo_conta IN (
+      'CORRENTE',
+      'POUPANCA'
+    )
+  ),
+
+  CONSTRAINT chk_plano_conta CHECK (
+    plano_conta IN (
+      'STANDARD',
+      'PLUS'
+    )
+  ),
+
+  CONSTRAINT chk_documento_titular CHECK (
+    CHAR_LENGTH(documento_titular) IN (11,14)
+  ),
+
+  CONSTRAINT chk_saldo_conta CHECK (
+    saldo >= 0
+  ),
+
+  CONSTRAINT chk_conta_ativa CHECK (
+    ativa IN (0,1)
+  ),
+
   CONSTRAINT uk_dados_bancarios UNIQUE (
     codigo_banco,
     agencia,
     numero_conta,
     tipo_conta
   ),
+
   CONSTRAINT uk_cliente_tipo_conta UNIQUE (
     cliente_id,
     tipo_conta
   ),
+
   CONSTRAINT uk_conta_cliente_id UNIQUE (
     cliente_id,
     id
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE credenciais_administrativas (
   id CHAR(36) PRIMARY KEY,
@@ -78,8 +144,9 @@ CREATE TABLE credenciais_administrativas (
   CONSTRAINT uk_credencial_admin_usuario
     UNIQUE (usuario),
 
-  CONSTRAINT chk_credencial_admin_ativa
-    CHECK (ativa IN (0,1))
+  CONSTRAINT chk_credencial_admin_ativa CHECK (
+    ativa IN (0,1)
+  )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
@@ -100,8 +167,9 @@ CREATE TABLE sessoes_administrativas (
   CONSTRAINT uk_sessao_admin_token
     UNIQUE (token_hash),
 
-  CONSTRAINT chk_expiracao_sessao_admin
-    CHECK (expira_em > criada_em)
+  CONSTRAINT chk_expiracao_sessao_admin CHECK (
+    expira_em > criada_em
+  )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
@@ -125,17 +193,27 @@ CREATE TABLE alteracoes_plano_conta (
     FOREIGN KEY (administrador_id)
     REFERENCES credenciais_administrativas(id),
 
-  CONSTRAINT chk_alteracao_plano_anterior
-    CHECK (plano_anterior IN ('STANDARD','PLUS')),
+  CONSTRAINT chk_alteracao_plano_anterior CHECK (
+    plano_anterior IN (
+      'STANDARD',
+      'PLUS'
+    )
+  ),
 
-  CONSTRAINT chk_alteracao_plano_novo
-    CHECK (plano_novo IN ('STANDARD','PLUS')),
+  CONSTRAINT chk_alteracao_plano_novo CHECK (
+    plano_novo IN (
+      'STANDARD',
+      'PLUS'
+    )
+  ),
 
-  CONSTRAINT chk_alteracao_plano_diferente
-    CHECK (plano_anterior <> plano_novo)
+  CONSTRAINT chk_alteracao_plano_diferente CHECK (
+    plano_anterior <> plano_novo
+  )
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE transferencias (
   id CHAR(36) PRIMARY KEY,
@@ -160,22 +238,31 @@ CREATE TABLE transferencias (
   referencia_liquidacao VARCHAR(100) NULL,
   codigo_falha VARCHAR(60) NULL,
   mensagem_falha VARCHAR(240) NULL,
+
   CONSTRAINT fk_transferencia_origem
     FOREIGN KEY (conta_origem_id)
     REFERENCES contas(id),
+
   CONSTRAINT fk_transferencia_destino
     FOREIGN KEY (conta_destino_id)
     REFERENCES contas(id),
+
   CONSTRAINT fk_transferencia_instituicao
     FOREIGN KEY (codigo_banco_destino)
     REFERENCES instituicoes_bancarias(codigo_estudo),
+
   CONSTRAINT uk_transferencia_idempotencia UNIQUE (
     conta_origem_id,
     chave_idempotencia
   ),
+
   CONSTRAINT chk_tipo_transferencia CHECK (
-    tipo_transferencia IN ('INTERNA','TED')
+    tipo_transferencia IN (
+      'INTERNA',
+      'TED'
+    )
   ),
+
   CONSTRAINT chk_destino_por_modalidade CHECK (
     (
       tipo_transferencia = 'INTERNA'
@@ -187,18 +274,23 @@ CREATE TABLE transferencias (
       AND conta_destino_id IS NULL
     )
   ),
+
   CONSTRAINT chk_valor_transferencia CHECK (
     valor > 0
   ),
+
   CONSTRAINT chk_taxa_transferencia CHECK (
     taxa >= 0
   ),
+
   CONSTRAINT chk_taxa_calculada CHECK (
     taxa_calculada IN (0,1)
   ),
+
   CONSTRAINT chk_hash_requisicao CHECK (
     hash_requisicao REGEXP '^[0-9a-f]{64}$'
   ),
+
   CONSTRAINT chk_situacao_transferencia CHECK (
     situacao IN (
       'AGENDADA',
@@ -208,7 +300,10 @@ CREATE TABLE transferencias (
       'CANCELADA'
     )
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE lancamentos_conta (
   id CHAR(36) PRIMARY KEY,
@@ -224,15 +319,18 @@ CREATE TABLE lancamentos_conta (
   nome_contraparte VARCHAR(120) NULL,
   banco_contraparte VARCHAR(8) NULL,
   modalidade_operacao VARCHAR(20) NULL,
+
   CONSTRAINT fk_lancamento_conta
     FOREIGN KEY (conta_id)
     REFERENCES contas(id),
+
   CONSTRAINT uk_lancamento_referencia UNIQUE (
     referencia_id,
     tipo_referencia,
     conta_id,
     tipo_lancamento
   ),
+
   CONSTRAINT chk_tipo_referencia CHECK (
     tipo_referencia IN (
       'TRANSFERENCIA',
@@ -241,39 +339,258 @@ CREATE TABLE lancamentos_conta (
       'INVESTIMENTO'
     )
   ),
+
   CONSTRAINT chk_tipo_lancamento CHECK (
     tipo_lancamento IN (
       'TRANSFERENCIA_SAIDA',
       'TRANSFERENCIA_ENTRADA',
+      'PIX_SAIDA',
+      'PIX_ENTRADA',
       'TAXA'
     )
   ),
+
   CONSTRAINT chk_valor_lancamento CHECK (
     valor > 0
   ),
+
   CONSTRAINT chk_natureza_lancamento CHECK (
-    natureza IN ('DEBITO','CREDITO')
+    natureza IN (
+      'DEBITO',
+      'CREDITO'
+    )
   ),
+
   CONSTRAINT chk_saldo_apos_lancamento CHECK (
     saldo_apos >= 0
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE chaves_pix (
+  id CHAR(36) PRIMARY KEY,
+  conta_id CHAR(36) NOT NULL,
+  tipo_chave VARCHAR(20) NOT NULL,
+  valor_normalizado VARCHAR(120) NOT NULL,
+  ativa TINYINT(1) NOT NULL DEFAULT 1,
+
+  valor_ativo VARCHAR(120)
+    GENERATED ALWAYS AS (
+      IF(
+        ativa = 1,
+        valor_normalizado,
+        NULL
+      )
+    ) STORED,
+
+  criada_em DATETIME(6) NOT NULL,
+
+  CONSTRAINT fk_chave_pix_conta
+    FOREIGN KEY (conta_id)
+    REFERENCES contas(id),
+
+  CONSTRAINT uk_chave_pix_valor_ativo
+    UNIQUE (valor_ativo),
+
+  CONSTRAINT chk_chave_pix_tipo CHECK (
+    tipo_chave IN (
+      'CPF_CNPJ',
+      'EMAIL',
+      'CELULAR',
+      'ALEATORIA'
+    )
+  ),
+
+  CONSTRAINT chk_chave_pix_ativa CHECK (
+    ativa IN (0,1)
+  )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE pix (
+  id CHAR(36) PRIMARY KEY,
+  conta_origem_id CHAR(36) NOT NULL,
+  conta_destino_id CHAR(36) NULL,
+  escopo_destino VARCHAR(20) NOT NULL DEFAULT 'INTERNO',
+  tipo_chave VARCHAR(20) NOT NULL,
+  chave_mascarada VARCHAR(120) NOT NULL,
+  hash_chave CHAR(64) NOT NULL,
+  nome_destinatario VARCHAR(120) NOT NULL,
+  documento_destinatario_mascarado VARCHAR(24) NOT NULL,
+  codigo_banco_destino VARCHAR(20) NOT NULL DEFAULT '90001',
+  nome_banco_destino VARCHAR(120) NOT NULL DEFAULT 'SPBank',
+  valor DECIMAL(19,2) NOT NULL,
+  situacao VARCHAR(20) NOT NULL,
+  chave_idempotencia CHAR(36) NOT NULL,
+  hash_requisicao CHAR(64) NOT NULL,
+  solicitada_em DATETIME(6) NOT NULL,
+  agendada_para DATE NULL,
+  processada_em DATETIME(6) NULL,
+  referencia_liquidacao VARCHAR(120) NULL,
+  codigo_falha VARCHAR(60) NULL,
+  mensagem_falha VARCHAR(240) NULL,
+  recorrencia_id CHAR(36) NULL,
+  frequencia_recorrencia VARCHAR(20) NULL,
+  numero_ocorrencia INT NULL,
+  total_ocorrencias INT NULL,
+
+  CONSTRAINT fk_pix_origem
+    FOREIGN KEY (conta_origem_id)
+    REFERENCES contas(id),
+
+  CONSTRAINT fk_pix_destino
+    FOREIGN KEY (conta_destino_id)
+    REFERENCES contas(id),
+
+  CONSTRAINT uk_pix_idempotencia UNIQUE (
+    conta_origem_id,
+    chave_idempotencia
+  ),
+
+  CONSTRAINT chk_pix_tipo_chave CHECK (
+    tipo_chave IN (
+      'CPF_CNPJ',
+      'EMAIL',
+      'CELULAR',
+      'ALEATORIA'
+    )
+  ),
+
+  CONSTRAINT chk_pix_valor CHECK (
+    valor > 0
+  ),
+
+  CONSTRAINT chk_pix_hash_chave CHECK (
+    hash_chave REGEXP '^[0-9a-f]{64}$'
+  ),
+
+  CONSTRAINT chk_pix_hash_requisicao CHECK (
+    hash_requisicao REGEXP '^[0-9a-f]{64}$'
+  ),
+
+  CONSTRAINT chk_pix_situacao CHECK (
+    situacao IN (
+      'AGENDADO',
+      'PROCESSANDO',
+      'CONCLUIDO',
+      'FALHA',
+      'CANCELADO'
+    )
+  ),
+
+  CONSTRAINT chk_pix_recorrencia CHECK (
+    (
+      recorrencia_id IS NULL
+      AND frequencia_recorrencia IS NULL
+      AND numero_ocorrencia IS NULL
+      AND total_ocorrencias IS NULL
+    )
+    OR
+    (
+      recorrencia_id IS NOT NULL
+      AND frequencia_recorrencia IN (
+        'SEMANAL',
+        'MENSAL'
+      )
+      AND numero_ocorrencia >= 1
+      AND total_ocorrencias BETWEEN 2 AND 24
+      AND numero_ocorrencia <= total_ocorrencias
+    )
+  ),
+
+  CONSTRAINT chk_pix_escopo_destino CHECK (
+    (
+      escopo_destino = 'INTERNO'
+      AND conta_destino_id IS NOT NULL
+    )
+    OR
+    (
+      escopo_destino = 'EXTERNO'
+      AND conta_destino_id IS NULL
+    )
+  )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE favoritos_pix (
+  id CHAR(36) PRIMARY KEY,
+  conta_origem_id CHAR(36) NOT NULL,
+  chave_pix_id CHAR(36) NULL,
+  valor_chave_normalizado VARCHAR(120) NOT NULL,
+  escopo_destino VARCHAR(20) NOT NULL DEFAULT 'INTERNO',
+  nome_destinatario VARCHAR(120) NOT NULL,
+  codigo_banco_destino VARCHAR(20) NOT NULL DEFAULT '90001',
+  nome_banco_destino VARCHAR(120) NOT NULL DEFAULT 'SPBank',
+  documento_destinatario_mascarado VARCHAR(24) NULL,
+  chave_mascarada VARCHAR(120) NOT NULL,
+  tipo_chave VARCHAR(20) NOT NULL,
+  criado_em DATETIME(6) NOT NULL,
+
+  CONSTRAINT fk_favorito_pix_origem
+    FOREIGN KEY (conta_origem_id)
+    REFERENCES contas(id),
+
+  CONSTRAINT fk_favorito_pix_chave
+    FOREIGN KEY (chave_pix_id)
+    REFERENCES chaves_pix(id),
+
+  CONSTRAINT uk_favorito_pix_chave UNIQUE (
+    conta_origem_id,
+    tipo_chave,
+    valor_chave_normalizado
+  ),
+
+  CONSTRAINT chk_favorito_pix_tipo CHECK (
+    tipo_chave IN (
+      'CPF_CNPJ',
+      'EMAIL',
+      'CELULAR',
+      'ALEATORIA'
+    )
+  ),
+
+  CONSTRAINT chk_favorito_pix_escopo CHECK (
+    (
+      escopo_destino = 'INTERNO'
+      AND chave_pix_id IS NOT NULL
+    )
+    OR
+    (
+      escopo_destino = 'EXTERNO'
+      AND chave_pix_id IS NULL
+    )
+  )
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE credenciais_acesso (
   cliente_id CHAR(36) PRIMARY KEY,
   usuario VARCHAR(60) NOT NULL,
   senha_hash VARCHAR(180) NOT NULL,
   ativa TINYINT(1) NOT NULL DEFAULT 1,
+
   CONSTRAINT fk_credencial_cliente
     FOREIGN KEY (cliente_id)
     REFERENCES clientes(id),
-  CONSTRAINT uk_credencial_usuario UNIQUE (
-    usuario
-  ),
+
+  CONSTRAINT uk_credencial_usuario
+    UNIQUE (usuario),
+
   CONSTRAINT chk_credencial_ativa CHECK (
     ativa IN (0,1)
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE sessoes_acesso (
   id CHAR(36) PRIMARY KEY,
@@ -283,46 +600,102 @@ CREATE TABLE sessoes_acesso (
   criada_em DATETIME(6) NOT NULL,
   expira_em DATETIME(6) NOT NULL,
   revogada_em DATETIME(6) NULL,
+
   CONSTRAINT fk_sessao_cliente
     FOREIGN KEY (cliente_id)
     REFERENCES clientes(id),
+
   CONSTRAINT fk_sessao_conta_cliente
     FOREIGN KEY (cliente_id, conta_id)
     REFERENCES contas(cliente_id, id),
-  CONSTRAINT uk_sessao_token UNIQUE (
-    token_hash
-  ),
+
+  CONSTRAINT uk_sessao_token
+    UNIQUE (token_hash),
+
   CONSTRAINT chk_expiracao_sessao CHECK (
     expira_em > criada_em
   )
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE INDEX idx_instituicoes_ativas
-  ON instituicoes_bancarias(ativa, nome);
+  ON instituicoes_bancarias (
+    ativa,
+    nome
+  );
 
 CREATE INDEX idx_contas_cliente
-  ON contas(cliente_id, ativa);
+  ON contas (
+    cliente_id,
+    ativa
+  );
 
 CREATE INDEX idx_transferencias_pendentes
-  ON transferencias(situacao, agendada_para);
+  ON transferencias (
+    situacao,
+    agendada_para
+  );
 
 CREATE INDEX idx_transferencias_origem_data
-  ON transferencias(conta_origem_id, solicitada_em);
+  ON transferencias (
+    conta_origem_id,
+    solicitada_em
+  );
 
 CREATE INDEX idx_lancamentos_conta_data
-  ON lancamentos_conta(conta_id, ocorrido_em DESC);
+  ON lancamentos_conta (
+    conta_id,
+    ocorrido_em DESC
+  );
 
 CREATE INDEX idx_sessoes_cliente_expiracao
-  ON sessoes_acesso(cliente_id, expira_em);
+  ON sessoes_acesso (
+    cliente_id,
+    expira_em
+  );
 
-  CREATE INDEX idx_sessoes_admin_expiracao
-  ON sessoes_administrativas(
+CREATE INDEX idx_sessoes_admin_expiracao
+  ON sessoes_administrativas (
     administrador_id,
     expira_em
   );
 
 CREATE INDEX idx_alteracoes_plano_conta_data
-  ON alteracoes_plano_conta(
+  ON alteracoes_plano_conta (
     conta_id,
     alterado_em DESC
+  );
+
+CREATE INDEX idx_chaves_pix_conta
+  ON chaves_pix (
+    conta_id,
+    ativa,
+    criada_em
+  );
+
+CREATE INDEX idx_pix_pendentes
+  ON pix (
+    situacao,
+    agendada_para
+  );
+
+CREATE INDEX idx_pix_origem_data
+  ON pix (
+    conta_origem_id,
+    solicitada_em
+  );
+
+CREATE INDEX idx_pix_recorrencia
+  ON pix (
+    conta_origem_id,
+    recorrencia_id,
+    situacao
+  );
+
+CREATE INDEX idx_favoritos_pix_origem
+  ON favoritos_pix (
+    conta_origem_id,
+    criado_em
   );

@@ -1,54 +1,34 @@
 package br.com.spbank.pix.application.port.in;
 
+import br.com.spbank.pix.application.model.PixFrequency;
 import br.com.spbank.pix.application.model.PixKeyType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.UUID;
 
 public record PixCreationCommand(
     UUID sourceAccountId,
     UUID idempotencyKey,
     PixKeyType keyType,
-    String keyValue,
+    String key,
     BigDecimal amount,
     LocalDate scheduledFor,
-    String recurrenceFrequency,
-    Integer totalOccurrences,
+    PixFrequency frequency,
+    Integer occurrences,
     boolean saveFavorite
 ) {
-
-    public PixCreationCommand {
-        Objects.requireNonNull(sourceAccountId, "sourceAccountId");
-        Objects.requireNonNull(idempotencyKey, "idempotencyKey");
-        Objects.requireNonNull(keyType, "keyType");
-        Objects.requireNonNull(keyValue, "keyValue");
-        Objects.requireNonNull(amount, "amount");
-
-        if (keyValue.isBlank()) {
-            throw new IllegalArgumentException(
-                "Chave PIX é obrigatória"
-            );
-        }
-
-        if (amount.signum() <= 0) {
-            throw new IllegalArgumentException(
-                "Valor do PIX deve ser maior que zero"
-            );
-        }
-    }
 
     @Override
     public String toString() {
         return "PixCreationCommand[sourceAccountId=" + sourceAccountId
             + ", idempotencyKey=" + idempotencyKey
             + ", keyType=" + keyType
-            + ", keyValue=[REDACTED]"
+            + ", key=[REDACTED]"
             + ", amount=" + amount
             + ", scheduledFor=" + scheduledFor
-            + ", recurrenceFrequency=" + recurrenceFrequency
-            + ", totalOccurrences=" + totalOccurrences
+            + ", frequency=" + frequency
+            + ", occurrences=" + occurrences
             + ", saveFavorite=" + saveFavorite
             + "]";
     }

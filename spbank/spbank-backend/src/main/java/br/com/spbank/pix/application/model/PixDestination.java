@@ -1,43 +1,45 @@
 package br.com.spbank.pix.application.model;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public record PixDestination(
-    PixDestinationScope scope,
+    PixRouting routing,
     UUID accountId,
-    String holderName,
-    String maskedDocument,
-    String maskedKey,
+    String recipientName,
+    String maskedRecipientDocument,
     String bankCode,
     String bankName
 ) {
 
-    public PixDestination {
-        Objects.requireNonNull(scope);
-        Objects.requireNonNull(holderName);
-        Objects.requireNonNull(maskedKey);
-
-        if (scope == PixDestinationScope.INTERNAL
-            && accountId == null) {
-            throw new IllegalArgumentException(
-                "Conta de destino é obrigatória para PIX interno"
-            );
-        }
-
-        if (scope == PixDestinationScope.EXTERNAL
-            && accountId != null) {
-            throw new IllegalArgumentException(
-                "Conta de destino não deve ser informada para PIX externo"
-            );
-        }
+    public static PixDestination internal(
+        UUID accountId,
+        String recipientName,
+        String maskedDocument,
+        String bankCode
+    ) {
+        return new PixDestination(
+            PixRouting.INTERNAL,
+            accountId,
+            recipientName,
+            maskedDocument,
+            bankCode,
+            "SPBank"
+        );
     }
 
-    public boolean isInternal() {
-        return scope == PixDestinationScope.INTERNAL;
-    }
-
-    public boolean isExternal() {
-        return scope == PixDestinationScope.EXTERNAL;
+    public static PixDestination external(
+        String recipientName,
+        String maskedDocument,
+        String bankCode,
+        String bankName
+    ) {
+        return new PixDestination(
+            PixRouting.EXTERNAL,
+            null,
+            recipientName,
+            maskedDocument,
+            bankCode,
+            bankName
+        );
     }
 }

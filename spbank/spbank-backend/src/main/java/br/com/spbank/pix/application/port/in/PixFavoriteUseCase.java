@@ -7,9 +7,16 @@ import java.util.UUID;
 
 public interface PixFavoriteUseCase {
 
-    List<PixFavorite> list(UUID sourceAccountId);
+    PixFavorite registerFavorite(
+        PixFavoriteRegistrationCommand command
+    );
 
-    PixFavorite register(PixFavoriteRegistrationCommand command);
+    List<PixFavorite> listFavorites(
+        UUID accountId
+    );
 
-    void remove(UUID favoriteId, UUID sourceAccountId);
+    void deleteFavorite(
+        UUID accountId,
+        UUID favoriteId
+    );
 }

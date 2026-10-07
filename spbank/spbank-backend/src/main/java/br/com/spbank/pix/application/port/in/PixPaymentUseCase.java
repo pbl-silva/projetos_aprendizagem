@@ -7,15 +7,30 @@ import java.util.UUID;
 
 public interface PixPaymentUseCase {
 
-    PixPreview preview(PixPreviewCommand command);
+    PixPreview preview(
+        PixCreationCommand command
+    );
 
-    PixPayment create(PixCreationCommand command);
+    PixPayment create(
+        PixCreationCommand command
+    );
 
-    PixPayment get(UUID paymentId, UUID sourceAccountId);
+    PixPayment get(
+        UUID accountId,
+        UUID pixId
+    );
 
-    List<PixPayment> listScheduled(UUID sourceAccountId);
+    List<PixPayment> listScheduled(
+        UUID accountId
+    );
 
-    PixPayment cancel(UUID paymentId, UUID sourceAccountId);
+    PixPayment cancel(
+        UUID accountId,
+        UUID pixId
+    );
 
-    void cancelRecurrence(UUID recurrenceId, UUID sourceAccountId);
+    int cancelRecurrence(
+        UUID accountId,
+        UUID recurrenceId
+    );
 }

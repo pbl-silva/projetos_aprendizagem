@@ -1,7 +1,6 @@
 package br.com.spbank.pix.adapter.out.persistence.mysql.repository;
 
 import br.com.spbank.pix.adapter.out.persistence.mysql.data.PixFavoriteData;
-import br.com.spbank.pix.application.model.PixDestinationScope;
 import br.com.spbank.pix.application.model.PixKeyType;
 
 import java.util.List;
@@ -15,63 +14,65 @@ import org.springframework.data.repository.query.Param;
 public interface PixFavoriteJpaRepository
         extends JpaRepository<PixFavoriteData, UUID> {
 
-    List<PixFavoriteData>
-            findByOriginAccountIdOrderByCreatedAtAsc(
-                UUID originAccountId
-            );
-
     Optional<PixFavoriteData>
-            findByIdAndOriginAccountId(
-                UUID id,
-                UUID originAccountId
-            );
-
-    Optional<PixFavoriteData>
-            findByOriginAccountIdAndKeyTypeAndNormalizedKeyValue(
-                UUID originAccountId,
-                PixKeyType keyType,
-                String normalizedKeyValue
-            );
+        findBySourceAccountIdAndKeyTypeAndNormalizedKey(
+            UUID source,
+            PixKeyType type,
+            String normalizedKey
+        );
 
     @Query("""
-        SELECT f
-        FROM PixFavoriteData f
-        WHERE f.originAccountId = :originAccountId
-          AND f.keyType = :keyType
-          AND f.normalizedKeyValue = :normalizedKeyValue
-          AND (
-                f.destinationScope = :externalScope
-                OR (
-                    f.destinationScope = :internalScope
-                    AND EXISTS (
-                        SELECT k.id
-                        FROM PixKeyData k
-                        WHERE k.id = f.pixKeyId
-                          AND k.active = true
-                    )
-                )
-          )
+        select f
+          from PixFavoriteData f
+         where f.sourceAccountId = :source
+           and f.keyType = :type
+           and f.normalizedKey = :normalizedKey
+           and (
+                f.routing =
+                    br.com.spbank.pix.application.model.PixRouting.EXTERNAL
+             or exists (
+                 select k.id
+                   from PixKeyData k
+                  where k.id = f.pixKeyId
+                    and k.active = true
+             )
+           )
         """)
-    Optional<PixFavoriteData> findUsableFavorite(
-        @Param("originAccountId")
-        UUID originAccountId,
+    Optional<PixFavoriteData> findUsable(
+        @Param("source")
+        UUID source,
 
-        @Param("keyType")
-        PixKeyType keyType,
+        @Param("type")
+        PixKeyType type,
 
-        @Param("normalizedKeyValue")
-        String normalizedKeyValue,
-
-        @Param("internalScope")
-        PixDestinationScope internalScope,
-
-        @Param("externalScope")
-        PixDestinationScope externalScope
+        @Param("normalizedKey")
+        String normalizedKey
     );
 
-    void deleteByIdAndOriginAccountId(
-        UUID id,
-        UUID originAccountId
+    Optional<PixFavoriteData>
+        findByIdAndSourceAccountId(
+            UUID id,
+            UUID source
+        );
+
+    @Query("""
+        select f
+          from PixFavoriteData f
+         where f.sourceAccountId = :source
+           and (
+                f.pixKeyId is null
+             or exists (
+                 select k.id
+                   from PixKeyData k
+                  where k.id = f.pixKeyId
+                    and k.active = true
+             )
+           )
+         order by f.createdAt desc
+        """)
+    List<PixFavoriteData> findActiveBySource(
+        @Param("source")
+        UUID source
     );
 
     void deleteByPixKeyId(

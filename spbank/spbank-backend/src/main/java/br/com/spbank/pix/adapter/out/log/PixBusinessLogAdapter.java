@@ -1,14 +1,14 @@
 package br.com.spbank.pix.adapter.out.log;
 
-import br.com.spbank.pix.application.port.out.BusinessLogPort;
 import br.com.spbank.pix.application.port.out.PixBusinessEvent;
+import br.com.spbank.pix.application.port.out.PixBusinessLogPort;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
 public final class PixBusinessLogAdapter
-        implements BusinessLogPort {
+        implements PixBusinessLogPort {
 
     private final ApplicationEventPublisher events;
 

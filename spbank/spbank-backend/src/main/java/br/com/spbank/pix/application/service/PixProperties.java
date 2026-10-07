@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "spbank.pix")
+@ConfigurationProperties("spbank.pix")
 public record PixProperties(
     long schedulerDelay,
     BigDecimal maxPerOperation,

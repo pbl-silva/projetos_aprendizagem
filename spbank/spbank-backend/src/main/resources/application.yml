@@ -5,6 +5,10 @@ spring:
   profiles:
     default: default
 
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+
   jpa:
     hibernate:
       ddl-auto: validate

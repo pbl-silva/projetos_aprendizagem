@@ -1,15 +1,25 @@
 package br.com.spbank.pix.application.port.in;
 
 import br.com.spbank.pix.application.model.PixKey;
+import br.com.spbank.pix.application.model.PixKeyType;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface PixKeyUseCase {
 
-    List<PixKey> listActive(UUID accountId);
+    PixKey registerKey(
+        UUID accountId,
+        PixKeyType type,
+        String value
+    );
 
-    PixKey register(PixKeyRegistrationCommand command);
+    List<PixKey> listKeys(
+        UUID accountId
+    );
 
-    void deactivate(UUID accountId, UUID keyId);
+    void deactivateKey(
+        UUID accountId,
+        UUID keyId
+    );
 }

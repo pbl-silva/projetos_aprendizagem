@@ -3,15 +3,14 @@ package br.com.spbank.pix.application.usecase;
 import br.com.spbank.conta.application.exception.InsufficientFundsException;
 import br.com.spbank.pix.application.model.PixPayment;
 import br.com.spbank.pix.application.port.in.ExecuteScheduledPixUseCase;
-import br.com.spbank.pix.application.port.out.BusinessLogPort;
 import br.com.spbank.pix.application.port.out.PixBusinessEvent;
+import br.com.spbank.pix.application.port.out.PixBusinessLogPort;
 import br.com.spbank.pix.application.port.out.PixPersistence;
 import br.com.spbank.pix.application.service.PixProperties;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.UUID;
 
@@ -24,116 +23,93 @@ public class ExecuteScheduledPixUseCaseImpl
 
     private final PixPersistence pix;
     private final PixExecutionService execution;
-    private final BusinessLogPort businessLogs;
-    private final PixProperties properties;
+    private final PixBusinessLogPort logs;
     private final Clock clock;
+    private final PixProperties properties;
 
     public ExecuteScheduledPixUseCaseImpl(
         PixPersistence pix,
         PixExecutionService execution,
-        BusinessLogPort businessLogs,
-        PixProperties properties,
-        Clock clock
+        PixBusinessLogPort logs,
+        Clock clock,
+        PixProperties properties
     ) {
         this.pix = pix;
         this.execution = execution;
-        this.businessLogs = businessLogs;
-        this.properties = properties;
+        this.logs = logs;
         this.clock = clock;
+        this.properties = properties;
     }
 
     @Override
     @Transactional
-    public PixPayment execute(UUID paymentId) {
+    public PixPayment execute(
+        UUID id
+    ) {
+        PixPayment payment =
+            pix.findPaymentForUpdate(id)
+                .orElseThrow(
+                    () ->
+                        new NotFoundException(
+                            "PIX_NOT_FOUND"
+                        )
+                );
 
-        PixPayment payment = pix
-            .findPaymentForUpdate(paymentId)
-            .orElseThrow(() ->
-                new NotFoundException(
-                    "PIX_NOT_FOUND"
+        payment.requireDue(
+            clock
+                .instant()
+                .atZone(
+                    ZoneId.of(
+                        properties.zone()
+                    )
                 )
-            );
+                .toLocalDate()
+        );
 
-        requireDue(payment);
-
-        payment.markProcessing();
+        payment.startProcessing();
 
         try {
             return execution.executeLocked(
                 payment
             );
 
-        } catch (InsufficientFundsException ex) {
-
-            payment.markFailed(
-                clock.instant(),
+        } catch (
+            InsufficientFundsException ex
+        ) {
+            payment.fail(
                 "INSUFFICIENT_FUNDS_ON_EXECUTION_DATE",
-                ex.getMessageKey()
+                ex.getMessageKey(),
+                clock.instant()
             );
 
-        } catch (BusinessException ex) {
-
-            payment.markFailed(
-                clock.instant(),
+        } catch (
+            BusinessException ex
+        ) {
+            payment.fail(
                 ex.getCode(),
-                ex.getMessageKey()
+                ex.getMessageKey(),
+                clock.instant()
             );
         }
 
         PixPayment saved =
-            pix.savePayment(payment);
+            pix.savePayment(
+                payment
+            );
 
-        businessLogs.publish(
+        logs.publish(
             new PixBusinessEvent(
                 saved.getId(),
                 saved.getStatus(),
-                saved.getOriginAccountId(),
+                saved.getSourceAccountId(),
                 saved.getAmount(),
+                saved.getKeyType(),
+                saved.getKeyHash(),
                 clock.instant(),
-                saved.getFailureCode(),
-                saved.getMaskedKey(),
-                saved.getMaskedDocument(),
-                saved.getKeyHash()
+                saved.getFailureCode()
             )
         );
 
         return saved;
-    }
-
-    private void requireDue(
-        PixPayment payment
-    ) {
-        if (!payment.isScheduled()) {
-            throw new BusinessException(
-                "PIX_NOT_SCHEDULED",
-                "pix.not-scheduled"
-            );
-        }
-
-        LocalDate scheduledFor =
-            payment.getScheduledFor();
-
-        if (scheduledFor == null) {
-            throw new BusinessException(
-                "PIX_NOT_SCHEDULED",
-                "pix.not-scheduled"
-            );
-        }
-
-        LocalDate today =
-            LocalDate.now(
-                clock.withZone(
-                    ZoneId.of(
-                        properties.zone()
-                    )
-                )
-            );
-
-        if (scheduledFor.isAfter(today)) {
-            throw new BusinessException(
-                "PIX_NOT_DUE",
-                "pix.not-due"
-            );
-        }
     }
 }

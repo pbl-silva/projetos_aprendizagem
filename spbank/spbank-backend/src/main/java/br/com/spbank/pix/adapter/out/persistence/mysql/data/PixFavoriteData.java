@@ -1,9 +1,9 @@
 package br.com.spbank.pix.adapter.out.persistence.mysql.data;
 
-import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixDestinationScopeConverter;
 import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixKeyTypeConverter;
-import br.com.spbank.pix.application.model.PixDestinationScope;
+import br.com.spbank.pix.adapter.out.persistence.mysql.converter.PixRoutingConverter;
 import br.com.spbank.pix.application.model.PixKeyType;
+import br.com.spbank.pix.application.model.PixRouting;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -23,9 +23,7 @@ public class PixFavoriteData {
 
     @Id
     @JdbcTypeCode(SqlTypes.CHAR)
-    @Column(
-        columnDefinition = "CHAR(36)"
-    )
+    @Column(columnDefinition = "CHAR(36)")
     private UUID id;
 
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -33,7 +31,7 @@ public class PixFavoriteData {
         name = "conta_origem_id",
         columnDefinition = "CHAR(36)"
     )
-    private UUID originAccountId;
+    private UUID sourceAccountId;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
@@ -42,54 +40,33 @@ public class PixFavoriteData {
     )
     private UUID pixKeyId;
 
-    @Column(
-        name = "valor_chave_normalizado",
-        length = 120
-    )
-    private String normalizedKeyValue;
+    @Column(name = "valor_chave_normalizado")
+    private String normalizedKey;
 
-    @Convert(
-        converter =
-            PixDestinationScopeConverter.class
-    )
+    @Convert(converter = PixRoutingConverter.class)
     @Column(name = "escopo_destino")
-    private PixDestinationScope destinationScope;
+    private PixRouting routing;
 
-    @Column(
-        name = "nome_destinatario",
-        length = 120
-    )
-    private String holderName;
+    @Column(name = "nome_destinatario")
+    private String recipientName;
 
-    @Column(
-        name = "chave_mascarada",
-        length = 120
-    )
-    private String maskedKey;
-
-    @Convert(
-        converter = PixKeyTypeConverter.class
-    )
-    @Column(name = "tipo_chave")
-    private PixKeyType keyType;
-
-    @Column(
-        name = "codigo_banco_destino",
-        length = 20
-    )
+    @Column(name = "codigo_banco_destino")
     private String bankCode;
 
-    @Column(
-        name = "nome_banco_destino",
-        length = 120
-    )
+    @Column(name = "nome_banco_destino")
     private String bankName;
 
     @Column(
-        name = "documento_destinatario_mascarado",
-        length = 24
+        name = "documento_destinatario_mascarado"
     )
-    private String maskedDocument;
+    private String maskedRecipientDocument;
+
+    @Column(name = "chave_mascarada")
+    private String maskedKey;
+
+    @Convert(converter = PixKeyTypeConverter.class)
+    @Column(name = "tipo_chave")
+    private PixKeyType keyType;
 
     @Column(name = "criado_em")
     private Instant createdAt;
@@ -99,33 +76,30 @@ public class PixFavoriteData {
 
     public PixFavoriteData(
         UUID id,
-        UUID originAccountId,
+        UUID sourceAccountId,
         UUID pixKeyId,
-        String normalizedKeyValue,
-        PixDestinationScope destinationScope,
-        String holderName,
-        String maskedKey,
-        PixKeyType keyType,
+        String normalizedKey,
+        PixRouting routing,
+        String recipientName,
         String bankCode,
         String bankName,
-        String maskedDocument,
+        String maskedRecipientDocument,
+        String maskedKey,
+        PixKeyType keyType,
         Instant createdAt
     ) {
         this.id = id;
-        this.originAccountId =
-            originAccountId;
+        this.sourceAccountId = sourceAccountId;
         this.pixKeyId = pixKeyId;
-        this.normalizedKeyValue =
-            normalizedKeyValue;
-        this.destinationScope =
-            destinationScope;
-        this.holderName = holderName;
-        this.maskedKey = maskedKey;
-        this.keyType = keyType;
+        this.normalizedKey = normalizedKey;
+        this.routing = routing;
+        this.recipientName = recipientName;
         this.bankCode = bankCode;
         this.bankName = bankName;
-        this.maskedDocument =
-            maskedDocument;
+        this.maskedRecipientDocument =
+            maskedRecipientDocument;
+        this.maskedKey = maskedKey;
+        this.keyType = keyType;
         this.createdAt = createdAt;
     }
 
@@ -133,32 +107,24 @@ public class PixFavoriteData {
         return id;
     }
 
-    public UUID getOriginAccountId() {
-        return originAccountId;
+    public UUID getSourceAccountId() {
+        return sourceAccountId;
     }
 
     public UUID getPixKeyId() {
         return pixKeyId;
     }
 
-    public String getNormalizedKeyValue() {
-        return normalizedKeyValue;
+    public String getNormalizedKey() {
+        return normalizedKey;
     }
 
-    public PixDestinationScope getDestinationScope() {
-        return destinationScope;
+    public PixRouting getRouting() {
+        return routing;
     }
 
-    public String getHolderName() {
-        return holderName;
-    }
-
-    public String getMaskedKey() {
-        return maskedKey;
-    }
-
-    public PixKeyType getKeyType() {
-        return keyType;
+    public String getRecipientName() {
+        return recipientName;
     }
 
     public String getBankCode() {
@@ -169,8 +135,16 @@ public class PixFavoriteData {
         return bankName;
     }
 
-    public String getMaskedDocument() {
-        return maskedDocument;
+    public String getMaskedRecipientDocument() {
+        return maskedRecipientDocument;
+    }
+
+    public String getMaskedKey() {
+        return maskedKey;
+    }
+
+    public PixKeyType getKeyType() {
+        return keyType;
     }
 
     public Instant getCreatedAt() {

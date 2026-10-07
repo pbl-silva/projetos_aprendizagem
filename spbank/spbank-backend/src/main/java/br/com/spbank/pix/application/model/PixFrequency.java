@@ -1,6 +1,6 @@
 package br.com.spbank.pix.application.model;
 
-public enum PixRecurrenceFrequency {
+public enum PixFrequency {
 
     WEEKLY,
     MONTHLY

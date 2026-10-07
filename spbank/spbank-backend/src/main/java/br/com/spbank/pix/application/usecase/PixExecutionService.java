@@ -8,22 +8,20 @@ import br.com.spbank.conta.application.model.EntryReferenceType;
 import br.com.spbank.conta.application.model.EntryType;
 import br.com.spbank.conta.application.port.out.AccountEntryPersistence;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
-import br.com.spbank.pix.application.model.PixDestinationScope;
 import br.com.spbank.pix.application.model.PixPayment;
-import br.com.spbank.pix.application.port.out.BusinessLogPort;
+import br.com.spbank.pix.application.model.PixRouting;
 import br.com.spbank.pix.application.port.out.PixBusinessEvent;
+import br.com.spbank.pix.application.port.out.PixBusinessLogPort;
 import br.com.spbank.pix.application.port.out.PixPersistence;
+import br.com.spbank.pix.application.port.out.PixSettlementInstruction;
 import br.com.spbank.pix.application.port.out.PixSettlementPort;
 import br.com.spbank.pix.application.service.PixProperties;
 import br.com.spbank.shared.application.exception.BusinessException;
 
-import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -34,27 +32,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class PixExecutionService {
 
     private final AccountPersistence accounts;
-    private final PixPersistence pix;
     private final AccountEntryPersistence entries;
-    private final BusinessLogPort businessLogs;
+    private final PixPersistence pix;
     private final PixSettlementPort settlement;
+    private final PixBusinessLogPort logs;
     private final PixProperties properties;
     private final Clock clock;
 
     public PixExecutionService(
         AccountPersistence accounts,
-        PixPersistence pix,
         AccountEntryPersistence entries,
-        BusinessLogPort businessLogs,
+        PixPersistence pix,
         PixSettlementPort settlement,
+        PixBusinessLogPort logs,
         PixProperties properties,
         Clock clock
     ) {
         this.accounts = accounts;
-        this.pix = pix;
         this.entries = entries;
-        this.businessLogs = businessLogs;
+        this.pix = pix;
         this.settlement = settlement;
+        this.logs = logs;
         this.properties = properties;
         this.clock = clock;
     }
@@ -67,94 +65,94 @@ public class PixExecutionService {
         PixPayment payment
     ) {
         List<UUID> accountIds =
-            accountIds(payment);
+            payment.getRouting() == PixRouting.INTERNAL
+
+                ? List.of(
+                    payment.getSourceAccountId(),
+                    payment.getTargetAccountId()
+                )
+
+                : List.of(
+                    payment.getSourceAccountId()
+                );
 
         Map<UUID, Account> locked =
             accounts.findAllForUpdate(
                 accountIds
             );
 
-        Account source = active(
-            locked.get(
-                payment.getOriginAccountId()
-            )
-        );
-
-        Optional<Account> target =
-            payment.getDestinationScope()
-                == PixDestinationScope.INTERNAL
-
-                ? Optional.of(
-                    active(
-                        locked.get(
-                            requireDestinationAccountId(
-                                payment
-                            )
-                        )
-                    )
+        Account source =
+            active(
+                locked.get(
+                    payment.getSourceAccountId()
                 )
+            );
 
-                : Optional.empty();
-
-        if (target.isPresent()
-            && source.getId().equals(
-                target.orElseThrow().getId()
-            )) {
+        if (payment.getAmount().compareTo(
+            properties.maxPerOperation()
+        ) > 0) {
 
             throw new BusinessException(
-                "PIX_SAME_ACCOUNT",
-                "pix.same-account"
+                "PIX_LIMIT_EXCEEDED",
+                "pix.limit-exceeded"
             );
         }
 
-        BigDecimal amount =
-            payment.getAmount();
-
-        requireWithinLimit(amount);
-
-        source.requireAvailable(amount);
+        source.requireAvailable(
+            payment.getAmount()
+        );
 
         Instant now =
             clock.instant();
 
-        List<AccountEntry> batch =
-            new ArrayList<>();
-
-        source.debit(amount);
-
-        batch.add(
-            AccountEntry.create(
-                source,
-                payment.getId(),
-                EntryReferenceType.PIX,
-                EntryType.PIX_OUT,
-                EntryDirection.DEBIT,
-                amount,
-                "Pix enviado para "
-                    + payment.getHolderName(),
-                now,
-                payment.getHolderName(),
-                payment.getBankCode(),
-                "PIX"
-            )
+        source.debit(
+            payment.getAmount()
         );
+
+        List<AccountEntry> batch;
+
+        List<Account> changedAccounts;
 
         String settlementReference = null;
 
-        if (target.isPresent()) {
-            Account internalTarget =
-                target.orElseThrow();
+        if (payment.getRouting()
+            == PixRouting.INTERNAL) {
 
-            internalTarget.credit(amount);
+            Account target =
+                active(
+                    locked.get(
+                        payment.getTargetAccountId()
+                    )
+                );
 
-            batch.add(
+            if (source.getId().equals(
+                target.getId()
+            )) {
+
+                throw new BusinessException(
+                    "PIX_SAME_ACCOUNT",
+                    "pix.same-account"
+                );
+            }
+
+            target.credit(
+                payment.getAmount()
+            );
+
+            batch = List.of(
+                debitEntry(
+                    source,
+                    payment,
+                    now
+                ),
+
                 AccountEntry.create(
-                    internalTarget,
+                    target,
                     payment.getId(),
                     EntryReferenceType.PIX,
                     EntryType.PIX_IN,
                     EntryDirection.CREDIT,
-                    amount,
+                    payment.getAmount(),
                     "Pix recebido de "
                         + source.getHolderName(),
                     now,
@@ -164,23 +162,44 @@ public class PixExecutionService {
                 )
             );
 
+            changedAccounts =
+                List.of(
+                    source,
+                    target
+                );
+
         } else {
+
+            batch =
+                List.of(
+                    debitEntry(
+                        source,
+                        payment,
+                        now
+                    )
+                );
+
+            changedAccounts =
+                List.of(
+                    source
+                );
+
             settlementReference =
-                settlement.settle(payment);
+                settlement.settle(
+                    new PixSettlementInstruction(
+                        payment.getId(),
+                        source.getId(),
+                        payment.getKeyType(),
+                        payment.getKeyHash(),
+                        payment.getDestinationBankCode(),
+                        payment.getAmount()
+                    )
+                );
         }
 
-        payment.markCompleted(
+        payment.complete(
             now,
             settlementReference
-        );
-
-        List<Account> changedAccounts =
-            new ArrayList<>();
-
-        changedAccounts.add(source);
-
-        target.ifPresent(
-            changedAccounts::add
         );
 
         accounts.saveAll(
@@ -192,72 +211,53 @@ public class PixExecutionService {
         );
 
         PixPayment saved =
-            pix.savePayment(payment);
+            pix.savePayment(
+                payment
+            );
 
-        businessLogs.publish(
-            new PixBusinessEvent(
-                saved.getId(),
-                saved.getStatus(),
-                saved.getOriginAccountId(),
-                saved.getAmount(),
-                now,
-                saved.getFailureCode(),
-                saved.getMaskedKey(),
-                saved.getMaskedDocument(),
-                saved.getKeyHash()
-            )
+        publish(
+            saved
         );
 
         return saved;
     }
 
-    private void requireWithinLimit(
-        BigDecimal amount
+    private static AccountEntry debitEntry(
+        Account source,
+        PixPayment payment,
+        Instant now
     ) {
-        if (amount.compareTo(
-            properties.maxPerOperation()
-        ) > 0) {
-
-            throw new BusinessException(
-                "PIX_LIMIT_EXCEEDED",
-                "pix.limit-exceeded"
-            );
-        }
-    }
-
-    private static List<UUID> accountIds(
-        PixPayment payment
-    ) {
-        if (payment.getDestinationScope()
-            == PixDestinationScope.INTERNAL) {
-
-            return List.of(
-                payment.getOriginAccountId(),
-                requireDestinationAccountId(
-                    payment
-                )
-            );
-        }
-
-        return List.of(
-            payment.getOriginAccountId()
+        return AccountEntry.create(
+            source,
+            payment.getId(),
+            EntryReferenceType.PIX,
+            EntryType.PIX_OUT,
+            EntryDirection.DEBIT,
+            payment.getAmount(),
+            "Pix enviado para "
+                + payment.getRecipientName(),
+            now,
+            payment.getRecipientName(),
+            payment.getDestinationBankCode(),
+            "PIX"
         );
     }
 
-    private static UUID requireDestinationAccountId(
+    private void publish(
         PixPayment payment
     ) {
-        UUID destinationId =
-            payment.getDestinationAccountId();
-
-        if (destinationId == null) {
-            throw new BusinessException(
-                "PIX_TARGET_ACCOUNT_REQUIRED",
-                "account.unavailable"
-            );
-        }
-
-        return destinationId;
+        logs.publish(
+            new PixBusinessEvent(
+                payment.getId(),
+                payment.getStatus(),
+                payment.getSourceAccountId(),
+                payment.getAmount(),
+                payment.getKeyType(),
+                payment.getKeyHash(),
+                clock.instant(),
+                payment.getFailureCode()
+            )
+        );
     }
 
     private static Account active(
