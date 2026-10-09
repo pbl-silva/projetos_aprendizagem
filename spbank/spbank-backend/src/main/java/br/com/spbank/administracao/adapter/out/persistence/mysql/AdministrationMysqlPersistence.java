@@ -1,14 +1,14 @@
 package br.com.spbank.administracao.adapter.out.persistence.mysql;
 
-import br.com.spbank.administracao.adapter.out.persistence.mysql.data.AccountPlanChangeData;
 import br.com.spbank.administracao.adapter.out.persistence.mysql.data.AdministratorCredentialData;
 import br.com.spbank.administracao.adapter.out.persistence.mysql.data.AdministratorSessionData;
-import br.com.spbank.administracao.adapter.out.persistence.mysql.repository.AccountPlanChangeJpaRepository;
+import br.com.spbank.administracao.adapter.out.persistence.mysql.data.CustomerPlanChangeData;
 import br.com.spbank.administracao.adapter.out.persistence.mysql.repository.AdministratorCredentialJpaRepository;
 import br.com.spbank.administracao.adapter.out.persistence.mysql.repository.AdministratorSessionJpaRepository;
-import br.com.spbank.administracao.application.model.AccountPlanChange;
+import br.com.spbank.administracao.adapter.out.persistence.mysql.repository.CustomerPlanChangeJpaRepository;
 import br.com.spbank.administracao.application.model.AdministratorCredential;
 import br.com.spbank.administracao.application.model.AdministratorSession;
+import br.com.spbank.administracao.application.model.CustomerPlanChange;
 import br.com.spbank.administracao.application.port.out.AdministrationPersistence;
 
 import java.time.Instant;
@@ -24,12 +24,12 @@ public final class AdministrationMysqlPersistence
 
     private final AdministratorCredentialJpaRepository credentials;
     private final AdministratorSessionJpaRepository sessions;
-    private final AccountPlanChangeJpaRepository planChanges;
+    private final CustomerPlanChangeJpaRepository planChanges;
 
     public AdministrationMysqlPersistence(
             AdministratorCredentialJpaRepository credentials,
             AdministratorSessionJpaRepository sessions,
-            AccountPlanChangeJpaRepository planChanges
+            CustomerPlanChangeJpaRepository planChanges
     ) {
         this.credentials = credentials;
         this.sessions = sessions;
@@ -43,9 +43,7 @@ public final class AdministrationMysqlPersistence
 
         return credentials
                 .findByUsernameIgnoreCase(username)
-                .map(data ->
-                        credential(data)
-                );
+                .map(AdministrationMysqlPersistence::credential);
     }
 
     @Override
@@ -55,9 +53,7 @@ public final class AdministrationMysqlPersistence
 
         return credentials
                 .findById(administratorId)
-                .map(data ->
-                        credential(data)
-                );
+                .map(AdministrationMysqlPersistence::credential);
     }
 
     @Override
@@ -110,13 +106,13 @@ public final class AdministrationMysqlPersistence
 
     @Override
     public void savePlanChange(
-            AccountPlanChange change
+            CustomerPlanChange change
     ) {
 
         planChanges.save(
-                new AccountPlanChangeData(
+                new CustomerPlanChangeData(
                         change.id(),
-                        change.accountId(),
+                        change.customerId(),
                         change.administratorId(),
                         change.administratorName(),
                         change.previousPlan(),
@@ -128,19 +124,19 @@ public final class AdministrationMysqlPersistence
     }
 
     @Override
-    public List<AccountPlanChange> findPlanChanges(
-            UUID accountId
+    public List<CustomerPlanChange> findPlanChanges(
+            UUID customerId
     ) {
 
         return planChanges
-                .findByAccountIdOrderByChangedAtDesc(
-                        accountId
+                .findByCustomerIdOrderByChangedAtDesc(
+                        customerId
                 )
                 .stream()
                 .map(data ->
-                        new AccountPlanChange(
+                        new CustomerPlanChange(
                                 data.getId(),
-                                data.getAccountId(),
+                                data.getCustomerId(),
                                 data.getAdministratorId(),
                                 data.getAdministratorName(),
                                 data.getPreviousPlan(),

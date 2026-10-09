@@ -3,13 +3,13 @@ package br.com.spbank.administracao.adapter.in.api.rest.controller;
 import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ADMINISTRATOR_ID;
 import static br.com.spbank.shared.adapter.in.api.rest.security.AuthenticatedRequest.ADMIN_ACCESS_TOKEN;
 
-import br.com.spbank.administracao.adapter.in.api.rest.dto.AccountPlanChangeDto;
-import br.com.spbank.administracao.adapter.in.api.rest.dto.AccountPlanUpdateDto;
-import br.com.spbank.administracao.adapter.in.api.rest.dto.AdministrativeAccountDto;
+import br.com.spbank.administracao.adapter.in.api.rest.dto.AdministrativeCustomerDto;
 import br.com.spbank.administracao.adapter.in.api.rest.dto.AdministratorLoginRequestDto;
 import br.com.spbank.administracao.adapter.in.api.rest.dto.AdministratorLoginResponseDto;
+import br.com.spbank.administracao.adapter.in.api.rest.dto.CustomerPlanChangeDto;
+import br.com.spbank.administracao.adapter.in.api.rest.dto.CustomerPlanUpdateDto;
 import br.com.spbank.administracao.application.port.in.AdministrationUseCase;
-import br.com.spbank.administracao.application.port.in.ChangeAccountPlanCommand;
+import br.com.spbank.administracao.application.port.in.ChangeCustomerPlanCommand;
 
 import jakarta.validation.Valid;
 
@@ -46,11 +46,10 @@ public final class AdministrationController {
             AdministratorLoginRequestDto request
     ) {
 
-        var result =
-                administration.login(
-                        request.username(),
-                        request.password()
-                );
+        var result = administration.login(
+                request.username(),
+                request.password()
+        );
 
         return new AdministratorLoginResponseDto(
                 result.accessToken(),
@@ -60,77 +59,60 @@ public final class AdministrationController {
         );
     }
 
-    @GetMapping("/accounts")
-    public List<AdministrativeAccountDto> accounts(
+    @GetMapping("/customers")
+    public List<AdministrativeCustomerDto> customers(
             @RequestAttribute(ADMINISTRATOR_ID)
             UUID administratorId
     ) {
 
         return administration
-                .listAccounts(
-                        administratorId
-                )
+                .listCustomers(administratorId)
                 .stream()
-                .map(account ->
-                        new AdministrativeAccountDto(
-                                account.accountId(),
-                                account.holderName(),
-                                account.maskedDocument(),
-                                account.branch(),
-                                account.accountNumber(),
-                                account.accountType(),
-                                account.accountPlan(),
-                                account.active()
-                        )
-                )
+                .map(AdministrativeCustomerDto::from)
                 .toList();
     }
 
-    @PutMapping("/accounts/{accountId}/plan")
-    public AccountPlanChangeDto changePlan(
+    @PutMapping("/customers/{customerId}/plan")
+    public CustomerPlanChangeDto changePlan(
             @RequestAttribute(ADMINISTRATOR_ID)
             UUID administratorId,
 
             @PathVariable
-            UUID accountId,
+            UUID customerId,
 
             @Valid
             @RequestBody
-            AccountPlanUpdateDto request
+            CustomerPlanUpdateDto request
     ) {
 
-        return AccountPlanChangeDto.from(
-                administration.changeAccountPlan(
+        return CustomerPlanChangeDto.from(
+                administration.changeCustomerPlan(
                         administratorId,
-                        accountId,
-                        new ChangeAccountPlanCommand(
-                                request.accountPlan(),
+                        customerId,
+                        new ChangeCustomerPlanCommand(
+                                request.customerPlan(),
                                 request.reason()
                         )
                 )
         );
     }
 
-    @GetMapping(
-            "/accounts/{accountId}/plan-history"
-    )
-    public List<AccountPlanChangeDto> history(
+    @GetMapping("/customers/{customerId}/plan-history")
+    public List<CustomerPlanChangeDto> history(
             @RequestAttribute(ADMINISTRATOR_ID)
             UUID administratorId,
 
             @PathVariable
-            UUID accountId
+            UUID customerId
     ) {
 
         return administration
-                .listAccountPlanHistory(
+                .listCustomerPlanHistory(
                         administratorId,
-                        accountId
+                        customerId
                 )
                 .stream()
-                .map(
-                        AccountPlanChangeDto::from
-                )
+                .map(CustomerPlanChangeDto::from)
                 .toList();
     }
 

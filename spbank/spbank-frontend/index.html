@@ -1,41 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    http-equiv="Cache-Control"
-    content="no-cache, no-store, must-revalidate"
-  >
-
-  <meta
-    http-equiv="Pragma"
-    content="no-cache"
-  >
-
-  <meta
-    http-equiv="Expires"
-    content="0"
-  >
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <meta
-    name="color-scheme"
-    content="dark light"
-  >
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
 
   <title>SPBank</title>
-
-
-  <!-- =========================================
-       FAVICON
-       O app.js atualiza conforme o tema.
-  ========================================== -->
 
   <link
     id="appFavicon"
@@ -44,36 +17,18 @@
     href="img/favicon-spbank-dark.png"
   >
 
-
-  <!-- =========================================
-       ESTILOS
-  ========================================== -->
-
-  <link
-    rel="stylesheet"
-    href="style.css?v=20260904-3"
-  >
-
+  <link rel="stylesheet" href="style.css?v=20260904-3">
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
   >
-
 </head>
-
 
 <body>
 
+  <!-- CONTROLE DE TEMA -->
 
-  <!-- =========================================
-       CONTROLE DE TEMA
-  ========================================== -->
-
-  <div
-    id="themeControl"
-    class="theme-control"
-  >
-
+  <div id="themeControl" class="theme-control">
     <button
       id="themeMenuButton"
       class="theme-menu-button"
@@ -82,30 +37,19 @@
       aria-expanded="false"
       aria-controls="themeMenu"
     >
-
       <span
         id="themeIcon"
         class="material-symbols-outlined"
         aria-hidden="true"
-      >
-        contrast
-      </span>
+      >contrast</span>
 
-
-      <span id="themeCurrentLabel">
-        Sistema
-      </span>
-
+      <span id="themeCurrentLabel">Sistema</span>
 
       <span
         class="material-symbols-outlined theme-chevron"
         aria-hidden="true"
-      >
-        expand_more
-      </span>
-
+      >expand_more</span>
     </button>
-
 
     <div
       id="themeMenu"
@@ -113,35 +57,20 @@
       role="menu"
       aria-label="Escolher tema"
     >
-
-
       <button
         class="theme-option active"
         type="button"
         role="menuitem"
         data-theme-option="system"
       >
-
-        <span
-          class="material-symbols-outlined"
-          aria-hidden="true"
-        >
+        <span class="material-symbols-outlined" aria-hidden="true">
           contrast
         </span>
-
-        <span>
-          Sistema
-        </span>
-
-        <span
-          class="material-symbols-outlined theme-check"
-          aria-hidden="true"
-        >
+        <span>Sistema</span>
+        <span class="material-symbols-outlined theme-check" aria-hidden="true">
           check
         </span>
-
       </button>
-
 
       <button
         class="theme-option"
@@ -149,27 +78,14 @@
         role="menuitem"
         data-theme-option="light"
       >
-
-        <span
-          class="material-symbols-outlined"
-          aria-hidden="true"
-        >
+        <span class="material-symbols-outlined" aria-hidden="true">
           light_mode
         </span>
-
-        <span>
-          Claro
-        </span>
-
-        <span
-          class="material-symbols-outlined theme-check"
-          aria-hidden="true"
-        >
+        <span>Claro</span>
+        <span class="material-symbols-outlined theme-check" aria-hidden="true">
           check
         </span>
-
       </button>
-
 
       <button
         class="theme-option"
@@ -177,73 +93,39 @@
         role="menuitem"
         data-theme-option="dark"
       >
-
-        <span
-          class="material-symbols-outlined"
-          aria-hidden="true"
-        >
+        <span class="material-symbols-outlined" aria-hidden="true">
           dark_mode
         </span>
-
-        <span>
-          Escuro
-        </span>
-
-        <span
-          class="material-symbols-outlined theme-check"
-          aria-hidden="true"
-        >
+        <span>Escuro</span>
+        <span class="material-symbols-outlined theme-check" aria-hidden="true">
           check
         </span>
-
       </button>
-
-
     </div>
-
   </div>
 
+  <!-- ÁREA PÚBLICA -->
 
-  <!-- =========================================
-       ÁREA PÚBLICA
-  ========================================== -->
-
-  <section
-    id="loginScreen"
-    class="public-screen"
-  >
-
+  <section id="loginScreen" class="public-screen">
     <div class="public-layout">
 
-
-      <!-- =====================================
-           APRESENTAÇÃO DO SPBANK
-      ====================================== -->
-
       <div class="public-hero">
-
-
         <div class="public-brand">
-
           <img
             class="theme-logo"
             src="img/logo-spbank-dark.png"
             alt="SPBank"
           >
-
         </div>
-
 
         <span class="public-eyebrow">
           Seu banco. Suas escolhas.
         </span>
 
-
         <h1>
           Uma experiência bancária simples,
           segura e conectada.
         </h1>
-
 
         <p>
           Consulte suas contas, acompanhe o
@@ -252,108 +134,53 @@
           fornecidos pelo SPBank.
         </p>
 
-
         <div class="public-features">
-
-
           <div class="public-feature">
-
-            <span
-              class="material-symbols-outlined"
-              aria-hidden="true"
-            >
+            <span class="material-symbols-outlined" aria-hidden="true">
               account_balance_wallet
             </span>
 
-
             <div>
-
-              <strong>
-                Conta corrente e poupança
-              </strong>
-
-              <span>
-                Um único acesso para suas contas.
-              </span>
-
+              <strong>Conta corrente e poupança</strong>
+              <span>Um único acesso para suas contas.</span>
             </div>
-
           </div>
 
-
           <div class="public-feature">
-
-            <span
-              class="material-symbols-outlined"
-              aria-hidden="true"
-            >
+            <span class="material-symbols-outlined" aria-hidden="true">
               security
             </span>
 
-
             <div>
-
-              <strong>
-                Sessão autenticada
-              </strong>
-
-              <span>
-                Operações vinculadas à conta selecionada.
-              </span>
-
+              <strong>Sessão autenticada</strong>
+              <span>Operações vinculadas à conta selecionada.</span>
             </div>
-
           </div>
 
-
           <div class="public-feature">
-
-            <span
-              class="material-symbols-outlined"
-              aria-hidden="true"
-            >
+            <span class="material-symbols-outlined" aria-hidden="true">
               sync_alt
             </span>
 
-
             <div>
-
-              <strong>
-                Transferências com transparência
-              </strong>
-
+              <strong>Transferências com transparência</strong>
               <span>
-                Confira a modalidade, a tarifa e o valor total antes de confirmar.
+                Confira a modalidade, a tarifa e o valor total
+                antes de confirmar.
               </span>
-
             </div>
-
           </div>
-
-
         </div>
-
       </div>
 
-
-      <!-- =====================================
-           CARTÃO DE ACESSO
-      ====================================== -->
+      <!-- CARTÃO DE ACESSO -->
 
       <div class="access-card">
-
-
-        <!-- ===================================
-             ABAS PRINCIPAIS DO CLIENTE
-        ==================================== -->
-
         <div
           class="access-tabs"
           role="tablist"
           aria-label="Acesso do cliente"
         >
-
-
           <button
             id="clientLoginTab"
             class="access-tab active"
@@ -365,7 +192,6 @@
             Faça login
           </button>
 
-
           <button
             id="registerTab"
             class="access-tab"
@@ -376,42 +202,21 @@
           >
             Cadastre-se
           </button>
-
-
         </div>
 
+        <!-- LOGIN DO CLIENTE -->
 
-        <!-- ===================================
-             LOGIN DO CLIENTE
-        ==================================== -->
-
-        <div
-          id="loginPanel"
-          class="access-panel"
-        >
-
-
+        <div id="loginPanel" class="access-panel">
           <div class="access-heading">
-
-            <h2>
-              Entre na sua conta
-            </h2>
-
+            <h2>Entre na sua conta</h2>
             <p>
               Use seu acesso para consultar
               saldo, extrato e transferências.
             </p>
-
           </div>
 
-
           <form id="loginForm">
-
-
-            <label for="loginUsername">
-              Usuário
-            </label>
-
+            <label for="loginUsername">Usuário</label>
 
             <input
               id="loginUsername"
@@ -420,11 +225,7 @@
               required
             >
 
-
-            <label for="loginPassword">
-              Senha
-            </label>
-
+            <label for="loginPassword">Senha</label>
 
             <input
               id="loginPassword"
@@ -434,115 +235,54 @@
               required
             >
 
-
             <div
               id="loginError"
               class="error-message"
               role="alert"
             ></div>
 
-
-            <button
-              class="btn login-button"
-              type="submit"
-            >
+            <button class="btn login-button" type="submit">
               Entrar
             </button>
-
-
           </form>
 
-
           <small class="login-help">
-
             Ambiente de desenvolvimento:
-            usuários
-
-            <strong>
-              lucas
-            </strong>
-
-            e
-
-            <strong>
-              marina
-            </strong>
-
-            · senha
-
-            <strong>
-              SPBank@123
-            </strong>.
-
+            usuários <strong>lucas</strong> e
+            <strong>marina</strong> ·
+            senha <strong>SPBank@123</strong>.
           </small>
-
-
         </div>
 
+        <!-- CADASTRO -->
 
-        <!-- ===================================
-             CADASTRO
-        ==================================== -->
-
-        <div
-          id="registerPanel"
-          class="access-panel hidden"
-        >
-
-
+        <div id="registerPanel" class="access-panel hidden">
           <div class="access-heading">
-
-            <h2>
-              Abra sua conta
-            </h2>
-
+            <h2>Abra sua conta</h2>
             <p>
               Faça seu cadastro e escolha sua
               primeira modalidade de conta.
             </p>
-
           </div>
 
-
-          <form
-            id="registerForm"
-            class="registration-form"
-          >
-
-
-            <!-- ===============================
-                 DADOS PESSOAIS
-            ================================ -->
+          <form id="registerForm" class="registration-form">
 
             <fieldset class="form-section">
-
-
-              <legend>
-                Dados pessoais
-              </legend>
-
+              <legend>Dados pessoais</legend>
 
               <div class="grid-2">
-
-
                 <label>
-
                   Nome completo
-
                   <input
                     name="fullName"
                     maxlength="120"
                     autocomplete="name"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   CPF
-
                   <input
                     name="cpf"
                     inputmode="numeric"
@@ -551,34 +291,22 @@
                     placeholder="Somente números"
                     required
                   >
-
                 </label>
-
-
               </div>
 
-
               <div class="grid-2">
-
-
                 <label>
-
                   Data de nascimento
-
                   <input
                     name="birthDate"
                     type="date"
                     autocomplete="bday"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   Celular
-
                   <input
                     name="mobile"
                     type="tel"
@@ -587,17 +315,11 @@
                     placeholder="DDD + número"
                     required
                   >
-
                 </label>
-
-
               </div>
 
-
               <label>
-
                 E-mail
-
                 <input
                   name="email"
                   type="email"
@@ -605,32 +327,15 @@
                   autocomplete="email"
                   required
                 >
-
               </label>
-
-
             </fieldset>
 
-
-            <!-- ===============================
-                 ENDEREÇO
-            ================================ -->
-
             <fieldset class="form-section">
-
-
-              <legend>
-                Endereço
-              </legend>
-
+              <legend>Endereço</legend>
 
               <div class="grid-2">
-
-
                 <label>
-
                   CEP
-
                   <input
                     name="postalCode"
                     inputmode="numeric"
@@ -638,14 +343,10 @@
                     autocomplete="postal-code"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   Estado
-
                   <input
                     name="state"
                     maxlength="2"
@@ -653,128 +354,77 @@
                     placeholder="SP"
                     required
                   >
-
                 </label>
-
-
               </div>
 
-
               <label>
-
                 Rua
-
                 <input
                   name="street"
                   maxlength="160"
                   autocomplete="address-line1"
                   required
                 >
-
               </label>
 
-
               <div class="grid-2">
-
-
                 <label>
-
                   Número
-
                   <input
                     name="number"
                     maxlength="20"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   Complemento
-
                   <input
                     name="complement"
                     maxlength="80"
                     autocomplete="address-line2"
                   >
-
                 </label>
-
-
               </div>
 
-
               <div class="grid-2">
-
-
                 <label>
-
                   Bairro
-
                   <input
                     name="district"
                     maxlength="100"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   Cidade
-
                   <input
                     name="city"
                     maxlength="120"
                     autocomplete="address-level2"
                     required
                   >
-
                 </label>
-
-
               </div>
-
-
             </fieldset>
 
-
-            <!-- ===============================
-                 ACESSO E CONTA
-            ================================ -->
-
             <fieldset class="form-section">
-
-
-              <legend>
-                Acesso e conta
-              </legend>
-
+              <legend>Acesso e conta</legend>
 
               <label>
-
                 Usuário
-
                 <input
                   name="username"
                   maxlength="80"
                   autocomplete="username"
                   required
                 >
-
               </label>
 
-
               <div class="grid-2">
-
-
                 <label>
-
                   Senha
-
                   <input
                     name="password"
                     type="password"
@@ -783,14 +433,10 @@
                     autocomplete="new-password"
                     required
                   >
-
                 </label>
 
-
                 <label>
-
                   Confirmar senha
-
                   <input
                     name="passwordConfirmation"
                     type="password"
@@ -799,50 +445,25 @@
                     autocomplete="new-password"
                     required
                   >
-
                 </label>
-
-
               </div>
 
-
               <label>
-
                 Primeira conta
-
-                <select
-                  name="accountType"
-                  required
-                >
-
-                  <option
-                    value=""
-                    selected
-                    disabled
-                  >
+                <select name="accountType" required>
+                  <option value="" selected disabled>
                     Selecione a modalidade
                   </option>
-
-                  <option value="CURRENT">
-                    Conta corrente
-                  </option>
-
-                  <option value="SAVINGS">
-                    Conta poupança
-                  </option>
-
+                  <option value="CURRENT">Conta corrente</option>
+                  <option value="SAVINGS">Conta poupança</option>
                 </select>
-
               </label>
 
-
               <p class="form-hint">
-                Sua conta será criada no plano STANDARD.
+                Seu cadastro será criado no plano STANDARD,
+                compartilhado entre suas contas.
               </p>
-
-
             </fieldset>
-
 
             <div
               id="registerError"
@@ -850,77 +471,44 @@
               role="alert"
             ></div>
 
-
             <div
               id="registerSuccess"
               class="success-message"
               role="status"
             ></div>
 
-
-            <button
-              class="btn login-button"
-              type="submit"
-            >
+            <button class="btn login-button" type="submit">
               Criar cadastro
             </button>
-
-
           </form>
-
-
         </div>
 
+        <!-- LOGIN GERENCIAL -->
 
-        <!-- ===================================
-             LOGIN GERENCIAL
-        ==================================== -->
-
-        <div
-          id="adminLoginPanel"
-          class="access-panel hidden"
-        >
-
-
+        <div id="adminLoginPanel" class="access-panel hidden">
           <div class="access-heading">
-
-
             <div class="admin-access-label">
-
               <span
                 class="material-symbols-outlined"
                 aria-hidden="true"
               >
                 admin_panel_settings
               </span>
-
               Área restrita
-
             </div>
 
-
-            <h2>
-              Acesso gerencial
-            </h2>
-
+            <h2>Acesso gerencial</h2>
 
             <p>
-              Ambiente separado para
-              administração e auditoria
-              dos planos das contas.
+              Ambiente separado para administração
+              e auditoria dos planos dos clientes.
             </p>
-
-
           </div>
 
-
           <form id="adminLoginForm">
-
-
             <label for="adminUsername">
               Usuário gerencial
             </label>
-
 
             <input
               id="adminUsername"
@@ -929,11 +517,7 @@
               required
             >
 
-
-            <label for="adminPassword">
-              Senha
-            </label>
-
+            <label for="adminPassword">Senha</label>
 
             <input
               id="adminPassword"
@@ -943,70 +527,41 @@
               required
             >
 
-
             <div
               id="adminLoginError"
               class="error-message"
               role="alert"
             ></div>
 
-
-            <button
-              class="btn login-button"
-              type="submit"
-            >
+            <button class="btn login-button" type="submit">
               Entrar na área gerencial
             </button>
-
-
           </form>
 
-
           <small class="login-help">
-
             Ambiente de desenvolvimento:
-
-            <strong>
-              gerente
-            </strong>
-
-            · senha
-
-            <strong>
-              SPBankAdmin@123
-            </strong>.
-
+            <strong>gerente</strong> ·
+            senha <strong>SPBankAdmin@123</strong>.
           </small>
-
-
         </div>
 
-
-        <!-- ===================================
-             ACESSO SECUNDÁRIO
-        ==================================== -->
+        <!-- ACESSO SECUNDÁRIO -->
 
         <div class="access-secondary-actions">
-
-
           <button
             id="adminLoginTab"
             class="manager-access-link manager-entry"
             type="button"
             data-public-tab="admin"
           >
-
             <span
               class="material-symbols-outlined"
               aria-hidden="true"
             >
               admin_panel_settings
             </span>
-
             Acesso gerencial
-
           </button>
-
 
           <button
             id="clientAccessBackButton"
@@ -1014,211 +569,102 @@
             type="button"
             data-public-tab="login"
           >
-
             <span
               class="material-symbols-outlined"
               aria-hidden="true"
             >
               arrow_back
             </span>
-
             Voltar ao acesso do cliente
-
           </button>
-
-
         </div>
-
-
       </div>
-
     </div>
-
   </section>
 
+  <!-- APLICAÇÃO DO CLIENTE -->
 
-  <!-- =========================================
-       APLICAÇÃO DO CLIENTE
-  ========================================== -->
-
-  <div
-    id="appShell"
-    class="container hidden"
-  >
-
-
-    <!-- =======================================
-         SIDEBAR
-    ======================================== -->
+  <div id="appShell" class="container hidden">
 
     <aside class="sidebar">
-
-
       <div class="logo">
-
         <img
           class="theme-logo"
           src="img/logo-spbank-dark.png"
           alt="SPBank"
         >
-
       </div>
 
-
-      <button
-        type="button"
-        onclick="loadPage('dashboard')"
-      >
-
+      <button type="button" onclick="loadPage('dashboard')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          team_dashboard
-        </span>
-
+        >team_dashboard</span>
         Dashboard
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('pix')"
-      >
-
+      <button type="button" onclick="loadPage('pix')">
         <span
           class="material-symbols-outlined menu-icon"
           id="pix"
           aria-hidden="true"
-        >
-          window
-        </span>
-
+        >window</span>
         Pix
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('transfer')"
-      >
-
+      <button type="button" onclick="loadPage('transfer')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          sync_alt
-        </span>
-
+        >sync_alt</span>
         Transferência
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('invest')"
-      >
-
+      <button type="button" onclick="loadPage('invest')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          monitoring
-        </span>
-
+        >monitoring</span>
         Investimentos
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('cartao')"
-      >
-
+      <button type="button" onclick="loadPage('cartao')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          credit_card
-        </span>
-
+        >credit_card</span>
         Cartão
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('extrato')"
-      >
-
+      <button type="button" onclick="loadPage('extrato')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          receipt
-        </span>
-
+        >receipt</span>
         Extrato
-
       </button>
 
-
-      <button
-        type="button"
-        onclick="loadPage('profile')"
-      >
-
+      <button type="button" onclick="loadPage('profile')">
         <span
           class="material-symbols-outlined menu-icon"
           aria-hidden="true"
-        >
-          manage_accounts
-        </span>
-
+        >manage_accounts</span>
         Meus dados
-
       </button>
-
-
     </aside>
 
-
-    <!-- =======================================
-         CONTEÚDO PRINCIPAL
-    ======================================== -->
-
     <main>
-
-
-      <!-- =====================================
-           HEADER
-      ====================================== -->
-
       <header class="app-header">
-
-
         <div
           id="accountContext"
           class="account-context hidden"
         >
-
-
-          <label for="accountSelector">
-            Conta
-          </label>
-
+          <label for="accountSelector">Conta</label>
 
           <select
             id="accountSelector"
             aria-label="Selecionar conta"
-          >
-          </select>
-
+          ></select>
 
           <button
             id="openMissingAccountButton"
@@ -1227,14 +673,9 @@
           >
             Abrir outra conta
           </button>
-
-
         </div>
 
-
         <div class="user-session">
-
-
           <span
             class="material-symbols-outlined"
             aria-hidden="true"
@@ -1242,87 +683,51 @@
             account_circle
           </span>
 
-
-          <span
-            id="currentUserName"
-            class="user"
-          >
+          <span id="currentUserName" class="user">
             Usuário
           </span>
-
 
           <button
             id="logoutButton"
             class="logout-button"
             type="button"
           >
-
             <span
               class="material-symbols-outlined"
               aria-hidden="true"
             >
               logout
             </span>
-
             Sair
-
           </button>
-
-
         </div>
-
-
       </header>
 
-
       <section id="content"></section>
-
-
     </main>
-
-
   </div>
 
+  <!-- ÁREA ADMINISTRATIVA -->
 
-  <!-- =========================================
-       ÁREA ADMINISTRATIVA
-  ========================================== -->
-
-  <div
-    id="adminShell"
-    class="admin-shell hidden"
-  >
-
-
+  <div id="adminShell" class="admin-shell hidden">
     <header class="admin-header">
-
-
       <div class="admin-brand">
-
         <img
           class="theme-logo"
           src="img/logo-spbank-dark.png"
           alt="SPBank"
         >
 
-
-        <span>
-          Administração
-        </span>
-
+        <span>Administração</span>
       </div>
 
-
       <div class="user-session">
-
-
         <span
           class="material-symbols-outlined"
           aria-hidden="true"
         >
           admin_panel_settings
         </span>
-
 
         <span
           id="currentAdministratorName"
@@ -1331,61 +736,42 @@
           Gerente
         </span>
 
-
         <button
           id="adminLogoutButton"
           class="logout-button"
           type="button"
         >
-
           <span
             class="material-symbols-outlined"
             aria-hidden="true"
           >
             logout
           </span>
-
           Sair
-
         </button>
-
-
       </div>
-
-
     </header>
 
-
     <main class="admin-main">
-
-
       <section class="admin-intro">
-
-
         <div>
-
           <span class="public-eyebrow">
             Área gerencial
           </span>
-
 
           <h1>
             Administração de planos
           </h1>
 
-
           <p>
-            Consulte as contas do SPBank,
-            altere entre STANDARD e PLUS
-            mediante justificativa e acompanhe
-            o histórico de alterações.
+            Consulte os clientes do SPBank,
+            visualize suas contas e altere
+            o plano STANDARD ou PLUS mediante
+            justificativa, com registro do
+            histórico de alterações por cliente.
           </p>
-
         </div>
-
-
       </section>
-
 
       <div
         id="adminGlobalError"
@@ -1393,98 +779,64 @@
         role="alert"
       ></div>
 
-
       <section class="card">
-
-
         <div class="header">
-
-
           <div>
-
-            <h2>
-              Contas
-            </h2>
+            <h2>Clientes</h2>
 
             <p class="summary-context">
-              Dados pessoais sensíveis são
-              apresentados de forma mascarada.
+              Cada cliente possui um único plano,
+              compartilhado entre suas contas.
+              Os documentos são apresentados
+              de forma mascarada.
             </p>
-
           </div>
 
-
           <button
-            id="refreshAdminAccountsButton"
+            id="refreshAdminCustomersButton"
             class="btn-outline btn-compact"
             type="button"
           >
             Atualizar
           </button>
-
-
         </div>
-
 
         <div
-          id="adminAccounts"
+          id="adminCustomers"
           class="admin-accounts"
         >
-
-          <p>
-            Carregando contas…
-          </p>
-
+          <p>Carregando clientes…</p>
         </div>
-
-
       </section>
-
-
     </main>
-
-
   </div>
 
-
-  <!-- =========================================
-       DIALOG — ABERTURA DE CONTA
-  ========================================== -->
+  <!-- DIALOG — ABERTURA DE CONTA -->
 
   <dialog
     id="openAccountDialog"
     class="transfer-dialog"
     aria-labelledby="openAccountTitle"
   >
-
-
     <h2 id="openAccountTitle">
       Abrir outra conta
     </h2>
-
 
     <p>
       Você pode possuir no máximo uma
       conta corrente e uma conta poupança.
     </p>
 
-
     <form id="openAccountForm">
-
-
       <label>
-
         Modalidade disponível
 
         <select
           id="newAccountType"
           name="accountType"
           required
-        >
-        </select>
-
+        ></select>
       </label>
-
 
       <div
         id="openAccountError"
@@ -1492,10 +844,7 @@
         role="alert"
       ></div>
 
-
       <div class="dialog-actions">
-
-
         <button
           id="cancelOpenAccountButton"
           class="btn-secondary"
@@ -1504,51 +853,31 @@
           Cancelar
         </button>
 
-
-        <button
-          class="btn"
-          type="submit"
-        >
+        <button class="btn" type="submit">
           Abrir conta
         </button>
-
-
       </div>
-
-
     </form>
-
-
   </dialog>
 
-
-  <!-- =========================================
-       DIALOG — HISTÓRICO DE PLANO
-  ========================================== -->
+  <!-- DIALOG — HISTÓRICO DO PLANO DO CLIENTE -->
 
   <dialog
     id="planHistoryDialog"
     class="transfer-dialog admin-history-dialog"
     aria-labelledby="planHistoryTitle"
   >
-
-
     <div class="header">
-
-
       <div>
-
         <h2 id="planHistoryTitle">
-          Histórico do plano
+          Histórico do plano do cliente
         </h2>
 
         <p
-          id="planHistoryAccount"
+          id="planHistoryCustomer"
           class="summary-context"
         ></p>
-
       </div>
-
 
       <button
         id="closePlanHistoryButton"
@@ -1557,30 +886,16 @@
       >
         Fechar
       </button>
-
-
     </div>
-
 
     <div id="planHistoryContent">
-
-      <p>
-        Carregando histórico…
-      </p>
-
+      <p>Carregando histórico…</p>
     </div>
-
-
   </dialog>
 
+  <!-- JAVASCRIPT -->
 
-  <!-- =========================================
-       JAVASCRIPT
-  ========================================== -->
-
-  <script src="app.js?v=20260904-3"></script>
-
+  <script src="app.js?v=20261009-1"></script>
 
 </body>
-
 </html>

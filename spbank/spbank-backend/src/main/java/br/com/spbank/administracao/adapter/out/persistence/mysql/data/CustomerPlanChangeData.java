@@ -1,7 +1,7 @@
 package br.com.spbank.administracao.adapter.out.persistence.mysql.data;
 
-import br.com.spbank.administracao.adapter.out.persistence.mysql.converter.AdministrativeAccountPlanConverter;
-import br.com.spbank.conta.application.model.AccountPlan;
+import br.com.spbank.administracao.adapter.out.persistence.mysql.converter.AdministrativeCustomerPlanConverter;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -16,8 +16,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "alteracoes_plano_conta")
-public class AccountPlanChangeData {
+@Table(name = "alteracoes_plano_cliente")
+public class CustomerPlanChangeData {
 
     @Id
     @JdbcTypeCode(SqlTypes.CHAR)
@@ -26,10 +26,10 @@ public class AccountPlanChangeData {
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
-            name = "conta_id",
+            name = "cliente_id",
             columnDefinition = "CHAR(36)"
     )
-    private UUID accountId;
+    private UUID customerId;
 
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(
@@ -42,18 +42,16 @@ public class AccountPlanChangeData {
     private String administratorName;
 
     @Convert(
-            converter =
-                    AdministrativeAccountPlanConverter.class
+            converter = AdministrativeCustomerPlanConverter.class
     )
     @Column(name = "plano_anterior")
-    private AccountPlan previousPlan;
+    private CustomerPlan previousPlan;
 
     @Convert(
-            converter =
-                    AdministrativeAccountPlanConverter.class
+            converter = AdministrativeCustomerPlanConverter.class
     )
     @Column(name = "plano_novo")
-    private AccountPlan newPlan;
+    private CustomerPlan newPlan;
 
     @Column(name = "motivo")
     private String reason;
@@ -61,21 +59,21 @@ public class AccountPlanChangeData {
     @Column(name = "alterado_em")
     private Instant changedAt;
 
-    protected AccountPlanChangeData() {
+    protected CustomerPlanChangeData() {
     }
 
-    public AccountPlanChangeData(
+    public CustomerPlanChangeData(
             UUID id,
-            UUID accountId,
+            UUID customerId,
             UUID administratorId,
             String administratorName,
-            AccountPlan previousPlan,
-            AccountPlan newPlan,
+            CustomerPlan previousPlan,
+            CustomerPlan newPlan,
             String reason,
             Instant changedAt
     ) {
         this.id = id;
-        this.accountId = accountId;
+        this.customerId = customerId;
         this.administratorId = administratorId;
         this.administratorName = administratorName;
         this.previousPlan = previousPlan;
@@ -88,8 +86,8 @@ public class AccountPlanChangeData {
         return id;
     }
 
-    public UUID getAccountId() {
-        return accountId;
+    public UUID getCustomerId() {
+        return customerId;
     }
 
     public UUID getAdministratorId() {
@@ -100,11 +98,11 @@ public class AccountPlanChangeData {
         return administratorName;
     }
 
-    public AccountPlan getPreviousPlan() {
+    public CustomerPlan getPreviousPlan() {
         return previousPlan;
     }
 
-    public AccountPlan getNewPlan() {
+    public CustomerPlan getNewPlan() {
         return newPlan;
     }
 

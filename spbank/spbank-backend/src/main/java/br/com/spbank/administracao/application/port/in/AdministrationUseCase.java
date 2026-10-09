@@ -1,9 +1,9 @@
 package br.com.spbank.administracao.application.port.in;
 
-import br.com.spbank.administracao.application.model.AccountPlanChange;
-import br.com.spbank.administracao.application.model.AdministrativeAccount;
+import br.com.spbank.administracao.application.model.AdministrativeCustomer;
 import br.com.spbank.administracao.application.model.AdministratorLoginResult;
 import br.com.spbank.administracao.application.model.AuthenticatedAdministrator;
+import br.com.spbank.administracao.application.model.CustomerPlanChange;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,19 +19,19 @@ public interface AdministrationUseCase {
             String accessToken
     );
 
-    List<AdministrativeAccount> listAccounts(
+    List<AdministrativeCustomer> listCustomers(
             UUID administratorId
     );
 
-    AccountPlanChange changeAccountPlan(
+    CustomerPlanChange changeCustomerPlan(
             UUID administratorId,
-            UUID accountId,
-            ChangeAccountPlanCommand command
+            UUID customerId,
+            ChangeCustomerPlanCommand command
     );
 
-    List<AccountPlanChange> listAccountPlanHistory(
+    List<CustomerPlanChange> listCustomerPlanHistory(
             UUID administratorId,
-            UUID accountId
+            UUID customerId
     );
 
     void logout(

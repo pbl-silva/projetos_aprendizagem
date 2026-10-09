@@ -8,6 +8,7 @@ import br.com.spbank.conta.application.port.in.ListAccountEntriesUseCase;
 import br.com.spbank.conta.application.port.out.AccountEntryPersistence;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.NotFoundException;
+import br.com.spbank.shared.application.port.out.CustomerPlanLookup;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +24,16 @@ public class AccountQueryUseCaseImpl
 
     private final AccountPersistence accounts;
     private final AccountEntryPersistence entries;
+    private final CustomerPlanLookup plans;
 
     public AccountQueryUseCaseImpl(
             AccountPersistence accounts,
-            AccountEntryPersistence entries
+            AccountEntryPersistence entries,
+            CustomerPlanLookup plans
     ) {
         this.accounts = accounts;
         this.entries = entries;
+        this.plans = plans;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class AccountQueryUseCaseImpl
                 account.getBranch(),
                 account.getAccountNumber(),
                 account.getAccountType(),
-                account.getAccountPlan(),
+                plans.findPlan(account.getCustomerId()),
                 account.getBalance()
         );
     }

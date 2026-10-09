@@ -1,6 +1,10 @@
 package br.com.spbank.autenticacao.adapter.out.persistence.mysql.data;
 
+import br.com.spbank.autenticacao.adapter.out.persistence.mysql.converter.CustomerPlanConverter;
+import br.com.spbank.shared.application.model.CustomerPlan;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
@@ -59,6 +63,10 @@ public class CustomerData {
     @Column(name = "ativo")
     private boolean active;
 
+    @Convert(converter = CustomerPlanConverter.class)
+    @Column(name = "plano_cliente", nullable = false)
+    private CustomerPlan plan;
+
     protected CustomerData() {
     }
 
@@ -76,6 +84,7 @@ public class CustomerData {
             String district,
             String city,
             String state,
+            CustomerPlan plan,
             boolean active
     ) {
         this.id = id;
@@ -91,6 +100,7 @@ public class CustomerData {
         this.district = district;
         this.city = city;
         this.state = state;
+        this.plan = plan;
         this.active = active;
     }
 
@@ -144,6 +154,10 @@ public class CustomerData {
 
     public String getState() {
         return state;
+    }
+
+    public CustomerPlan getPlan() {
+        return plan;
     }
 
     public boolean isActive() {

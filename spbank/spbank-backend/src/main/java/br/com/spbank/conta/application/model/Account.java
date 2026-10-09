@@ -17,7 +17,6 @@ public final class Account {
     private final String branch;
     private final String accountNumber;
     private final AccountType accountType;
-    private AccountPlan accountPlan;
     private BigDecimal balance;
     private final boolean active;
 
@@ -30,7 +29,6 @@ public final class Account {
             String branch,
             String accountNumber,
             AccountType accountType,
-            AccountPlan accountPlan,
             BigDecimal balance,
             boolean active
     ) {
@@ -42,7 +40,6 @@ public final class Account {
         this.branch = branch;
         this.accountNumber = accountNumber;
         this.accountType = accountType;
-        this.accountPlan = accountPlan;
         this.balance = money(balance);
         this.active = active;
     }
@@ -63,13 +60,6 @@ public final class Account {
     public void credit(BigDecimal amount) {
         requirePositive(amount);
         balance = balance.add(money(amount));
-    }
-
-    public void changePlan(AccountPlan newPlan) {
-        accountPlan = java.util.Objects.requireNonNull(
-                newPlan,
-                "newPlan"
-        );
     }
 
     private static void requirePositive(BigDecimal value) {
@@ -121,10 +111,6 @@ public final class Account {
 
     public AccountType getAccountType() {
         return accountType;
-    }
-
-    public AccountPlan getAccountPlan() {
-        return accountPlan;
     }
 
     public BigDecimal getBalance() {

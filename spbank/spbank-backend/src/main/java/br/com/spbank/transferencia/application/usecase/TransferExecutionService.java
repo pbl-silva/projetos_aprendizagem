@@ -9,6 +9,7 @@ import br.com.spbank.conta.application.model.EntryType;
 import br.com.spbank.conta.application.port.out.AccountEntryPersistence;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.BusinessException;
+import br.com.spbank.shared.application.port.out.CustomerPlanLookup;
 import br.com.spbank.transferencia.application.model.Transfer;
 import br.com.spbank.transferencia.application.model.TransferType;
 import br.com.spbank.transferencia.application.port.out.BusinessLogPort;
@@ -45,6 +46,7 @@ public class TransferExecutionService {
     private final BusinessCalendar calendar;
     private final TedSettlementPort tedSettlement;
     private final Clock clock;
+    private final CustomerPlanLookup plans;
 
     public TransferExecutionService(
             AccountPersistence accounts,
@@ -55,7 +57,8 @@ public class TransferExecutionService {
             TedFeePolicy fees,
             BusinessCalendar calendar,
             TedSettlementPort tedSettlement,
-            Clock clock
+            Clock clock,
+            CustomerPlanLookup plans
     ) {
         this.accounts = accounts;
         this.transfers = transfers;
@@ -66,6 +69,7 @@ public class TransferExecutionService {
         this.calendar = calendar;
         this.tedSettlement = tedSettlement;
         this.clock = clock;
+        this.plans = plans;
     }
 
     @Transactional(
@@ -130,7 +134,9 @@ public class TransferExecutionService {
                 transfer.getType() == TransferType.TED
 
                         ? fees.feeFor(
-                                source,
+                                plans.findPlanForUpdate(
+                                        source.getCustomerId()
+                                ),
                                 completedTeds
                         )
 
@@ -303,7 +309,7 @@ public class TransferExecutionService {
         if (targetId == null) {
 
             throw new BusinessException(
-                    "TARGET_ACCOUNT_REQUIRED",
+                    "TRANSFER_TARGET_ACCOUNT_REQUIRED",
                     "account.unavailable"
             );
         }

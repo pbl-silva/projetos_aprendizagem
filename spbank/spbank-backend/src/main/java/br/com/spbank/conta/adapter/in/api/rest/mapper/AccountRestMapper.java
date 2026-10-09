@@ -16,7 +16,7 @@ public final class AccountRestMapper {
         return new AccountSummaryDto(
                 summary.id(),
                 summary.holderName(),
-                summary.accountPlan(),
+                summary.customerPlan(),
                 summary.balance()
         );
     }

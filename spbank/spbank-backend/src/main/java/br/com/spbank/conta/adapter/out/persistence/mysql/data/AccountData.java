@@ -1,8 +1,6 @@
 package br.com.spbank.conta.adapter.out.persistence.mysql.data;
 
-import br.com.spbank.conta.adapter.out.persistence.mysql.converter.AccountPlanConverter;
 import br.com.spbank.conta.adapter.out.persistence.mysql.converter.AccountTypeConverter;
-import br.com.spbank.conta.application.model.AccountPlan;
 import br.com.spbank.conta.application.model.AccountType;
 
 import jakarta.persistence.Column;
@@ -52,10 +50,6 @@ public class AccountData {
     @Column(name = "tipo_conta")
     private AccountType accountType;
 
-    @Convert(converter = AccountPlanConverter.class)
-    @Column(name = "plano_conta")
-    private AccountPlan accountPlan;
-
     @Column(name = "saldo")
     private BigDecimal balance;
 
@@ -74,7 +68,6 @@ public class AccountData {
             String branch,
             String accountNumber,
             AccountType accountType,
-            AccountPlan accountPlan,
             BigDecimal balance,
             boolean active
     ) {
@@ -86,7 +79,6 @@ public class AccountData {
         this.branch = branch;
         this.accountNumber = accountNumber;
         this.accountType = accountType;
-        this.accountPlan = accountPlan;
         this.balance = balance;
         this.active = active;
     }
@@ -121,10 +113,6 @@ public class AccountData {
 
     public AccountType getAccountType() {
         return accountType;
-    }
-
-    public AccountPlan getAccountPlan() {
-        return accountPlan;
     }
 
     public BigDecimal getBalance() {

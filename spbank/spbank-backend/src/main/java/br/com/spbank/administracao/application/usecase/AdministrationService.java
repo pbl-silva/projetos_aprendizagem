@@ -1,16 +1,18 @@
 package br.com.spbank.administracao.application.usecase;
 
-import br.com.spbank.administracao.application.model.AccountPlanChange;
 import br.com.spbank.administracao.application.model.AdministrativeAccount;
+import br.com.spbank.administracao.application.model.AdministrativeCustomer;
 import br.com.spbank.administracao.application.model.AdministratorCredential;
 import br.com.spbank.administracao.application.model.AdministratorLoginResult;
 import br.com.spbank.administracao.application.model.AdministratorSession;
 import br.com.spbank.administracao.application.model.AuthenticatedAdministrator;
+import br.com.spbank.administracao.application.model.CustomerPlanChange;
 import br.com.spbank.administracao.application.port.in.AdministrationUseCase;
-import br.com.spbank.administracao.application.port.in.ChangeAccountPlanCommand;
+import br.com.spbank.administracao.application.port.in.ChangeCustomerPlanCommand;
 import br.com.spbank.administracao.application.port.out.AdministrationPersistence;
+import br.com.spbank.autenticacao.application.model.Customer;
+import br.com.spbank.autenticacao.application.port.out.AuthenticationPersistence;
 import br.com.spbank.autenticacao.application.service.PasswordHasher;
-import br.com.spbank.conta.application.model.Account;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
@@ -36,19 +38,24 @@ public class AdministrationService
 
     private final AdministrationPersistence administration;
     private final AccountPersistence accounts;
+    private final AuthenticationPersistence customers;
     private final Clock clock;
     private final Duration sessionDuration;
-    private final SecureRandom random = new SecureRandom();
+
+    private final SecureRandom random =
+            new SecureRandom();
 
     public AdministrationService(
             AdministrationPersistence administration,
             AccountPersistence accounts,
+            AuthenticationPersistence customers,
             Clock clock,
             @Value("${spbank.auth.session-hours:8}")
             long sessionHours
     ) {
         this.administration = administration;
         this.accounts = accounts;
+        this.customers = customers;
         this.clock = clock;
         this.sessionDuration =
                 Duration.ofHours(sessionHours);
@@ -62,14 +69,9 @@ public class AdministrationService
     ) {
 
         String normalized =
-                Objects.requireNonNullElse(
-                                username,
-                                ""
-                        )
+                Objects.requireNonNullElse(username, "")
                         .trim()
-                        .toLowerCase(
-                                Locale.ROOT
-                        );
+                        .toLowerCase(Locale.ROOT);
 
         AdministratorCredential credential =
                 administration
@@ -89,33 +91,22 @@ public class AdministrationService
                         );
 
         byte[] tokenBytes = new byte[32];
-
-        random.nextBytes(
-                tokenBytes
-        );
+        random.nextBytes(tokenBytes);
 
         String token =
                 Base64.getUrlEncoder()
                         .withoutPadding()
-                        .encodeToString(
-                                tokenBytes
-                        );
+                        .encodeToString(tokenBytes);
 
-        Instant now =
-                clock.instant();
-
+        Instant now = clock.instant();
         Instant expiresAt =
-                now.plus(
-                        sessionDuration
-                );
+                now.plus(sessionDuration);
 
         administration.saveSession(
                 new AdministratorSession(
                         UUID.randomUUID(),
                         credential.id(),
-                        PasswordHasher.tokenHash(
-                                token
-                        ),
+                        PasswordHasher.tokenHash(token),
                         now,
                         expiresAt,
                         null
@@ -153,9 +144,7 @@ public class AdministrationService
                                 UnauthorizedException::new
                         );
 
-        if (!session.isValidAt(
-                clock.instant()
-        )) {
+        if (!session.isValidAt(clock.instant())) {
             throw new UnauthorizedException();
         }
 
@@ -172,7 +161,7 @@ public class AdministrationService
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdministrativeAccount> listAccounts(
+    public List<AdministrativeCustomer> listCustomers(
             UUID administratorId
     ) {
 
@@ -180,21 +169,43 @@ public class AdministrationService
                 administratorId
         );
 
-        return accounts
-                .findAll()
+        var allAccounts =
+                accounts.findAll();
+
+        return customers
+                .findAllCustomers()
                 .stream()
-                .map(account ->
-                        new AdministrativeAccount(
-                                account.getId(),
-                                account.getHolderName(),
+                .map(customer ->
+                        new AdministrativeCustomer(
+                                customer.id(),
+                                customer.fullName(),
                                 maskDocument(
-                                        account.getHolderDocument()
+                                        customer.cpf()
                                 ),
-                                account.getBranch(),
-                                account.getAccountNumber(),
-                                account.getAccountType(),
-                                account.getAccountPlan(),
-                                account.isActive()
+                                customer.plan(),
+                                customer.active(),
+                                allAccounts
+                                        .stream()
+                                        .filter(account ->
+                                                account.getCustomerId()
+                                                        .equals(
+                                                                customer.id()
+                                                        )
+                                        )
+                                        .map(account ->
+                                                new AdministrativeAccount(
+                                                        account.getId(),
+                                                        account.getHolderName(),
+                                                        maskDocument(
+                                                                account.getHolderDocument()
+                                                        ),
+                                                        account.getBranch(),
+                                                        account.getAccountNumber(),
+                                                        account.getAccountType(),
+                                                        account.isActive()
+                                                )
+                                        )
+                                        .toList()
                         )
                 )
                 .toList();
@@ -202,10 +213,10 @@ public class AdministrationService
 
     @Override
     @Transactional
-    public AccountPlanChange changeAccountPlan(
+    public CustomerPlanChange changeCustomerPlan(
             UUID administratorId,
-            UUID accountId,
-            ChangeAccountPlanCommand command
+            UUID customerId,
+            ChangeCustomerPlanCommand command
     ) {
 
         AdministratorCredential administrator =
@@ -219,8 +230,8 @@ public class AdministrationService
         );
 
         Objects.requireNonNull(
-                command.accountPlan(),
-                "accountPlan"
+                command.customerPlan(),
+                "customerPlan"
         );
 
         String reason =
@@ -233,54 +244,54 @@ public class AdministrationService
         if (reason.isBlank()) {
 
             throw new BusinessException(
-                    "ACCOUNT_PLAN_REASON_REQUIRED",
-                    "admin.account-plan.reason-required"
+                    "CUSTOMER_PLAN_REASON_REQUIRED",
+                    "admin.customer-plan.reason-required"
             );
         }
 
-        Account account =
-                accounts
-                        .findAllForUpdate(
-                                List.of(accountId)
-                        )
-                        .get(accountId);
-
-        if (account == null
-                || !account.isActive()) {
-
-            throw new NotFoundException(
-                    "ACCOUNT_NOT_FOUND"
-            );
-        }
-
-        if (account.getAccountPlan()
-                == command.accountPlan()) {
+        if (reason.length() > 240) {
 
             throw new BusinessException(
-                    "ACCOUNT_PLAN_UNCHANGED",
-                    "admin.account-plan.unchanged"
+                    "CUSTOMER_PLAN_REASON_SIZE",
+                    "admin.customer-plan.reason-size"
             );
         }
 
-        var previous =
-                account.getAccountPlan();
+        Customer customer =
+                customers
+                        .findCustomerByIdForUpdate(
+                                customerId
+                        )
+                        .filter(Customer::active)
+                        .orElseThrow(() ->
+                                new NotFoundException(
+                                        "CUSTOMER_NOT_FOUND"
+                                )
+                        );
 
-        account.changePlan(
-                command.accountPlan()
+        if (customer.plan()
+                == command.customerPlan()) {
+
+            throw new BusinessException(
+                    "CUSTOMER_PLAN_UNCHANGED",
+                    "admin.customer-plan.unchanged"
+            );
+        }
+
+        customers.saveCustomer(
+                customer.withPlan(
+                        command.customerPlan()
+                )
         );
 
-        accounts.saveAll(
-                List.of(account)
-        );
-
-        AccountPlanChange change =
-                new AccountPlanChange(
+        CustomerPlanChange change =
+                new CustomerPlanChange(
                         UUID.randomUUID(),
-                        accountId,
+                        customerId,
                         administrator.id(),
                         administrator.displayName(),
-                        previous,
-                        command.accountPlan(),
+                        customer.plan(),
+                        command.customerPlan(),
                         reason,
                         clock.instant()
                 );
@@ -294,29 +305,27 @@ public class AdministrationService
 
     @Override
     @Transactional(readOnly = true)
-    public List<AccountPlanChange>
-            listAccountPlanHistory(
-                    UUID administratorId,
-                    UUID accountId
-            ) {
+    public List<CustomerPlanChange> listCustomerPlanHistory(
+            UUID administratorId,
+            UUID customerId
+    ) {
 
         requireActiveAdministrator(
                 administratorId
         );
 
-        if (accounts
-                .findById(accountId)
+        if (customers
+                .findCustomerById(customerId)
                 .isEmpty()) {
 
             throw new NotFoundException(
-                    "ACCOUNT_NOT_FOUND"
+                    "CUSTOMER_NOT_FOUND"
             );
         }
 
-        return administration
-                .findPlanChanges(
-                        accountId
-                );
+        return administration.findPlanChanges(
+                customerId
+        );
     }
 
     @Override
@@ -337,10 +346,9 @@ public class AdministrationService
         }
     }
 
-    private AdministratorCredential
-            requireActiveAdministrator(
-                    UUID administratorId
-            ) {
+    private AdministratorCredential requireActiveAdministrator(
+            UUID administratorId
+    ) {
 
         return administration
                 .findCredentialById(
@@ -365,9 +373,8 @@ public class AdministrationService
             return "***";
         }
 
-        return "***"
-                + document.substring(
-                        document.length() - 4
-                );
+        return "***" + document.substring(
+                document.length() - 4
+        );
     }
 }

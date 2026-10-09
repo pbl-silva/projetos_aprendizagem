@@ -1,7 +1,7 @@
 package br.com.spbank.conta.application.port.in;
 
-import br.com.spbank.conta.application.model.AccountPlan;
 import br.com.spbank.conta.application.model.AccountType;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -13,7 +13,7 @@ public record AccountSummary(
         String branch,
         String accountNumber,
         AccountType accountType,
-        AccountPlan accountPlan,
+        CustomerPlan customerPlan,
         BigDecimal balance
 ) {
 }

@@ -1,6 +1,6 @@
 package br.com.spbank.conta.adapter.in.api.rest.dto;
 
-import br.com.spbank.conta.application.model.AccountPlan;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import java.util.UUID;
 public record AccountSummaryDto(
         UUID id,
         String holderName,
-        AccountPlan accountPlan,
+        CustomerPlan customerPlan,
         BigDecimal balance
 ) {
 }

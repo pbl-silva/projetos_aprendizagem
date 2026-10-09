@@ -5,6 +5,7 @@ import br.com.spbank.conta.application.model.Account;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.NotFoundException;
+import br.com.spbank.shared.application.port.out.CustomerPlanLookup;
 import br.com.spbank.transferencia.application.model.TransferType;
 import br.com.spbank.transferencia.application.port.in.PreviewTransferCommand;
 import br.com.spbank.transferencia.application.port.in.PreviewTransferUseCase;
@@ -36,6 +37,7 @@ public class PreviewTransferUseCaseImpl
     private final TedFeePolicy fees;
     private final BusinessCalendar calendar;
     private final Clock clock;
+    private final CustomerPlanLookup plans;
 
     public PreviewTransferUseCaseImpl(
             AccountPersistence accounts,
@@ -44,7 +46,8 @@ public class PreviewTransferUseCaseImpl
             TransferPolicy policy,
             TedFeePolicy fees,
             BusinessCalendar calendar,
-            Clock clock
+            Clock clock,
+            CustomerPlanLookup plans
     ) {
         this.accounts = accounts;
         this.transfers = transfers;
@@ -53,6 +56,7 @@ public class PreviewTransferUseCaseImpl
         this.fees = fees;
         this.calendar = calendar;
         this.clock = clock;
+        this.plans = plans;
     }
 
     @Override
@@ -60,8 +64,8 @@ public class PreviewTransferUseCaseImpl
             PreviewTransferCommand command
     ) {
 
-        BigDecimal amount = command.amount()
-                .setScale(
+        BigDecimal amount =
+                command.amount().setScale(
                         2,
                         RoundingMode.UNNECESSARY
                 );
@@ -90,7 +94,7 @@ public class PreviewTransferUseCaseImpl
                 )) {
 
             throw new BusinessException(
-                    "SAME_ACCOUNT",
+                    "TRANSFER_SAME_ACCOUNT",
                     "transfer.same-account"
             );
         }
@@ -114,11 +118,16 @@ public class PreviewTransferUseCaseImpl
 
                         : 0;
 
+        var plan =
+                plans.findPlan(
+                        source.getCustomerId()
+                );
+
         BigDecimal fee =
                 route.type() == TransferType.TED
 
                         ? fees.feeFor(
-                                source,
+                                plan,
                                 completedTeds
                         )
 
@@ -128,7 +137,7 @@ public class PreviewTransferUseCaseImpl
                 route.type() == TransferType.TED
 
                         ? fees.remainingFreeTeds(
-                                source,
+                                plan,
                                 completedTeds
                         )
 

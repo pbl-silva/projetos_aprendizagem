@@ -1,17 +1,17 @@
 package br.com.spbank.administracao.application.model;
 
-import br.com.spbank.conta.application.model.AccountPlan;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import java.time.Instant;
 import java.util.UUID;
 
-public record AccountPlanChange(
+public record CustomerPlanChange(
         UUID id,
-        UUID accountId,
+        UUID customerId,
         UUID administratorId,
         String administratorName,
-        AccountPlan previousPlan,
-        AccountPlan newPlan,
+        CustomerPlan previousPlan,
+        CustomerPlan newPlan,
         String reason,
         Instant changedAt
 ) {

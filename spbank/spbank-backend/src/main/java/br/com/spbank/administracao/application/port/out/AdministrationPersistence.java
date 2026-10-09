@@ -1,8 +1,8 @@
 package br.com.spbank.administracao.application.port.out;
 
-import br.com.spbank.administracao.application.model.AccountPlanChange;
 import br.com.spbank.administracao.application.model.AdministratorCredential;
 import br.com.spbank.administracao.application.model.AdministratorSession;
+import br.com.spbank.administracao.application.model.CustomerPlanChange;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,10 +33,10 @@ public interface AdministrationPersistence {
     );
 
     void savePlanChange(
-            AccountPlanChange change
+            CustomerPlanChange change
     );
 
-    List<AccountPlanChange> findPlanChanges(
-            UUID accountId
+    List<CustomerPlanChange> findPlanChanges(
+            UUID customerId
     );
 }

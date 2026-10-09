@@ -15,11 +15,11 @@ import br.com.spbank.autenticacao.application.port.in.CustomerRegistrationComman
 import br.com.spbank.autenticacao.application.port.out.AuthenticationPersistence;
 import br.com.spbank.autenticacao.application.service.PasswordHasher;
 import br.com.spbank.conta.application.model.Account;
-import br.com.spbank.conta.application.model.AccountPlan;
 import br.com.spbank.conta.application.model.AccountType;
 import br.com.spbank.conta.application.port.out.AccountPersistence;
 import br.com.spbank.shared.application.exception.BusinessException;
 import br.com.spbank.shared.application.exception.UnauthorizedException;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import java.security.SecureRandom;
 import java.time.Clock;
@@ -227,6 +227,7 @@ public class AuthenticationService
                         normalizeAddress(
                                 command.address()
                         ),
+                        CustomerPlan.STANDARD,
                         true
                 );
 
@@ -621,7 +622,6 @@ public class AuthenticationService
                         accountType
                 ),
                 accountType,
-                AccountPlan.STANDARD,
                 new java.math.BigDecimal(
                         "0.00"
                 ),

@@ -1,9 +1,9 @@
 package br.com.spbank.transferencia.application.service;
 
-import br.com.spbank.conta.application.model.Account;
-import br.com.spbank.conta.application.model.AccountPlan;
+import br.com.spbank.shared.application.model.CustomerPlan;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -17,11 +17,15 @@ public final class TedFeePolicy {
     }
 
     public BigDecimal feeFor(
-            Account source,
+            CustomerPlan plan,
             long completedTedsInMonth
     ) {
+        Objects.requireNonNull(
+                plan,
+                "plan"
+        );
 
-        if (source.getAccountPlan() == AccountPlan.PLUS
+        if (plan == CustomerPlan.PLUS
                 && completedTedsInMonth
                 < properties.ted().plusFreePerMonth()) {
 
@@ -35,11 +39,15 @@ public final class TedFeePolicy {
     }
 
     public int remainingFreeTeds(
-            Account source,
+            CustomerPlan plan,
             long completedTedsInMonth
     ) {
+        Objects.requireNonNull(
+                plan,
+                "plan"
+        );
 
-        if (source.getAccountPlan() != AccountPlan.PLUS) {
+        if (plan != CustomerPlan.PLUS) {
             return 0;
         }
 

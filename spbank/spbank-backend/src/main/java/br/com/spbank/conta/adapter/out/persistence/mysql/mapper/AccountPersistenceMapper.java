@@ -20,7 +20,6 @@ public final class AccountPersistenceMapper {
                 data.getBranch(),
                 data.getAccountNumber(),
                 data.getAccountType(),
-                data.getAccountPlan(),
                 data.getBalance(),
                 data.isActive()
         );
@@ -38,7 +37,6 @@ public final class AccountPersistenceMapper {
                 account.getBranch(),
                 account.getAccountNumber(),
                 account.getAccountType(),
-                account.getAccountPlan(),
                 account.getBalance(),
                 account.isActive()
         );

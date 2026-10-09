@@ -5,6 +5,7 @@ import br.com.spbank.autenticacao.application.model.AccessSession;
 import br.com.spbank.autenticacao.application.model.Customer;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,6 +26,12 @@ public interface AuthenticationPersistence {
     Optional<Customer> findCustomerById(
             UUID customerId
     );
+
+    Optional<Customer> findCustomerByIdForUpdate(
+            UUID customerId
+    );
+
+    List<Customer> findAllCustomers();
 
     Optional<Customer> findCustomerByCpf(
             String cpf
