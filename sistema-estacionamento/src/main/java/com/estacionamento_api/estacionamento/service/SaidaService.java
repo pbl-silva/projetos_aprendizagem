@@ -2,6 +2,8 @@ package com.estacionamento_api.estacionamento.service;
 
 import com.estacionamento_api.estacionamento.dto.ReciboDTO;
 import com.estacionamento_api.estacionamento.dto.SaidaDTO;
+import com.estacionamento_api.estacionamento.dto.PreviaSaidaDTO;
+import com.estacionamento_api.estacionamento.enums.Modalidade;
 import com.estacionamento_api.estacionamento.exception.RecursoNaoEncontradoException;
 import com.estacionamento_api.estacionamento.model.Entrada;
 import com.estacionamento_api.estacionamento.model.Saida;
@@ -25,6 +27,19 @@ public class SaidaService {
     private final EntradaRepository entradaRepository;
     private final VagaService vagaService;
     private final TarifaService tarifaService;
+
+    @Transactional(readOnly = true)
+    public PreviaSaidaDTO calcularPrevia(Long entradaId, Modalidade modalidade) {
+        Entrada entrada = entradaRepository.findById(entradaId)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Entrada não encontrada"));
+        if (!Boolean.TRUE.equals(entrada.getAtivo())) {
+            throw new IllegalArgumentException("A saída desta entrada já foi registrada");
+        }
+        BigDecimal valorBase = tarifaService.calcularValorBase(
+            entrada.getVeiculo().getTipoVeiculo(), entrada.getDataHoraEntrada(), LocalDateTime.now());
+        BigDecimal desconto = tarifaService.calcularDesconto(valorBase, modalidade);
+        return new PreviaSaidaDTO(valorBase, desconto, valorBase.subtract(desconto));
+    }
     
     public ReciboDTO registrarSaida(SaidaDTO dto) {
         log.debug("Registrando saída para entradaId={}", dto.getEntradaId());

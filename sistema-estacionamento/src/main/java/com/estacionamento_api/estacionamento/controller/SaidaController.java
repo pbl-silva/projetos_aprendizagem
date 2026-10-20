@@ -2,6 +2,8 @@ package com.estacionamento_api.estacionamento.controller;
 
 import com.estacionamento_api.estacionamento.dto.ReciboDTO;
 import com.estacionamento_api.estacionamento.dto.SaidaDTO;
+import com.estacionamento_api.estacionamento.dto.PreviaSaidaDTO;
+import com.estacionamento_api.estacionamento.enums.Modalidade;
 import com.estacionamento_api.estacionamento.service.SaidaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +20,13 @@ import org.springframework.web.bind.annotation.*;
 public class SaidaController {
     
     private final SaidaService service;
+
+    @GetMapping("/previa/{entradaId}")
+    @Operation(summary = "Consultar valor previsto da saída sem encerrar a entrada")
+    public ResponseEntity<PreviaSaidaDTO> previa(@PathVariable Long entradaId,
+            @RequestParam(defaultValue = "DIARIA") Modalidade modalidade) {
+        return ResponseEntity.ok(service.calcularPrevia(entradaId, modalidade));
+    }
     
     @PostMapping
     @Operation(summary = "Registrar saída e gerar recibo")

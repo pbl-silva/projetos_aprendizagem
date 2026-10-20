@@ -58,8 +58,7 @@ class EstacionamentoIntegrationTest {
     // Não usamos o ObjectMapper gerenciado pelo Spring de propósito: no
     // Spring Boot 4, com os starters divididos (spring-boot-starter-webmvc),
     // esse bean nem sempre fica disponível para injeção no contexto de teste.
-    // Instanciar o nosso próprio evita depender disso — mesma abordagem do
-    // ApiClient usado pelo Swing.
+    // Instanciar o nosso próprio evita depender disso.
     private final ObjectMapper objectMapper = new ObjectMapper()
         .registerModule(new JavaTimeModule());
 
@@ -100,6 +99,21 @@ class EstacionamentoIntegrationTest {
         assertEquals("INT0001", entrada.getPlacaVeiculo());
         assertNotNull(entrada.getNumeroVaga());
 
+        MvcResult previa = mockMvc.perform(get("/saidas/previa/" + entrada.getId())
+                .param("modalidade", "MENSAL"))
+            .andExpect(status().isOk()).andReturn();
+        var valores = objectMapper.readTree(previa.getResponse().getContentAsString());
+        assertEquals(0, valores.get("valorBase").decimalValue().compareTo(new BigDecimal("20.00")));
+        assertEquals(0, valores.get("desconto").decimalValue().compareTo(new BigDecimal("3.00")));
+        assertEquals(0, valores.get("valorFinal").decimalValue().compareTo(new BigDecimal("17.00")));
+        // Consultar a prévia não pode encerrar a entrada nem liberar sua vaga.
+        MvcResult aposPrevia = mockMvc.perform(get("/entradas/" + entrada.getId()))
+            .andExpect(status().isOk()).andReturn();
+        assertTrue(objectMapper.readTree(aposPrevia.getResponse().getContentAsString()).get("ativo").asBoolean());
+        MvcResult vagaAposPrevia = mockMvc.perform(get("/vagas/" + entrada.getVagaId()))
+            .andExpect(status().isOk()).andReturn();
+        assertFalse(objectMapper.readTree(vagaAposPrevia.getResponse().getContentAsString()).get("disponivel").asBoolean());
+
         SaidaDTO saidaRequisicao = SaidaDTO.builder()
             .entradaId(entrada.getId())
             .modalidade(Modalidade.DIARIA)
@@ -119,6 +133,9 @@ class EstacionamentoIntegrationTest {
         // Carro, modalidade diária (sem desconto), mínimo de 1 hora cobrada: R$ 20,00
         assertEquals(0, recibo.getValorFinal().compareTo(new BigDecimal("20.00")));
         assertNotNull(recibo.getNumeroRecibo());
+
+        mockMvc.perform(get("/saidas/previa/" + entrada.getId()))
+            .andExpect(status().isConflict());
 
         MvcResult segundaConsulta = mockMvc.perform(get("/saidas/recibo/" + recibo.getId()))
             .andExpect(status().isOk())

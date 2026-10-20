@@ -56,3 +56,6 @@ logs/
 
 # Temp
 *.tmp
+
+# Banco local do iniciador web
+data/
