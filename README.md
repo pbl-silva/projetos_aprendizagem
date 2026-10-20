@@ -21,8 +21,4 @@ projetos_aprendizagem/
     └── spbank-frontend/
 ```
 
-## Arquivos gerados
-
-Pastas de compilação (`target/`), logs e dados locais do e-commerce são ignorados pelo Git. Elas podem existir na máquina sem fazer parte do conteúdo publicado no GitHub.
-
 As pastas foram padronizadas como `sistema-biblioteca`, `sistema-ecommerce` e `sistema-estacionamento`. Os identificadores Maven e os pacotes Java existentes foram preservados.
