@@ -1,5 +1,6 @@
 package com.ecommerce;
 
+import com.ecommerce.api.dto.AtualizacaoClienteDTO;
 import com.ecommerce.api.dto.ClienteDTO;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.service.ClienteService;
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -54,7 +55,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve listar clientes")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListar() throws Exception {
         when(clienteService.listarTodos()).thenReturn(List.of(clienteDTO));
 
@@ -66,7 +67,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve obter cliente por ID")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObter() throws Exception {
         when(clienteService.obterPorId(1L)).thenReturn(clienteDTO);
 
@@ -77,7 +78,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve retornar 404 para cliente inexistente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObterNaoEncontrado() throws Exception {
         when(clienteService.obterPorId(999L))
             .thenThrow(new RecursoNaoEncontradoException("Cliente não encontrado"));
@@ -88,7 +89,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve criar cliente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriar() throws Exception {
         when(clienteService.criar(any(ClienteDTO.class))).thenReturn(clienteDTO);
 
@@ -101,7 +102,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve atualizar cliente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testAtualizar() throws Exception {
         when(clienteService.atualizar(eq(1L), any(ClienteDTO.class))).thenReturn(clienteDTO);
 
@@ -113,8 +114,50 @@ class ClienteControllerTest {
     }
 
     @Test
+    @DisplayName("Cliente deve consultar a própria conta")
+    @WithMockUser(username = "joao@example.com", roles = "USER")
+    void testObterMinhaConta() throws Exception {
+        when(clienteService.obterPorEmail("joao@example.com")).thenReturn(clienteDTO);
+
+        mockMvc.perform(get("/clientes/me"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nome", is("João Silva")))
+            .andExpect(jsonPath("$.email", is("joao@example.com")));
+    }
+
+    @Test
+    @DisplayName("Cliente deve atualizar apenas a própria conta")
+    @WithMockUser(username = "joao@example.com", roles = "USER")
+    void testAtualizarMinhaConta() throws Exception {
+        AtualizacaoClienteDTO atualizacao = AtualizacaoClienteDTO.builder()
+            .nome("João da Silva")
+            .email("joao@example.com")
+            .cpf("12345678901")
+            .telefone("11987654321")
+            .endereco("Rua A, 123")
+            .build();
+        when(clienteService.atualizarMinhaConta(eq("joao@example.com"), any(AtualizacaoClienteDTO.class)))
+            .thenReturn(clienteDTO);
+
+        mockMvc.perform(put("/clientes/me")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(atualizacao)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id", is(1)));
+    }
+
+    @Test
+    @DisplayName("Cliente não deve acessar o cadastro de outro cliente")
+    @WithMockUser(username = "joao@example.com", roles = "USER")
+    void testClienteNaoAcessaOutroCadastro() throws Exception {
+        mockMvc.perform(get("/clientes/2"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("Deve listar clientes com paginação")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListarComPaginacao() throws Exception {
         org.springframework.data.domain.Pageable pageable =
             org.springframework.data.domain.PageRequest.of(0, 10);
@@ -129,7 +172,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve rejeitar criação de cliente com email inválido")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriarEmailInvalido() throws Exception {
         ClienteDTO invalido = ClienteDTO.builder()
             .nome("João Silva")
@@ -146,7 +189,7 @@ class ClienteControllerTest {
 
     @Test
     @DisplayName("Deve deletar cliente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testDeletar() throws Exception {
         doNothing().when(clienteService).deletar(1L);
 

@@ -1,9 +1,7 @@
 /**
  * Por padrao, parametros, tipos de retorno e campos neste pacote sao considerados
- * @NonNull, a menos que explicitamente anotados com @Nullable. Isso alinha o codigo
- * com as anotacoes de nulidade do proprio Spring (Spring Data, Spring MVC etc.) e
- * elimina os avisos de "unchecked conversion" do compilador sem suprimi-los.
+ * nao nulos, a menos que explicitamente anotados com {@code @Nullable}.
+ * Usa JSpecify, o padrao adotado pelo Spring Framework 7.
  */
-@org.springframework.lang.NonNullApi
-@org.springframework.lang.NonNullFields
+@org.jspecify.annotations.NullMarked
 package com.ecommerce.api.config;

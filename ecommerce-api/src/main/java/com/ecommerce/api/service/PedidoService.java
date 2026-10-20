@@ -3,6 +3,7 @@ package com.ecommerce.api.service;
 import com.ecommerce.api.dto.ItemPedidoDTO;
 import com.ecommerce.api.dto.PedidoDTO;
 import com.ecommerce.api.enums.StatusPedido;
+import com.ecommerce.api.enums.ModalidadeFrete;
 import com.ecommerce.api.exception.EstoqueInsuficienteException;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Cliente;
@@ -33,6 +34,10 @@ import java.util.stream.Collectors;
 @Transactional
 public class PedidoService {
 
+    private static final BigDecimal FRETE_PADRAO = new BigDecimal("19.90");
+    private static final BigDecimal FRETE_EXPRESSO = new BigDecimal("39.90");
+    private static final BigDecimal LIMITE_FRETE_GRATIS = new BigDecimal("200.00");
+
     private final PedidoRepository pedidoRepository;
     private final ClienteRepository clienteRepository;
     private final ProdutoRepository produtoRepository;
@@ -56,6 +61,11 @@ public class PedidoService {
         if (!Boolean.TRUE.equals(cliente.getAtivo())) {
             throw new IllegalArgumentException("Cliente inativo não pode realizar pedidos");
         }
+
+        ModalidadeFrete modalidade = dto.getModalidadeFrete() == null
+            ? ModalidadeFrete.RETIRADA
+            : dto.getModalidadeFrete();
+        validarEntrega(modalidade, dto.getCepEntrega(), dto.getEnderecoEntrega());
 
         Pedido pedido = Pedido.builder()
             .cliente(cliente)
@@ -86,8 +96,23 @@ public class PedidoService {
             total = total.add(item.getSubtotal());
         }
 
-        pedido.setTotal(total.doubleValue());
+        BigDecimal frete = calcularFrete(modalidade, total);
+        pedido.setSubtotal(total.doubleValue());
+        pedido.setFrete(frete.doubleValue());
+        pedido.setTotal(total.add(frete).doubleValue());
+        pedido.setModalidadeFrete(modalidade);
+        pedido.setCepEntrega(normalizarTexto(dto.getCepEntrega()));
+        pedido.setEnderecoEntrega(normalizarTexto(dto.getEnderecoEntrega()));
         return converterParaDTO(pedidoRepository.save(pedido));
+    }
+
+    public PedidoDTO criarParaCliente(PedidoDTO dto, String email) {
+        Cliente cliente = clienteRepository.findByEmail(email)
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Cliente não encontrado para o usuário autenticado"
+            ));
+        dto.setClienteId(cliente.getId());
+        return criar(dto);
     }
 
     @Transactional(readOnly = true)
@@ -102,6 +127,14 @@ public class PedidoService {
     @Transactional(readOnly = true)
     public List<PedidoDTO> listarTodos() {
         return pedidoRepository.findAll()
+            .stream()
+            .map(this::converterParaDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PedidoDTO> listarDoCliente(String email) {
+        return pedidoRepository.findByClienteEmailOrderByDataCriacaoDesc(email)
             .stream()
             .map(this::converterParaDTO)
             .collect(Collectors.toList());
@@ -169,7 +202,12 @@ public class PedidoService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException(
                     "Produto não encontrado com ID: " + produtoId
                 ));
-            produto.setEstoque(somarQuantidade(produto.getEstoque(), item.getQuantidade()));
+            Integer estoqueAtual = produto.getEstoque();
+            Integer quantidade = item.getQuantidade();
+            if (estoqueAtual == null || quantidade == null) {
+                throw new IllegalStateException("Produto ou item com quantidade de estoque inválida");
+            }
+            produto.setEstoque(somarQuantidade(estoqueAtual, quantidade));
         }
     }
 
@@ -184,7 +222,13 @@ public class PedidoService {
             if (item.getQuantidade() == null || item.getQuantidade() <= 0) {
                 throw new IllegalArgumentException("Quantidade deve ser maior que zero");
             }
-            itensAgrupados.merge(item.getProdutoId(), item.getQuantidade(), this::somarQuantidade);
+            Long produtoId = item.getProdutoId();
+            Integer quantidade = item.getQuantidade();
+            Integer quantidadeAtual = itensAgrupados.get(produtoId);
+            int quantidadeTotal = quantidadeAtual == null
+                ? quantidade
+                : somarQuantidade(quantidadeAtual, quantidade);
+            itensAgrupados.put(produtoId, quantidadeTotal);
         }
         return itensAgrupados;
     }
@@ -209,6 +253,32 @@ public class PedidoService {
         }
     }
 
+    private void validarEntrega(ModalidadeFrete modalidade, String cep, String endereco) {
+        if (modalidade == ModalidadeFrete.RETIRADA) {
+            return;
+        }
+        if (cep == null || !cep.matches("\\d{8}")) {
+            throw new IllegalArgumentException("Informe um CEP válido com 8 dígitos");
+        }
+        if (endereco == null || endereco.isBlank()) {
+            throw new IllegalArgumentException("Informe o endereço de entrega");
+        }
+    }
+
+    private BigDecimal calcularFrete(ModalidadeFrete modalidade, BigDecimal subtotal) {
+        return switch (modalidade) {
+            case RETIRADA -> BigDecimal.ZERO;
+            case PADRAO -> subtotal.compareTo(LIMITE_FRETE_GRATIS) >= 0
+                ? BigDecimal.ZERO
+                : FRETE_PADRAO;
+            case EXPRESSA -> FRETE_EXPRESSO;
+        };
+    }
+
+    private String normalizarTexto(String valor) {
+        return valor == null || valor.isBlank() ? null : valor.trim();
+    }
+
     private PedidoDTO converterParaDTO(Pedido pedido) {
         List<ItemPedidoDTO> itens = pedido.getItens() == null ? List.of() : pedido.getItens().stream()
             .map(item -> ItemPedidoDTO.builder()
@@ -224,7 +294,13 @@ public class PedidoService {
         return PedidoDTO.builder()
             .id(pedido.getId())
             .clienteId(pedido.getCliente().getId())
+            .clienteNome(pedido.getCliente().getNome())
             .total(pedido.getTotal())
+            .subtotal(pedido.getSubtotal())
+            .frete(pedido.getFrete())
+            .modalidadeFrete(pedido.getModalidadeFrete())
+            .cepEntrega(pedido.getCepEntrega())
+            .enderecoEntrega(pedido.getEnderecoEntrega())
             .status(pedido.getStatus())
             .dataCriacao(pedido.getDataCriacao())
             .dataAtualizacao(pedido.getDataAtualizacao())

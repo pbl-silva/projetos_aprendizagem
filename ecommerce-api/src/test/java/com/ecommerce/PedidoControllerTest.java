@@ -10,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -48,6 +48,7 @@ class PedidoControllerTest {
         pedidoDTO = PedidoDTO.builder()
             .id(1L)
             .clienteId(10L)
+            .clienteNome("Cliente Teste")
             .total(150.0)
             .status(StatusPedido.PENDENTE)
             .itens(List.of(ItemPedidoDTO.builder().produtoId(5L).quantidade(1).build()))
@@ -56,7 +57,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve listar pedidos")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListar() throws Exception {
         when(pedidoService.listarTodos()).thenReturn(List.of(pedidoDTO));
 
@@ -67,18 +68,19 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve obter pedido por ID")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObter() throws Exception {
         when(pedidoService.obterPorId(1L)).thenReturn(pedidoDTO);
 
         mockMvc.perform(get("/pedidos/1"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.clienteId", is(10)));
+            .andExpect(jsonPath("$.clienteId", is(10)))
+            .andExpect(jsonPath("$.clienteNome", is("Cliente Teste")));
     }
 
     @Test
     @DisplayName("Deve retornar 404 para pedido inexistente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObterNaoEncontrado() throws Exception {
         when(pedidoService.obterPorId(999L))
             .thenThrow(new RecursoNaoEncontradoException("Pedido não encontrado"));
@@ -89,7 +91,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve criar pedido")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriar() throws Exception {
         when(pedidoService.criar(any(PedidoDTO.class))).thenReturn(pedidoDTO);
 
@@ -102,7 +104,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve atualizar pedido")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testAtualizar() throws Exception {
         when(pedidoService.atualizar(eq(1L), any(PedidoDTO.class))).thenReturn(pedidoDTO);
 
@@ -115,7 +117,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve listar pedidos com paginação")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListarComPaginacao() throws Exception {
         org.springframework.data.domain.Pageable pageable =
             org.springframework.data.domain.PageRequest.of(0, 10);
@@ -130,7 +132,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve rejeitar criação de pedido sem cliente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriarSemCliente() throws Exception {
         PedidoDTO invalido = PedidoDTO.builder()
             .itens(List.of(ItemPedidoDTO.builder().produtoId(5L).quantidade(1).build()))
@@ -145,7 +147,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve rejeitar criação de pedido sem produtos")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriarSemProdutos() throws Exception {
         PedidoDTO invalido = PedidoDTO.builder().clienteId(10L).itens(List.of()).build();
 
@@ -158,7 +160,7 @@ class PedidoControllerTest {
 
     @Test
     @DisplayName("Deve deletar pedido")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testDeletar() throws Exception {
         doNothing().when(pedidoService).deletar(1L);
 

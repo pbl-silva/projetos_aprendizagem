@@ -25,7 +25,9 @@ public class Cliente {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true, length = 11)
+    // Pode ficar vazio no cadastro inicial da conta. O administrador pode
+    // completar os dados cadastrais depois, antes de uma integração fiscal.
+    @Column(unique = true, length = 11)
     private String cpf;
 
     @Column(length = 20)

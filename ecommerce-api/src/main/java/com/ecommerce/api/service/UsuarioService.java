@@ -5,6 +5,8 @@ import com.ecommerce.api.dto.LoginResponse;
 import com.ecommerce.api.dto.UsuarioDTO;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Usuario;
+import com.ecommerce.api.model.Cliente;
+import com.ecommerce.api.repository.ClienteRepository;
 import com.ecommerce.api.repository.UsuarioRepository;
 import com.ecommerce.api.security.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -23,6 +22,7 @@ import java.util.stream.Collectors;
 public class UsuarioService {
     
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     
@@ -46,6 +46,16 @@ public class UsuarioService {
             .build();
         
         Usuario salvo = usuarioRepository.save(usuario);
+
+        // Toda conta publica representa um cliente. O vinculo por e-mail
+        // permite criar pedidos sem aceitar um clienteId manipulavel no front.
+        if (clienteRepository.findByEmail(salvo.getEmail()).isEmpty()) {
+            clienteRepository.save(Cliente.builder()
+                .nome(salvo.getNome())
+                .email(salvo.getEmail())
+                .ativo(true)
+                .build());
+        }
         log.info("Novo usuário registrado: {}", salvo.getEmail());
         
         return converterParaDTO(salvo);
@@ -71,64 +81,14 @@ public class UsuarioService {
             throw new IllegalArgumentException("Senha incorreta");
         }
         
-        String token = jwtProvider.generateToken(usuario.getEmail(), usuario.getId());
+        String token = jwtProvider.generateToken(
+            usuario.getEmail(), usuario.getId(), usuario.getPapel());
+        var clienteEncontrado = clienteRepository.findByEmail(usuario.getEmail());
+        Long clienteId = clienteEncontrado.isPresent() ? clienteEncontrado.get().getId() : null;
         log.info("Login realizado com sucesso: {}", usuario.getEmail());
         
-        return LoginResponse.of(token, usuario.getId(), usuario.getEmail(), usuario.getNome());
-    }
-    
-    /**
-     * Obtém usuário por ID
-     */
-    @Transactional(readOnly = true)
-    public UsuarioDTO obterPorId(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new RecursoNaoEncontradoException(
-                "Usuário não encontrado com ID: " + id
-            ));
-        return converterParaDTO(usuario);
-    }
-    
-    /**
-     * Lista todos os usuários
-     */
-    @Transactional(readOnly = true)
-    public List<UsuarioDTO> listarTodos() {
-        return usuarioRepository.findAll()
-            .stream()
-            .map(this::converterParaDTO)
-            .collect(Collectors.toList());
-    }
-    
-    /**
-     * Atualiza usuário
-     */
-    public UsuarioDTO atualizar(Long id, UsuarioDTO dto) {
-        Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new RecursoNaoEncontradoException(
-                "Usuário não encontrado com ID: " + id
-            ));
-        
-        usuario.setNome(dto.getNome());
-        usuario.setAtivo(dto.getAtivo());
-        
-        Usuario atualizado = usuarioRepository.save(usuario);
-        log.info("Usuário atualizado: {}", usuario.getEmail());
-        
-        return converterParaDTO(atualizado);
-    }
-    
-    /**
-     * Deleta usuário
-     */
-    public void deletar(Long id) {
-        if (!usuarioRepository.existsById(id)) {
-            throw new RecursoNaoEncontradoException(
-                "Usuário não encontrado com ID: " + id
-            );
-        }
-        usuarioRepository.deleteById(id);
-        log.info("Usuário deletado com ID: {}", id);
+        return LoginResponse.of(token, usuario.getId(), usuario.getEmail(), usuario.getNome(),
+            usuario.getPapel(), clienteId);
     }
     
     private UsuarioDTO converterParaDTO(Usuario usuario) {

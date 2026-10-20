@@ -13,6 +13,7 @@ import com.ecommerce.api.service.PagamentoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/pagamentos")
@@ -22,9 +23,20 @@ public class PagamentoController {
     private final PagamentoService service;
 
     @PostMapping
-    public ResponseEntity<PagamentoDTO> criar(@Valid @RequestBody PagamentoDTO dto) {
+    public ResponseEntity<PagamentoDTO> criar(@Valid @RequestBody PagamentoDTO dto,
+                                              Authentication authentication) {
+        boolean admin = authentication.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        PagamentoDTO criado = admin
+            ? service.criar(dto)
+            : service.criarParaCliente(dto, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(service.criar(dto));
+            .body(criado);
+    }
+
+    @GetMapping("/meus")
+    public ResponseEntity<List<PagamentoDTO>> listarMeus(Authentication authentication) {
+        return ResponseEntity.ok(service.listarDoCliente(authentication.getName()));
     }
 
     @GetMapping("/{id}")

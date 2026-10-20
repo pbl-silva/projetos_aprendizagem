@@ -14,9 +14,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.ecommerce.api.dto.ClienteDTO;
+import com.ecommerce.api.dto.AtualizacaoClienteDTO;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Cliente;
+import com.ecommerce.api.model.Usuario;
 import com.ecommerce.api.repository.ClienteRepository;
+import com.ecommerce.api.repository.UsuarioRepository;
 import com.ecommerce.api.service.ClienteService;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +27,9 @@ public class ClienteServiceTest {
     
     @Mock
     private ClienteRepository clienteRepository;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
     
     @InjectMocks
     private ClienteService clienteService;
@@ -105,5 +111,67 @@ public class ClienteServiceTest {
         var resultado = clienteService.listarComPaginacao(0, 10, "id", "ASC");
 
         assertEquals(1, resultado.getTotalElements());
+    }
+
+    @Test
+    void testObterMinhaContaPorEmail() {
+        when(clienteRepository.findByEmail("joao@example.com")).thenReturn(Optional.of(cliente));
+
+        ClienteDTO resultado = clienteService.obterPorEmail("joao@example.com");
+
+        assertEquals(1L, resultado.getId());
+        assertEquals("João Silva", resultado.getNome());
+    }
+
+    @Test
+    void testAtualizarMinhaContaESincronizarUsuario() {
+        Usuario usuario = Usuario.builder()
+            .id(7L)
+            .nome("João Silva")
+            .email("joao@example.com")
+            .senha("hash")
+            .build();
+        AtualizacaoClienteDTO atualizacao = AtualizacaoClienteDTO.builder()
+            .nome("João da Silva")
+            .email("novo@example.com")
+            .cpf("12345678901")
+            .telefone("11999999999")
+            .endereco("Rua Nova, 10")
+            .build();
+
+        when(clienteRepository.findByEmail("joao@example.com")).thenReturn(Optional.of(cliente));
+        when(usuarioRepository.findByEmail("joao@example.com")).thenReturn(Optional.of(usuario));
+        when(clienteRepository.findByEmail("novo@example.com")).thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmail("novo@example.com")).thenReturn(Optional.empty());
+        when(clienteRepository.findByCpf("12345678901")).thenReturn(Optional.of(cliente));
+        when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+        ClienteDTO resultado = clienteService.atualizarMinhaConta("joao@example.com", atualizacao);
+
+        assertEquals("João da Silva", resultado.getNome());
+        assertEquals("novo@example.com", resultado.getEmail());
+        assertEquals("novo@example.com", usuario.getEmail());
+        assertEquals("João da Silva", usuario.getNome());
+        verify(usuarioRepository).save(usuario);
+        verify(clienteRepository).save(cliente);
+    }
+
+    @Test
+    void testNaoPermitirEmailDeOutraConta() {
+        Usuario usuario = Usuario.builder()
+            .id(7L).nome("João Silva").email("joao@example.com").senha("hash").build();
+        Cliente outroCliente = Cliente.builder()
+            .id(2L).nome("Maria").email("maria@example.com").build();
+        AtualizacaoClienteDTO atualizacao = AtualizacaoClienteDTO.builder()
+            .nome("João Silva").email("maria@example.com").build();
+
+        when(clienteRepository.findByEmail("joao@example.com")).thenReturn(Optional.of(cliente));
+        when(usuarioRepository.findByEmail("joao@example.com")).thenReturn(Optional.of(usuario));
+        when(clienteRepository.findByEmail("maria@example.com")).thenReturn(Optional.of(outroCliente));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> clienteService.atualizarMinhaConta("joao@example.com", atualizacao));
+        verify(clienteRepository, never()).save(any());
+        verify(usuarioRepository, never()).save(any());
     }
 }

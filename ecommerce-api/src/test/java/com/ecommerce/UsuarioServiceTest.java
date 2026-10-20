@@ -5,6 +5,7 @@ import com.ecommerce.api.dto.LoginResponse;
 import com.ecommerce.api.dto.UsuarioDTO;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Usuario;
+import com.ecommerce.api.repository.ClienteRepository;
 import com.ecommerce.api.repository.UsuarioRepository;
 import com.ecommerce.api.security.JwtProvider;
 import com.ecommerce.api.service.UsuarioService;
@@ -18,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,6 +32,9 @@ class UsuarioServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private ClienteRepository clienteRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -101,7 +104,7 @@ class UsuarioServiceTest {
 
         when(usuarioRepository.findByEmail("usuario@teste.com")).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("senha123", "senha-criptografada")).thenReturn(true);
-        when(jwtProvider.generateToken("usuario@teste.com", 1L)).thenReturn("token-jwt-fake");
+        when(jwtProvider.generateToken("usuario@teste.com", 1L, Usuario.Papel.USER)).thenReturn("token-jwt-fake");
 
         LoginResponse resultado = usuarioService.login(request);
 
@@ -147,73 +150,4 @@ class UsuarioServiceTest {
         verifyNoInteractions(jwtProvider);
     }
 
-    @Test
-    @DisplayName("Deve obter usuário por ID")
-    void testObterPorId() {
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-
-        UsuarioDTO resultado = usuarioService.obterPorId(1L);
-
-        assertNotNull(resultado);
-        assertEquals("usuario@teste.com", resultado.getEmail());
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção ao obter usuário inexistente")
-    void testObterPorIdNaoEncontrado() {
-        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNaoEncontradoException.class, () -> usuarioService.obterPorId(999L));
-    }
-
-    @Test
-    @DisplayName("Deve listar todos os usuários")
-    void testListarTodos() {
-        when(usuarioRepository.findAll()).thenReturn(List.of(usuario));
-
-        List<UsuarioDTO> resultado = usuarioService.listarTodos();
-
-        assertEquals(1, resultado.size());
-    }
-
-    @Test
-    @DisplayName("Deve atualizar usuário existente")
-    void testAtualizar() {
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuario);
-
-        UsuarioDTO atualizacao = UsuarioDTO.builder().nome("Novo Nome").ativo(false).build();
-
-        UsuarioDTO resultado = usuarioService.atualizar(1L, atualizacao);
-
-        assertNotNull(resultado);
-        verify(usuarioRepository, times(1)).save(any(Usuario.class));
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção ao atualizar usuário inexistente")
-    void testAtualizarNaoEncontrado() {
-        when(usuarioRepository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(RecursoNaoEncontradoException.class,
-            () -> usuarioService.atualizar(999L, usuarioDTO));
-    }
-
-    @Test
-    @DisplayName("Deve deletar usuário existente")
-    void testDeletar() {
-        when(usuarioRepository.existsById(1L)).thenReturn(true);
-
-        usuarioService.deletar(1L);
-
-        verify(usuarioRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    @DisplayName("Deve lançar exceção ao deletar usuário inexistente")
-    void testDeletarNaoEncontrado() {
-        when(usuarioRepository.existsById(999L)).thenReturn(false);
-
-        assertThrows(RecursoNaoEncontradoException.class, () -> usuarioService.deletar(999L));
-    }
 }

@@ -1,6 +1,7 @@
 package com.ecommerce.api.model;
 
 import com.ecommerce.api.enums.StatusPedido;
+import com.ecommerce.api.enums.ModalidadeFrete;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,25 @@ public class Pedido {
 
     @Column(nullable = false)
     private Double total;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Double subtotal = 0.0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Double frete = 0.0;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ModalidadeFrete modalidadeFrete = ModalidadeFrete.RETIRADA;
+
+    @Column(length = 8)
+    private String cepEntrega;
+
+    @Column(length = 255)
+    private String enderecoEntrega;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

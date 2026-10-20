@@ -24,9 +24,4 @@ public class JwtProperties {
      * Tempo de expiração do token em milissegundos (padrão: 24 horas)
      */
     private Long expiration = 86400000L;
-    
-    /**
-     * Tempo de expiração do refresh token em milissegundos (padrão: 7 dias)
-     */
-    private Long refreshExpiration = 604800000L;
 }

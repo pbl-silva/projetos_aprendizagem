@@ -16,7 +16,7 @@ RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 # Agora copia o código-fonte e builda o jar (pulando os testes, que já
 # rodam separadamente no CI/antes do build da imagem)
 COPY src src
-RUN ./mvnw clean package -DskipTests -Djacoco.skip=true -B
+RUN ./mvnw clean package -Dmaven.test.skip=true -Djacoco.skip=true -B
 
 # ============================================
 # STAGE 2: runtime - imagem final, só com o JRE
@@ -40,6 +40,4 @@ USER spring
 
 EXPOSE 8080
 
-# -Djava.awt.headless=true reforça o modo headless (a aplicação já detecta
-# isso sozinha, mas é uma segurança a mais explícita)
-ENTRYPOINT ["java", "-Djava.awt.headless=true", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

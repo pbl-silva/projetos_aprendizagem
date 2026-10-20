@@ -9,7 +9,7 @@ target/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
@@ -32,15 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 
-# IDE
-.idea/
-.vscode/
+# Arquivos temporários de editores
 *.swp
 *.swo
-*.iml
 
 # Build
-target/
 *.jar
 *.war
 *.nar
@@ -56,6 +52,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Banco H2 local criado pelo iniciador
+data/
 
 # Temp
 *.tmp

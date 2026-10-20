@@ -8,4 +8,5 @@ import com.ecommerce.api.model.Pedido;
 
 public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     List<Pedido> findByClienteId(Long clienteId);
+    List<Pedido> findByClienteEmailOrderByDataCriacaoDesc(String email);
 }

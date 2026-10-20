@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -134,7 +135,9 @@ public class ProdutoService {
         
         if (tamanho > 100) tamanho = 100;
         
-        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("id").descending());
+        Pageable pageable = PageRequest.of(
+            pagina, tamanho, Sort.<Produto>by(Sort.Direction.DESC, Produto::getId)
+        );
         Page<Produto> produtos = produtoRepository.findByAtivoTrue(pageable);
         
         return produtos.map(this::converterParaDTO);
@@ -149,7 +152,9 @@ public class ProdutoService {
         
         if (tamanho > 100) tamanho = 100;
         
-        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        Pageable pageable = PageRequest.of(
+            pagina, tamanho, Sort.<Produto>by(Sort.Direction.ASC, Produto::getNome)
+        );
         Page<Produto> produtos = produtoRepository.findByNomeContainingIgnoreCase(nome, pageable);
         
         log.debug("Encontrados {} produtos com nome contendo: {}", produtos.getTotalElements(), nome);
@@ -172,7 +177,9 @@ public class ProdutoService {
         
         if (tamanho > 100) tamanho = 100;
         
-        Pageable pageable = PageRequest.of(pagina, tamanho, Sort.by("nome").ascending());
+        Pageable pageable = PageRequest.of(
+            pagina, tamanho, Sort.<Produto>by(Sort.Direction.ASC, Produto::getNome)
+        );
         Page<Produto> produtos = produtoRepository.findByCategoria_Id(categoriaId, pageable);
         
         return produtos.map(this::converterParaDTO);
@@ -201,6 +208,9 @@ public class ProdutoService {
         produto.setDescricao(dto.getDescricao());
         produto.setPreco(dto.getPreco());
         produto.setEstoque(dto.getEstoque());
+        if (dto.getAtivo() != null) {
+            produto.setAtivo(dto.getAtivo());
+        }
         
         Produto atualizado = produtoRepository.save(produto);
         log.debug("Produto atualizado com sucesso: {}", id);
@@ -259,7 +269,7 @@ public class ProdutoService {
     /**
      * Aumenta o estoque de um produto
      */
-    public Integer aumentarEstoque(Long produtoId, Integer quantidade) {
+    public Integer aumentarEstoque(Long produtoId, @Nullable Integer quantidade) {
         log.info("Aumentando estoque do produto {} em {} unidades", produtoId, quantidade);
 
         if (quantidade == null || quantidade <= 0) {

@@ -18,12 +18,6 @@
       "type": "java.lang.Long",
       "description": "Tempo de expiração do token JWT em milissegundos",
       "defaultValue": "86400000"
-    },
-    {
-      "name": "jwt.refresh-expiration",
-      "type": "java.lang.Long",
-      "description": "Tempo de expiração do refresh token em milissegundos",
-      "defaultValue": "604800000"
     }
   ],
   "hints": []

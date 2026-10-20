@@ -21,14 +21,23 @@ import static org.hamcrest.Matchers.*;
  * embarcado, exercitando o Hibernate/H2, as constraints de FK entre as
  * tabelas, a paginação real e a validação de bean ponta a ponta.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+    properties = {
+        "app.admin.enabled=true",
+        "app.admin.email=admin-flow@teste.com",
+        "app.admin.password=AdminFlow123"
+    }
+)
 @DisplayName("IT - Fluxo completo de e-commerce")
 class EcommerceFlowIT {
 
     @LocalServerPort
     private int port;
 
-    private String token;
+    private String tokenCliente;
+    private String tokenAdmin;
+    private Long clienteId;
 
     @BeforeEach
     void setUp() {
@@ -45,9 +54,21 @@ class EcommerceFlowIT {
         .then()
             .statusCode(201);
 
-        token = given()
+        var loginCliente = given()
             .contentType(ContentType.JSON)
             .body(Map.of("email", email, "senha", "senha123"))
+        .when()
+            .post("/auth/login")
+        .then()
+            .statusCode(200)
+            .extract().response();
+
+        tokenCliente = loginCliente.path("token");
+        clienteId = loginCliente.jsonPath().getLong("clienteId");
+
+        tokenAdmin = given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("email", "admin-flow@teste.com", "senha", "AdminFlow123"))
         .when()
             .post("/auth/login")
         .then()
@@ -58,11 +79,12 @@ class EcommerceFlowIT {
     @Test
     @DisplayName("Deve executar o fluxo completo: categoria -> produto -> cliente -> pedido -> pagamento")
     void testFluxoCompletoDeVenda() {
-        String auth = "Bearer " + token;
+        String authAdmin = "Bearer " + tokenAdmin;
+        String authCliente = "Bearer " + tokenCliente;
 
         // 1. Criar categoria
         Long categoriaId = given()
-            .header("Authorization", auth)
+            .header("Authorization", authAdmin)
             .contentType(ContentType.JSON)
             .body(Map.of("nome", "Eletrônicos IT", "descricao", "Categoria de teste", "ativo", true))
         .when()
@@ -74,7 +96,7 @@ class EcommerceFlowIT {
 
         // 2. Criar produto vinculado à categoria
         Long produtoId = given()
-            .header("Authorization", auth)
+            .header("Authorization", authAdmin)
             .contentType(ContentType.JSON)
             .body(Map.of(
                 "nome", "Notebook IT",
@@ -91,61 +113,73 @@ class EcommerceFlowIT {
             .body("nome", equalTo("Notebook IT"))
             .extract().jsonPath().getLong("id");
 
-        // 3. Criar cliente
-        String cpf = String.valueOf(System.nanoTime()).substring(0, 11);
-        Long clienteId = given()
-            .header("Authorization", auth)
-            .contentType(ContentType.JSON)
-            .body(Map.of(
-                "nome", "Cliente IT",
-                "cpf", cpf,
-                "email", "cliente-" + UUID.randomUUID() + "@teste.com",
-                "ativo", true
-            ))
-        .when()
-            .post("/clientes")
-        .then()
-            .statusCode(201)
-            .extract().jsonPath().getLong("id");
-
-        // 4. Criar pedido vinculado ao cliente com um produto
+        // 3. O cliente compra usando apenas a conta vinculada ao seu login.
         Long pedidoId = given()
-            .header("Authorization", auth)
+            .header("Authorization", authCliente)
             .contentType(ContentType.JSON)
             .body(Map.of("clienteId", clienteId,
-                "itens", List.of(Map.of("produtoId", produtoId, "quantidade", 1))))
+                "itens", List.of(Map.of("produtoId", produtoId, "quantidade", 1)),
+                "modalidadeFrete", "PADRAO",
+                "cepEntrega", "01001000",
+                "enderecoEntrega", "Praça da Sé, 1 - São Paulo/SP"))
         .when()
             .post("/pedidos")
         .then()
             .statusCode(201)
             .body("status", equalTo("PENDENTE"))
+            .body("subtotal", equalTo(3500.0f))
+            .body("frete", equalTo(0.0f))
+            .body("modalidadeFrete", equalTo("PADRAO"))
             .body("total", equalTo(3500.0f))
             .body("itens", hasSize(1))
             .extract().jsonPath().getLong("id");
 
-        // 5. Criar pagamento vinculado ao pedido
-        given()
-            .header("Authorization", auth)
+        // 4. O cliente paga o próprio pedido.
+        Long pagamentoId = given()
+            .header("Authorization", authCliente)
             .contentType(ContentType.JSON)
-            .body(Map.of("pedidoId", pedidoId, "valor", 3500.00, "metodo", "CARTAO"))
+            .body(Map.of("pedidoId", pedidoId, "valor", 3500.00, "metodo", "CARTAO_CREDITO"))
         .when()
             .post("/pagamentos")
         .then()
             .statusCode(201)
-            .body("status", equalTo("PENDENTE"));
+            .body("status", equalTo("PENDENTE"))
+            .body("metodo", equalTo("CARTAO_CREDITO"))
+            .extract().jsonPath().getLong("id");
 
-        // 6. Diminuir estoque do produto via HTTP real. O pedido já reservou uma unidade.
+        // 5. Trocar o método atualiza o pagamento pendente, sem criar duplicata.
         given()
-            .header("Authorization", auth)
+            .header("Authorization", authCliente)
+            .contentType(ContentType.JSON)
+            .body(Map.of("pedidoId", pedidoId, "valor", 1.00, "metodo", "BOLETO"))
+        .when()
+            .post("/pagamentos")
+        .then()
+            .statusCode(201)
+            .body("id", equalTo(pagamentoId.intValue()))
+            .body("valor", equalTo(3500.0f))
+            .body("metodo", equalTo("BOLETO"));
+
+        given()
+            .header("Authorization", authCliente)
+        .when()
+            .get("/pagamentos/meus")
+        .then()
+            .statusCode(200)
+            .body("size()", equalTo(1));
+
+        // 6. Somente o administrador faz manutenção manual do estoque.
+        given()
+            .header("Authorization", authAdmin)
         .when()
             .patch("/produtos/" + produtoId + "/estoque/diminuir?quantidade=3")
         .then()
             .statusCode(200)
             .body(equalTo("6"));
 
-        // 7. Listar produtos paginados e confirmar presença do produto criado
+        // 7. O cliente pode consultar o catálogo.
         given()
-            .header("Authorization", auth)
+            .header("Authorization", authCliente)
         .when()
             .get("/produtos?pagina=0&tamanho=50")
         .then()
@@ -154,7 +188,7 @@ class EcommerceFlowIT {
 
         // 8. Consultar o produto usado no pedido e confirmar o estoque final.
         given()
-            .header("Authorization", auth)
+            .header("Authorization", authCliente)
         .when()
             .get("/produtos/" + produtoId)
         .then()
@@ -163,24 +197,33 @@ class EcommerceFlowIT {
     }
 
     @Test
-    @DisplayName("Deve retornar 400 ao criar pedido para cliente inexistente")
-    void testCriarPedidoClienteInexistente() {
+    @DisplayName("Cliente não pode comprar em nome de outro cliente")
+    void testClienteIdForjadoEhIgnorado() {
+        Long produtoId = given()
+            .header("Authorization", "Bearer " + tokenCliente)
+        .when()
+            .get("/produtos/todos")
+        .then()
+            .statusCode(200)
+            .extract().jsonPath().getLong("[0].id");
+
         given()
-            .header("Authorization", "Bearer " + token)
+            .header("Authorization", "Bearer " + tokenCliente)
             .contentType(ContentType.JSON)
             .body(Map.of("clienteId", 999999L,
-                "itens", List.of(Map.of("produtoId", 1L, "quantidade", 1))))
+                "itens", List.of(Map.of("produtoId", produtoId, "quantidade", 1))))
         .when()
             .post("/pedidos")
         .then()
-            .statusCode(404);
+            .statusCode(201)
+            .body("clienteId", equalTo(clienteId.intValue()));
     }
 
     @Test
     @DisplayName("Deve listar categorias com paginação real")
     void testListarCategoriasComPaginacao() {
         given()
-            .header("Authorization", "Bearer " + token)
+            .header("Authorization", "Bearer " + tokenAdmin)
             .contentType(ContentType.JSON)
             .body(Map.of("nome", "Categoria Paginação " + UUID.randomUUID(), "ativo", true))
         .when()
@@ -189,7 +232,7 @@ class EcommerceFlowIT {
             .statusCode(201);
 
         given()
-            .header("Authorization", "Bearer " + token)
+            .header("Authorization", "Bearer " + tokenCliente)
         .when()
             .get("/categorias?pagina=0&tamanho=5")
         .then()

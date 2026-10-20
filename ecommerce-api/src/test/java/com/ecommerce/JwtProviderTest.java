@@ -2,6 +2,7 @@ package com.ecommerce;
 
 import com.ecommerce.api.security.JwtProperties;
 import com.ecommerce.api.security.JwtProvider;
+import com.ecommerce.api.model.Usuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,14 +19,13 @@ class JwtProviderTest {
         JwtProperties properties = new JwtProperties();
         properties.setSecret("chave-secreta-de-teste-com-pelo-menos-32-caracteres");
         properties.setExpiration(3600000L);
-        properties.setRefreshExpiration(604800000L);
         jwtProvider = new JwtProvider(properties);
     }
 
     @Test
     @DisplayName("Deve gerar um token JWT valido")
     void testGenerateToken() {
-        String token = jwtProvider.generateToken("usuario@teste.com", 1L);
+        String token = jwtProvider.generateToken("usuario@teste.com", 1L, Usuario.Papel.USER);
 
         assertNotNull(token);
         assertFalse(token.isBlank());
@@ -35,7 +35,7 @@ class JwtProviderTest {
     @Test
     @DisplayName("Deve extrair o email correto do token")
     void testGetEmailFromToken() {
-        String token = jwtProvider.generateToken("usuario@teste.com", 1L);
+        String token = jwtProvider.generateToken("usuario@teste.com", 1L, Usuario.Papel.USER);
 
         String email = jwtProvider.getEmailFromToken(token);
 
@@ -45,7 +45,7 @@ class JwtProviderTest {
     @Test
     @DisplayName("Deve extrair o userId correto do token")
     void testGetUserIdFromToken() {
-        String token = jwtProvider.generateToken("usuario@teste.com", 42L);
+        String token = jwtProvider.generateToken("usuario@teste.com", 42L, Usuario.Papel.USER);
 
         Long userId = jwtProvider.getUserIdFromToken(token);
 
@@ -71,7 +71,7 @@ class JwtProviderTest {
     @Test
     @DisplayName("Deve validar um token recem-gerado como valido")
     void testValidateTokenValido() {
-        String token = jwtProvider.generateToken("usuario@teste.com", 1L);
+        String token = jwtProvider.generateToken("usuario@teste.com", 1L, Usuario.Papel.USER);
 
         assertTrue(jwtProvider.validateToken(token));
     }
@@ -82,30 +82,4 @@ class JwtProviderTest {
         assertFalse(jwtProvider.validateToken("token.invalido.aqui"));
     }
 
-    @Test
-    @DisplayName("Nao deve considerar expirado um token recem-gerado")
-    void testIsTokenExpiradoFalso() {
-        String token = jwtProvider.generateToken("usuario@teste.com", 1L);
-
-        assertFalse(jwtProvider.isTokenExpired(token));
-    }
-
-    @Test
-    @DisplayName("Deve considerar expirado um token ja vencido")
-    void testIsTokenExpiradoTrue() {
-        JwtProperties properties = new JwtProperties();
-        properties.setSecret("chave-secreta-de-teste-com-pelo-menos-32-caracteres");
-        properties.setExpiration(-1000L);
-        JwtProvider provider = new JwtProvider(properties);
-
-        String token = provider.generateToken("usuario@teste.com", 1L);
-
-        assertTrue(provider.isTokenExpired(token));
-    }
-
-    @Test
-    @DisplayName("Deve tratar token invalido como expirado (fail-safe)")
-    void testIsTokenExpiradoTokenInvalido() {
-        assertTrue(jwtProvider.isTokenExpired("token.invalido.aqui"));
-    }
 }

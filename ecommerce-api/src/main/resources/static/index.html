@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Painel web para gerenciamento do e-commerce">
+  <meta name="theme-color" content="#2B59FF">
+  <title>Pague Mais | Gestão do e-commerce</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" style="fill:var(--logo-tile,#2B59FF)"/><path style="fill:var(--logo-p,#fff)" fill-rule="evenodd" d="M18 12h17a14 14 0 0 1 0 28h-7v12H18zM28 22v8h7a4 4 0 0 0 0-8z"/><rect x="38" y="46" width="16" height="6" rx="3" fill="#FFB020"/><rect x="43" y="41" width="6" height="16" rx="3" fill="#FFB020"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9zM8 8h.01"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM21 20v-1a4 4 0 0 0-3-3.9M16 4.1a3.5 3.5 0 0 1 0 6.8"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><path d="M3 6h18v12H3zM3 10h18M7 15h3"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.6L20.5 8H6M10 20h.01M17 20h.01"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM21 21l-4.5-4.5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  </svg>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <main id="auth-screen" class="auth-screen">
+    <section class="auth-hero" aria-label="Apresentação">
+      <a class="brand brand-light" href="./" aria-label="Pague Mais, início"><svg class="logo"><use href="#logo"/></svg><span>Pague Mais</span></a>
+      <div class="hero-copy">
+        <h1>Venda, receba e acompanhe tudo em um só painel.</h1>
+        <p>Produtos, clientes, pedidos e pagamentos conectados, com o estoque sempre à vista.</p>
+      </div>
+      <p class="hero-foot">Gestão de e-commerce</p>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div id="login-view">
+          <h2>Entre na sua conta</h2>
+          <p class="muted">Use seu acesso para continuar para o painel.</p>
+          <button id="admin-login-hint" class="admin-login-hint" type="button" title="Preencher e-mail do administrador local">
+            <span class="admin-login-icon" aria-hidden="true">A</span>
+            <span><small>Administrador local</small><strong>admin@paguemais.local</strong></span>
+            <span class="admin-login-action">Usar</span>
+          </button>
+          <form id="login-form" class="form-stack" autocomplete="off">
+            <label>E-mail<input id="login-email" name="login-email-input" type="email" autocomplete="off" placeholder="admin@paguemais.local" readonly required></label>
+            <label>Senha
+              <span class="password-field">
+                <input id="login-password" name="login-password-input" type="password" autocomplete="new-password" minlength="6" placeholder="Mínimo de 6 caracteres" readonly required>
+                <button class="password-toggle" type="button" aria-label="Mostrar senha" aria-pressed="false">Mostrar</button>
+              </span>
+            </label>
+            <button class="button primary" type="submit">Entrar</button>
+          </form>
+          <p class="switch-copy">Ainda não tem conta? <button class="link-button" data-auth-view="register">Criar conta</button></p>
+        </div>
+
+        <div id="register-view" hidden>
+          <h2>Crie sua conta</h2>
+          <p class="muted">Leva menos de um minuto.</p>
+          <form id="register-form" class="form-stack">
+            <label>Nome<input name="nome" autocomplete="name" minlength="2" placeholder="Seu nome" required></label>
+            <label>E-mail<input name="email" type="email" autocomplete="email" placeholder="voce@exemplo.com" required></label>
+            <label>Senha<input name="senha" type="password" autocomplete="new-password" minlength="6" placeholder="Mínimo de 6 caracteres" required></label>
+            <button class="button primary" type="submit">Criar conta</button>
+          </form>
+          <p class="switch-copy">Já tem uma conta? <button class="link-button" data-auth-view="login">Entrar</button></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="app-shell" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand brand-light" href="#dashboard"><svg class="logo"><use href="#logo"/></svg><span>Pague Mais</span></a>
+      <nav aria-label="Menu principal">
+        <p class="nav-label">Visão geral</p>
+        <button class="nav-item active" data-view="dashboard"><svg class="ico"><use href="#i-home"/></svg>Dashboard</button>
+        <p class="nav-label">Operação</p>
+        <button class="nav-item" data-view="produtos"><svg class="ico"><use href="#i-box"/></svg>Produtos</button>
+        <button class="nav-item" data-view="categorias"><svg class="ico"><use href="#i-tag"/></svg>Categorias</button>
+        <button class="nav-item" data-view="clientes" data-admin-only><svg class="ico"><use href="#i-users"/></svg>Clientes</button>
+        <button class="nav-item" data-view="conta" data-customer-only><svg class="ico"><use href="#i-users"/></svg>Minha conta</button>
+        <button class="nav-item" data-view="carrinho" data-customer-only><svg class="ico"><use href="#i-cart"/></svg>Carrinho <span id="cart-badge" class="nav-badge" hidden>0</span></button>
+        <button class="nav-item" data-view="pedidos"><svg class="ico"><use href="#i-bag"/></svg>Pedidos</button>
+        <button class="nav-item" data-view="pagamentos"><svg class="ico"><use href="#i-card"/></svg>Pagamentos</button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div><strong id="user-name">Usuário</strong><small id="user-email">conta</small><small id="user-role"></small></div>
+        <button id="logout-button" class="icon-button" title="Sair" aria-label="Sair"><svg class="ico"><use href="#i-out"/></svg></button>
+      </div>
+    </aside>
+
+    <header class="mobile-header">
+      <button id="menu-button" class="icon-button" aria-label="Abrir menu"><svg class="ico"><use href="#i-menu"/></svg></button>
+      <span class="brand"><svg class="logo"><use href="#logo"/></svg><span>Pague Mais</span></span>
+    </header>
+
+    <main class="workspace">
+      <header class="topbar">
+        <h1 id="page-title">Dashboard</h1>
+      </header>
+      <section id="content" class="content" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <dialog id="entity-dialog" class="dialog">
+    <div class="dialog-frame">
+      <header><h2 id="dialog-title">Novo item</h2><button id="dialog-close" class="icon-button" type="button" aria-label="Fechar"><svg class="ico"><use href="#i-x"/></svg></button></header>
+      <div id="dialog-content"></div>
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

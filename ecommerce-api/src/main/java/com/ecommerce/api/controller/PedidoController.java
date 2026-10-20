@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/pedidos")
@@ -43,8 +44,19 @@ public class PedidoController {
     }
 
     @PostMapping
-    public ResponseEntity<PedidoDTO> criar(@Valid @RequestBody PedidoDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.criar(dto));
+    public ResponseEntity<PedidoDTO> criar(@Valid @RequestBody PedidoDTO dto,
+                                           Authentication authentication) {
+        boolean admin = authentication.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        PedidoDTO criado = admin
+            ? service.criar(dto)
+            : service.criarParaCliente(dto, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(criado);
+    }
+
+    @GetMapping("/meus")
+    public ResponseEntity<List<PedidoDTO>> listarMeus(Authentication authentication) {
+        return ResponseEntity.ok(service.listarDoCliente(authentication.getName()));
     }
 
     @PutMapping("/{id}")

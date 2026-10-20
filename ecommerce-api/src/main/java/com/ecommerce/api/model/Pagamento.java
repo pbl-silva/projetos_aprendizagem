@@ -1,6 +1,7 @@
 package com.ecommerce.api.model;
 
 import com.ecommerce.api.enums.StatusPagamento;
+import com.ecommerce.api.enums.MetodoPagamento;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,8 +28,9 @@ public class Pagamento {
     @Column(nullable = false)
     private Double valor;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String metodo;
+    private MetodoPagamento metodo;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

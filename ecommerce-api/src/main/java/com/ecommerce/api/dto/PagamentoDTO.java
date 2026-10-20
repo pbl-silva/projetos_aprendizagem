@@ -1,8 +1,8 @@
 package com.ecommerce.api.dto;
 
 import com.ecommerce.api.enums.StatusPagamento;
+import com.ecommerce.api.enums.MetodoPagamento;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,8 +24,8 @@ public class PagamentoDTO {
     @DecimalMin(value = "0.01", message = "Valor deve ser maior que 0")
     private Double valor;
 
-    @NotBlank(message = "Método de pagamento é obrigatório")
-    private String metodo;
+    @NotNull(message = "Método de pagamento é obrigatório")
+    private MetodoPagamento metodo;
 
     private StatusPagamento status;
     private LocalDateTime dataCriacao;

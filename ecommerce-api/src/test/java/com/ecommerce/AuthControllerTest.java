@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -64,7 +64,8 @@ class AuthControllerTest {
         request.setEmail("usuario@teste.com");
         request.setSenha("senha123");
 
-        LoginResponse response = LoginResponse.of("token-fake", 1L, "usuario@teste.com", "Usuário Teste");
+        LoginResponse response = LoginResponse.of(
+            "token-fake", 1L, "usuario@teste.com", "Usuário Teste", Usuario.Papel.USER, null);
 
         when(usuarioService.login(any(LoginRequest.class))).thenReturn(response);
 

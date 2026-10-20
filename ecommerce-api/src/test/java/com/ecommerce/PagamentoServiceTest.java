@@ -2,6 +2,7 @@ package com.ecommerce;
 
 import com.ecommerce.api.dto.PagamentoDTO;
 import com.ecommerce.api.enums.StatusPagamento;
+import com.ecommerce.api.enums.MetodoPagamento;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Cliente;
 import com.ecommerce.api.model.Pagamento;
@@ -56,7 +57,7 @@ class PagamentoServiceTest {
             .id(1L)
             .pedido(pedido)
             .valor(150.0)
-            .metodo("CARTAO")
+            .metodo(MetodoPagamento.CARTAO_CREDITO)
             .status(StatusPagamento.PENDENTE)
             .dataCriacao(LocalDateTime.now())
             .build();
@@ -64,7 +65,7 @@ class PagamentoServiceTest {
         pagamentoDTO = PagamentoDTO.builder()
             .pedidoId(10L)
             .valor(150.0)
-            .metodo("CARTAO")
+            .metodo(MetodoPagamento.CARTAO_CREDITO)
             .build();
     }
 
@@ -72,12 +73,13 @@ class PagamentoServiceTest {
     @DisplayName("Deve criar pagamento vinculado a um pedido existente")
     void testCriar() {
         when(pedidoRepository.findById(10L)).thenReturn(Optional.of(pedido));
+        when(pagamentoRepository.findByPedidoIdOrderByDataCriacaoDesc(10L)).thenReturn(List.of());
         when(pagamentoRepository.save(any(Pagamento.class))).thenReturn(pagamento);
 
         PagamentoDTO resultado = pagamentoService.criar(pagamentoDTO);
 
         assertNotNull(resultado);
-        assertEquals("CARTAO", resultado.getMetodo());
+        assertEquals(MetodoPagamento.CARTAO_CREDITO, resultado.getMetodo());
         assertEquals(StatusPagamento.PENDENTE, resultado.getStatus());
     }
 
@@ -85,7 +87,7 @@ class PagamentoServiceTest {
     @DisplayName("Deve lançar exceção ao criar pagamento para pedido inexistente")
     void testCriarPedidoNaoEncontrado() {
         when(pedidoRepository.findById(999L)).thenReturn(Optional.empty());
-        PagamentoDTO dto = PagamentoDTO.builder().pedidoId(999L).valor(10.0).metodo("PIX").build();
+        PagamentoDTO dto = PagamentoDTO.builder().pedidoId(999L).valor(10.0).metodo(MetodoPagamento.PIX).build();
 
         assertThrows(RecursoNaoEncontradoException.class, () -> pagamentoService.criar(dto));
     }
@@ -125,12 +127,46 @@ class PagamentoServiceTest {
         when(pagamentoRepository.findById(1L)).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any(Pagamento.class))).thenReturn(pagamento);
 
-        PagamentoDTO atualizacao = PagamentoDTO.builder().valor(200.0).metodo("PIX").build();
+        PagamentoDTO atualizacao = PagamentoDTO.builder().valor(200.0).metodo(MetodoPagamento.PIX).build();
 
         PagamentoDTO resultado = pagamentoService.atualizar(1L, atualizacao);
 
         assertNotNull(resultado);
         verify(pagamentoRepository, times(1)).save(any(Pagamento.class));
+    }
+
+    @Test
+    @DisplayName("Deve trocar o método no mesmo pagamento pendente")
+    void testTrocarMetodoSemDuplicarPagamento() {
+        Pagamento duplicadoAntigo = Pagamento.builder()
+            .id(2L).pedido(pedido).valor(150.0)
+            .metodo(MetodoPagamento.BOLETO).status(StatusPagamento.PENDENTE)
+            .dataCriacao(LocalDateTime.now().minusMinutes(1)).build();
+        when(pedidoRepository.findById(10L)).thenReturn(Optional.of(pedido));
+        when(pagamentoRepository.findByPedidoIdOrderByDataCriacaoDesc(10L))
+            .thenReturn(List.of(pagamento, duplicadoAntigo));
+        when(pagamentoRepository.save(pagamento)).thenReturn(pagamento);
+        PagamentoDTO troca = PagamentoDTO.builder()
+            .pedidoId(10L).valor(150.0).metodo(MetodoPagamento.PIX).build();
+
+        PagamentoDTO resultado = pagamentoService.criar(troca);
+
+        assertEquals(1L, resultado.getId());
+        assertEquals(MetodoPagamento.PIX, resultado.getMetodo());
+        assertEquals(StatusPagamento.PENDENTE, resultado.getStatus());
+        verify(pagamentoRepository).save(pagamento);
+        verify(pagamentoRepository).deleteAll(List.of(duplicadoAntigo));
+    }
+
+    @Test
+    @DisplayName("Não deve reabrir pagamento aprovado")
+    void testNaoReabrirPagamentoAprovado() {
+        pagamento.setStatus(StatusPagamento.APROVADO);
+        when(pedidoRepository.findById(10L)).thenReturn(Optional.of(pedido));
+        when(pagamentoRepository.findByPedidoIdOrderByDataCriacaoDesc(10L)).thenReturn(List.of(pagamento));
+
+        assertThrows(IllegalArgumentException.class, () -> pagamentoService.criar(pagamentoDTO));
+        verify(pagamentoRepository, never()).save(any());
     }
 
     @Test

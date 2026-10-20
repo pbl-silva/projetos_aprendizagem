@@ -3,6 +3,7 @@ package com.ecommerce;
 import com.ecommerce.api.dto.ItemPedidoDTO;
 import com.ecommerce.api.dto.PedidoDTO;
 import com.ecommerce.api.enums.StatusPedido;
+import com.ecommerce.api.enums.ModalidadeFrete;
 import com.ecommerce.api.exception.EstoqueInsuficienteException;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.model.Cliente;
@@ -69,9 +70,41 @@ class PedidoServiceTest {
 
         assertEquals(StatusPedido.PENDENTE, resultado.getStatus());
         assertEquals(1L, resultado.getClienteId());
+        assertEquals("Cliente Teste", resultado.getClienteNome());
         assertEquals(100.0, resultado.getTotal());
         assertEquals(1, resultado.getItens().size());
         assertEquals(8, produto.getEstoque());
+        assertEquals(0.0, resultado.getFrete());
+        assertEquals(ModalidadeFrete.RETIRADA, resultado.getModalidadeFrete());
+    }
+
+    @Test
+    @DisplayName("Deve somar o frete padrão ao pedido abaixo de duzentos reais")
+    void testCriarComFretePadrao() {
+        pedidoDTO.setModalidadeFrete(ModalidadeFrete.PADRAO);
+        pedidoDTO.setCepEntrega("01001000");
+        pedidoDTO.setEnderecoEntrega("Praça da Sé, 1 - São Paulo/SP");
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+        when(produtoRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(produto));
+        when(pedidoRepository.save(any(Pedido.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PedidoDTO resultado = pedidoService.criar(pedidoDTO);
+
+        assertEquals(100.0, resultado.getSubtotal());
+        assertEquals(19.9, resultado.getFrete());
+        assertEquals(119.9, resultado.getTotal());
+        assertEquals(ModalidadeFrete.PADRAO, resultado.getModalidadeFrete());
+    }
+
+    @Test
+    @DisplayName("Deve exigir endereço para entrega")
+    void testCriarComEntregaSemEndereco() {
+        pedidoDTO.setModalidadeFrete(ModalidadeFrete.EXPRESSA);
+        when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
+
+        assertThrows(IllegalArgumentException.class, () -> pedidoService.criar(pedidoDTO));
+        verifyNoInteractions(produtoRepository);
+        verify(pedidoRepository, never()).save(any());
     }
 
     @Test

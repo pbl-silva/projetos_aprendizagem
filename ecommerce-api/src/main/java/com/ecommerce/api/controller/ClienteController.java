@@ -1,5 +1,6 @@
 package com.ecommerce.api.controller;
 
+import com.ecommerce.api.dto.AtualizacaoClienteDTO;
 import com.ecommerce.api.dto.ClienteDTO;
 import com.ecommerce.api.service.ClienteService;
 import jakarta.validation.Valid;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -16,6 +18,18 @@ import java.util.List;
 public class ClienteController {
 
     private final ClienteService service;
+
+    @GetMapping("/me")
+    public ResponseEntity<ClienteDTO> obterMinhaConta(Authentication authentication) {
+        return ResponseEntity.ok(service.obterPorEmail(authentication.getName()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ClienteDTO> atualizarMinhaConta(
+            Authentication authentication,
+            @Valid @RequestBody AtualizacaoClienteDTO dto) {
+        return ResponseEntity.ok(service.atualizarMinhaConta(authentication.getName(), dto));
+    }
 
     /**
      * Lista todos os clientes SEM paginação

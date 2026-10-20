@@ -5,7 +5,9 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
+import com.ecommerce.api.model.Usuario;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +27,7 @@ public class JwtProvider {
     /**
      * Gera token JWT
      */
-    public String generateToken(String email, Long userId) {
+    public String generateToken(String email, Long userId, Usuario.Papel papel) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpiration());
         
@@ -34,17 +36,31 @@ public class JwtProvider {
         return Jwts.builder()
             .subject(email)
             .claim("userId", userId)
+            .claim("papel", papel.name())
             .issuedAt(now)
             .expiration(expiryDate)
             .signWith(getSigningKey())
             .compact();
     }
+
+    public @Nullable String getPapelFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+            return claims.get("papel", String.class);
+        } catch (Exception e) {
+            log.error("Erro ao extrair papel do token: {}", e.getMessage());
+            return null;
+        }
+    }
     
     /**
      * Extrai email do token
      */
-    @org.springframework.lang.Nullable
-    public String getEmailFromToken(String token) {
+    public @Nullable String getEmailFromToken(String token) {
         try {
             Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -62,8 +78,7 @@ public class JwtProvider {
     /**
      * Extrai userId do token
      */
-    @org.springframework.lang.Nullable
-    public Long getUserIdFromToken(String token) {
+    public @Nullable Long getUserIdFromToken(String token) {
         try {
             Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -93,24 +108,6 @@ public class JwtProvider {
         } catch (Exception e) {
             log.warn("Token JWT inválido: {}", e.getMessage());
             return false;
-        }
-    }
-    
-    /**
-     * Verifica se o token está expirado
-     */
-    public boolean isTokenExpired(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-            
-            return claims.getExpiration().before(new Date());
-        } catch (Exception e) {
-            log.warn("Erro ao verificar expiração do token: {}", e.getMessage());
-            return true;
         }
     }
 }

@@ -68,6 +68,9 @@ public class CategoriaService {
         
         categoria.setNome(dto.getNome());
         categoria.setDescricao(dto.getDescricao());
+        if (dto.getAtivo() != null) {
+            categoria.setAtivo(dto.getAtivo());
+        }
         
         Categoria atualizada = categoriaRepository.save(categoria);
         return converterParaDTO(atualizada);

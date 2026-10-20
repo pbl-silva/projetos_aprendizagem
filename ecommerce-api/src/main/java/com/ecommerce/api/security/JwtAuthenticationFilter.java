@@ -7,10 +7,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -30,10 +33,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwt != null && jwtProvider.validateToken(jwt)) {
                 String email = jwtProvider.getEmailFromToken(jwt);
                 Long userId = jwtProvider.getUserIdFromToken(jwt);
+                String papel = jwtProvider.getPapelFromToken(jwt);
+
+                if (email == null || userId == null || papel == null) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(
-                        email, null, null
+                        email, null, List.of(new SimpleGrantedAuthority("ROLE_" + papel))
                     );
                 authentication.setDetails(userId);
                 
@@ -46,8 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
     
-    @org.springframework.lang.Nullable
-    private String getJwtFromRequest(HttpServletRequest request) {
+    private @Nullable String getJwtFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);

@@ -92,10 +92,11 @@ class GlobalExceptionHandlerTest {
         EstoqueInsuficienteException ex = new EstoqueInsuficienteException("Estoque insuficiente");
 
         ResponseEntity<ErrorResponse> response = handler.handleEstoqueInsuficiente(ex, webRequest);
+        ErrorResponse body = response.getBody();
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals("Estoque insuficiente", response.getBody().getErro());
+        assertNotNull(body);
+        assertEquals("Estoque insuficiente", body.getErro());
     }
 
     @Test

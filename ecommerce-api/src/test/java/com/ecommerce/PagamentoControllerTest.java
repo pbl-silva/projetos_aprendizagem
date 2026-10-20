@@ -2,6 +2,7 @@ package com.ecommerce;
 
 import com.ecommerce.api.dto.PagamentoDTO;
 import com.ecommerce.api.enums.StatusPagamento;
+import com.ecommerce.api.enums.MetodoPagamento;
 import com.ecommerce.api.exception.RecursoNaoEncontradoException;
 import com.ecommerce.api.service.PagamentoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -48,14 +49,14 @@ class PagamentoControllerTest {
             .id(1L)
             .pedidoId(10L)
             .valor(150.0)
-            .metodo("CARTAO")
+            .metodo(MetodoPagamento.CARTAO_CREDITO)
             .status(StatusPagamento.PENDENTE)
             .build();
     }
 
     @Test
     @DisplayName("Deve criar pagamento")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriar() throws Exception {
         when(pagamentoService.criar(any(PagamentoDTO.class))).thenReturn(pagamentoDTO);
 
@@ -64,12 +65,12 @@ class PagamentoControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(pagamentoDTO)))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.metodo", is("CARTAO")));
+            .andExpect(jsonPath("$.metodo", is("CARTAO_CREDITO")));
     }
 
     @Test
     @DisplayName("Deve obter pagamento por ID")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObterPorId() throws Exception {
         when(pagamentoService.obterPorId(1L)).thenReturn(pagamentoDTO);
 
@@ -80,7 +81,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve retornar 404 para pagamento inexistente")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testObterPorIdNaoEncontrado() throws Exception {
         when(pagamentoService.obterPorId(999L))
             .thenThrow(new RecursoNaoEncontradoException("Pagamento não encontrado"));
@@ -91,7 +92,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve listar pagamentos")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListarTodos() throws Exception {
         when(pagamentoService.listarTodos()).thenReturn(List.of(pagamentoDTO));
 
@@ -102,7 +103,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve atualizar pagamento")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testAtualizar() throws Exception {
         when(pagamentoService.atualizar(eq(1L), any(PagamentoDTO.class))).thenReturn(pagamentoDTO);
 
@@ -115,7 +116,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve atualizar status do pagamento")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testAtualizarStatus() throws Exception {
         when(pagamentoService.atualizarStatus(1L, StatusPagamento.APROVADO)).thenReturn(pagamentoDTO);
 
@@ -127,7 +128,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve listar pagamentos com paginação")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testListarComPaginacao() throws Exception {
         org.springframework.data.domain.Pageable pageable =
             org.springframework.data.domain.PageRequest.of(0, 10);
@@ -142,7 +143,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve rejeitar criação de pagamento sem método")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testCriarSemMetodo() throws Exception {
         PagamentoDTO invalido = PagamentoDTO.builder().pedidoId(10L).valor(50.0).build();
 
@@ -155,7 +156,7 @@ class PagamentoControllerTest {
 
     @Test
     @DisplayName("Deve deletar pagamento")
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     void testDeletar() throws Exception {
         doNothing().when(pagamentoService).deletar(1L);
 
