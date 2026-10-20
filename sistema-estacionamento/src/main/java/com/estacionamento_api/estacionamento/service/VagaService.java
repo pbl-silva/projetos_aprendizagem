@@ -26,24 +26,16 @@ public class VagaService {
     public void inicializarVagas() {
         log.info("Inicializando vagas do estacionamento...");
         
-        // Vagas Comuns
-        for (int i = 1; i <= 23; i++) {
-            criarVaga("C-" + String.format("%02d", i), TipoVaga.COMUM);
-        }
-        
-        // Vagas PCD
-        for (int i = 1; i <= 15; i++) {
-            criarVaga("PCD-" + String.format("%02d", i), TipoVaga.PCD);
-        }
-        
-        // Vagas Moto
-        for (int i = 1; i <= 10; i++) {
-            criarVaga("M-" + String.format("%02d", i), TipoVaga.MOTO);
-        }
-        
-        // Vagas Elétricas
-        for (int i = 1; i <= 2; i++) {
-            criarVaga("E-" + String.format("%02d", i), TipoVaga.ELETRICA);
+        for (TipoVaga tipo : TipoVaga.values()) {
+            String prefixo = switch (tipo) {
+                case COMUM -> "C";
+                case PCD -> "PCD";
+                case MOTO -> "M";
+                case ELETRICA -> "E";
+            };
+            for (int i = 1; i <= tipo.getQuantidade(); i++) {
+                criarVaga("%s-%02d".formatted(prefixo, i), tipo);
+            }
         }
 
         log.info("Vagas inicializadas: {} vagas criadas", vagaRepository.count());
@@ -119,13 +111,6 @@ public class VagaService {
             .collect(Collectors.toList());
     }
     
-    @Transactional(readOnly = true)
-    public List<VagaDTO> listarDisponiveisPorTipo(TipoVaga tipo) {
-        return vagaRepository.findByTipoVagaAndDisponivel(tipo, true).stream()
-            .map(this::converterParaDTO)
-            .collect(Collectors.toList());
-    }
-    
     public Vaga encontrarVagaDisponivel(TipoVaga tipo) {
         return vagaRepository.findFirstByTipoVagaAndDisponivelTrueOrderByIdAsc(tipo)
             .orElseThrow(() -> new VagaNaoDisponvelException(
@@ -147,21 +132,6 @@ public class VagaService {
         vaga.setDisponivel(true);
         vagaRepository.save(vaga);
         log.debug("Vaga liberada: id={}, numero={}", vaga.getId(), vaga.getNumero());
-    }
-    
-    @Transactional(readOnly = true)
-    public long obterVagasDisponiveis() {
-        return vagaRepository.countVagasDisponiveis();
-    }
-    
-    @Transactional(readOnly = true)
-    public double obterTaxaOcupacao() {
-        long total = vagaRepository.count();
-        if (total == 0) {
-            return 0.0;
-        }
-        long disponiveis = obterVagasDisponiveis();
-        return ((total - disponiveis) * 100.0) / total;
     }
     
     private VagaDTO converterParaDTO(Vaga vaga) {

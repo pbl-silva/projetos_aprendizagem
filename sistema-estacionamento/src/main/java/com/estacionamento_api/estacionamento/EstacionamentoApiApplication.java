@@ -23,13 +23,7 @@ public class EstacionamentoApiApplication {
 		return args -> vagaService.inicializarVagas();
 	}
 
-	/**
-	 * Usuário admin padrão para dev/demo. Como o H2 é em memória (create-drop),
-	 * ele precisa ser recriado a cada subida da aplicação — sem isso, ninguém
-	 * conseguiria logar na primeira vez. Credenciais só para desenvolvimento;
-	 * numa aplicação real isso não existiria (o cadastro seria feito via
-	 * POST /auth/registrar).
-	 */
+	/** Cria a conta inicial de desenvolvimento apenas quando ainda não existe administrador. */
 	@Bean
 	@ConditionalOnProperty(name = "app.bootstrap-admin.enabled", havingValue = "true")
 	CommandLineRunner inicializarUsuarioAdmin(

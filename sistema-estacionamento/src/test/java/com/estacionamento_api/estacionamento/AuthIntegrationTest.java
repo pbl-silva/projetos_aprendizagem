@@ -4,6 +4,7 @@ import com.estacionamento_api.estacionamento.dto.LoginRequestDTO;
 import com.estacionamento_api.estacionamento.dto.LoginResponseDTO;
 import com.estacionamento_api.estacionamento.dto.RegistroDTO;
 import com.estacionamento_api.estacionamento.service.UsuarioService;
+import com.estacionamento_api.estacionamento.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,9 @@ class AuthIntegrationTest {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
         .registerModule(new JavaTimeModule());
@@ -172,7 +176,7 @@ class AuthIntegrationTest {
         mockMvc.perform(post("/auth/registrar").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"invasor\",\"senha\":\"senha123\",\"role\":\"ADMIN\"}"))
             .andExpect(status().isUnauthorized());
-        assertFalse(usuarioService.existeUsuario("invasor"));
+        assertFalse(usuarioRepository.existsByUsername("invasor"));
     }
 
     @Test
@@ -188,7 +192,7 @@ class AuthIntegrationTest {
         }
         mockMvc.perform(get("/usuarios").header("Authorization", "Bearer " + token))
             .andExpect(status().isForbidden());
-        assertFalse(usuarioService.existeUsuario("contabloqueada"));
+        assertFalse(usuarioRepository.existsByUsername("contabloqueada"));
     }
 
     @Test
@@ -218,7 +222,7 @@ class AuthIntegrationTest {
                         .username("perfil-invalido").senha("senha123").role(role).build())))
                 .andExpect(status().isBadRequest());
         }
-        assertFalse(usuarioService.existeUsuario("perfil-invalido"));
+        assertFalse(usuarioRepository.existsByUsername("perfil-invalido"));
     }
 
     @Test

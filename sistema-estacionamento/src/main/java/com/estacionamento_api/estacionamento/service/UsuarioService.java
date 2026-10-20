@@ -33,9 +33,7 @@ public class UsuarioService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException(
-                "Usuário não encontrado: " + username));
+        Usuario usuario = buscar(username);
 
         return User.withUsername(usuario.getUsername())
             .password(usuario.getSenha())
@@ -65,19 +63,13 @@ public class UsuarioService implements UserDetailsService {
     }
 
     @Transactional(readOnly = true)
-    public boolean existeUsuario(String username) {
-        return usuarioRepository.existsByUsername(username);
-    }
-
-    @Transactional(readOnly = true)
     public boolean existeAdministrador() {
         return usuarioRepository.existsByRole("ADMIN");
     }
 
     @Transactional(readOnly = true)
     public UsuarioDTO obterUsuario(String username) {
-        return resumo(usuarioRepository.findByUsername(username)
-            .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado")));
+        return resumo(buscar(username));
     }
 
     @Transactional(readOnly = true)

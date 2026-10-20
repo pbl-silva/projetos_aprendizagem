@@ -1,2 +1,27 @@
 # Configurações locais do Visual Studio Code, em qualquer projeto
 .vscode/
+
+# Saídas de compilação e execução
+target/
+logs/
+*.log
+*.class
+*.jar
+
+# Configurações e dados locais
+.idea/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+!.env.sample
+*.mv.db
+*.trace.db
+*.lock.db
+
+# Arquivos temporários e cópias de editores
+*.tmp
+*.bak
+*.swp
+*.swo

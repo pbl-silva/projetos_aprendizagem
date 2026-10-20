@@ -35,8 +35,8 @@ public final class TarifaCalculator {
      * Usa BigDecimal.valueOf(double) para evitar o erro de arredondamento
      * binário de "new BigDecimal(double)".
      */
-    public static BigDecimal calcularValorBase(double precoDiaria, long horas) {
-        return BigDecimal.valueOf(precoDiaria)
+    public static BigDecimal calcularValorBase(double precoHora, long horas) {
+        return BigDecimal.valueOf(precoHora)
             .multiply(BigDecimal.valueOf(horas))
             .setScale(2, RoundingMode.HALF_UP);
     }

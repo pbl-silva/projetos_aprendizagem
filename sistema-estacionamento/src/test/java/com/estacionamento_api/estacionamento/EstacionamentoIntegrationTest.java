@@ -81,6 +81,20 @@ class EstacionamentoIntegrationTest {
     }
 
     @Test
+    void deveAtribuirVagaCompativelNoFluxoRealDeEntrada() throws Exception {
+        TipoVeiculo[] tipos = { TipoVeiculo.CARRO, TipoVeiculo.CARRO, TipoVeiculo.MOTO, TipoVeiculo.CARRO_ELETRICO };
+        String[] prefixos = { "C-", "PCD-", "M-", "E-" };
+        for (int i = 0; i < tipos.length; i++) {
+            VeiculoDTO veiculo = cadastrarVeiculo("VAG000" + i, tipos[i], i == 1);
+            MvcResult result = mockMvc.perform(post("/entradas").contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(EntradaDTO.builder().veiculoId(veiculo.getId()).build())))
+                .andExpect(status().isCreated()).andReturn();
+            EntradaDTO entrada = objectMapper.readValue(result.getResponse().getContentAsString(), EntradaDTO.class);
+            assertTrue(entrada.getNumeroVaga().startsWith(prefixos[i]));
+        }
+    }
+
+    @Test
     @DisplayName("Fluxo completo: cadastrar veículo, registrar entrada, registrar saída")
     void testFluxoCompletoEntradaSaida() throws Exception {
         VeiculoDTO veiculo = cadastrarVeiculo("INT0001", TipoVeiculo.CARRO, false);

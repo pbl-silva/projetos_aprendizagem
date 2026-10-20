@@ -1,6 +1,7 @@
 package com.estacionamento_api.estacionamento;
 
 import com.estacionamento_api.estacionamento.service.UsuarioService;
+import com.estacionamento_api.estacionamento.repository.UsuarioRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ class AuthHttpIntegrationTest {
     private int port;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @Test
     void servidorDeveResponder403SemRedirecionarNegacaoParaErroDeAutenticacao() throws Exception {
@@ -40,7 +43,7 @@ class AuthHttpIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.ofString("{\"username\":\"bloqueado-http\",\"senha\":\"senha123\",\"role\":\"ADMIN\"}"))
                 .build(), HttpResponse.BodyHandlers.ofString());
             assertEquals(403, create.statusCode());
-            assertFalse(usuarioService.existeUsuario("bloqueado-http"));
+            assertFalse(usuarioRepository.existsByUsername("bloqueado-http"));
         }
     }
 

@@ -130,7 +130,7 @@ class MinhaContaIntegrationTest {
         service.registrar("admin", "senha123", "ADMIN");
         atualizar(login("admin", "senha123"), "novo-admin", "senha123");
         new EstacionamentoApiApplication().inicializarUsuarioAdmin(service, "admin", "senhaInicial123").run();
-        assertFalse(service.existeUsuario("admin"));
+        assertFalse(usuarios.existsByUsername("admin"));
         assertEquals("ADMIN", service.obterUsuario("novo-admin").role());
     }
 

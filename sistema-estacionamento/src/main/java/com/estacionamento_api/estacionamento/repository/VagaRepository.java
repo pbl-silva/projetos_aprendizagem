@@ -8,14 +8,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import jakarta.persistence.LockModeType;
-import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface VagaRepository extends JpaRepository<Vaga, Long> {
-    Optional<Vaga> findByNumero(String numero);
     boolean existsByNumero(String numero);
-    List<Vaga> findByTipoVagaAndDisponivel(TipoVaga tipoVaga, Boolean disponivel);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Vaga> findFirstByTipoVagaAndDisponivelTrueOrderByIdAsc(TipoVaga tipoVaga);
@@ -27,6 +24,4 @@ public interface VagaRepository extends JpaRepository<Vaga, Long> {
     @Query("SELECT COUNT(v) FROM Vaga v WHERE v.disponivel = true")
     long countVagasDisponiveis();
     
-    @Query("SELECT COUNT(v) FROM Vaga v WHERE v.tipoVaga = :tipo AND v.disponivel = true")
-    long countVagasDisponiveisPorTipo(TipoVaga tipo);
 }

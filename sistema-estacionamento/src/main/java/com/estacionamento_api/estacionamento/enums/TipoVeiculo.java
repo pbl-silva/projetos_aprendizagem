@@ -1,23 +1,17 @@
 package com.estacionamento_api.estacionamento.enums;
 
 public enum TipoVeiculo {
-    CARRO("Carro", 20.00),
-    MOTO("Moto", 15.00),
-    CARRO_ELETRICO("Carro Elétrico", 19.00);
+    CARRO(20.00),
+    MOTO(15.00),
+    CARRO_ELETRICO(19.00);
     
-    private final String descricao;
-    private final double precoDiaria;
+    private final double precoHora;
     
-    TipoVeiculo(String descricao, double precoDiaria) {
-        this.descricao = descricao;
-        this.precoDiaria = precoDiaria;
+    TipoVeiculo(double precoHora) {
+        this.precoHora = precoHora;
     }
     
-    public String getDescricao() {
-        return descricao;
-    }
-    
-    public double getPrecoDiaria() {
-        return precoDiaria;
+    public double getPrecoHora() {
+        return precoHora;
     }
 }
