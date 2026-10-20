@@ -21,30 +21,6 @@ projetos_aprendizagem/
     └── spbank-frontend/
 ```
 
-## Executar no Windows
-
-Instale o JDK indicado para o projeto e abra o terminal na pasta correspondente. O Maven Wrapper está incluído nos projetos, portanto não é necessário instalar o Maven separadamente.
-
-Para iniciar o Pague Mais, execute `sistema-ecommerce\iniciar-ecommerce.cmd`. Consulte o [README do e-commerce](sistema-ecommerce/README.md) para configuração, persistência e acesso administrativo.
-
-Para iniciar a API da biblioteca:
-
-```powershell
-cd sistema-biblioteca
-.\mvnw.cmd spring-boot:run
-```
-
-Para iniciar o sistema de estacionamento, abra outro terminal na raiz do repositório:
-
-```powershell
-cd sistema-estacionamento
-.\mvnw.cmd spring-boot:run
-```
-
-No SPBank, o backend fica em `spbank/spbank-backend` e a interface em `spbank/spbank-frontend`. Configure o banco MySQL conforme os arquivos `application*.yml` do backend antes de iniciá-lo com `.\mvnw.cmd spring-boot:run`. Sirva a pasta do frontend por um servidor HTTP local, como o Live Server do VS Code; as origens locais configuradas por padrão usam a porta 5500.
-
-Os backends usam a porta 8080 por padrão. Execute um de cada vez ou configure portas diferentes; ao alterar a porta do SPBank, ajuste também a URL da API no frontend.
-
 ## Arquivos gerados
 
 Pastas de compilação (`target/`), logs e dados locais do e-commerce são ignorados pelo Git. Elas podem existir na máquina sem fazer parte do conteúdo publicado no GitHub.
