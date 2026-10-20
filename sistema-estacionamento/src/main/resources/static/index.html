@@ -3,13 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#163b34" />
+    <meta name="theme-color" content="#1c2128" />
     <meta
       name="description"
       content="Controle de entradas, saídas, vagas e relatórios do estacionamento."
     />
     <title>Estacionamento · Painel de operação</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
   </head>
@@ -19,93 +22,70 @@
         <a class="brand" href="./"
           ><span class="brand-icon">P</span> Estacionamento</a
         >
-        <div>
-          <span class="eyebrow">CADA VAGA, SOB CONTROLE</span>
-          <h1>Uma operação<br />mais tranquila.</h1>
+        <div class="login-story-content">
+          <span class="eyebrow">Cada vaga, sob controle</span>
+          <h1>O seu próximo<br />turno começa aqui.</h1>
           <p>
-            Do primeiro veículo ao fechamento do dia.<br />Seu estacionamento em
-            um só lugar.
+            Entradas, saídas e cada vaga no lugar.<br />Mais controle para quem cuida da operação.
           </p>
-          <div class="parking-art" aria-hidden="true">
-            <span>P</span><i></i><i></i><i></i><i></i>
+          <div class="login-parking" aria-hidden="true">
+            <div class="parking-sign">P<small>ESTACIONAMENTO</small></div>
+            <div class="parking-bays"><i></i><i class="parked"></i><i></i><i class="parked blue"></i><i></i></div>
+            <div class="parking-road"><span>ENTRADA</span><b>→</b></div>
           </div>
         </div>
-        <small>Gestão de estacionamento</small>
+        <div class="login-story-footer"><span>Gestão de estacionamento</span><small>Da chegada ao fechamento.</small></div>
       </div>
       <div class="login-side">
         <form id="login-form" class="login-card">
-          <span class="eyebrow">BEM-VINDO</span>
-          <h2 id="login-title">Acesse sua operação</h2>
+          <span class="login-access"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> ACESSO DA EQUIPE</span>
+          <div class="login-intro"><span class="eyebrow">BOM TER VOCÊ POR AQUI</span>
+          <h2 id="login-title">Entre no seu painel.</h2>
           <p id="login-description" class="muted">
-            Entre com sua conta para começar.
-          </p>
+            Use o usuário e a senha fornecidos pelo administrador.
+          </p></div>
           <label
             >Usuário<input
               name="username"
               autocomplete="username"
               minlength="3"
               maxlength="50"
+              placeholder="Seu usuário"
+              spellcheck="false"
+              autocapitalize="none"
               required
               autofocus /></label
           ><label
-            >Senha<input
+            >Senha<span class="password-field"><input
               name="senha"
               type="password"
               autocomplete="current-password"
               maxlength="72"
+              id="login-password"
+              placeholder="Sua senha"
               required
-          /></label>
+          /><button type="button" id="password-toggle" aria-controls="login-password" aria-pressed="false" aria-label="Mostrar senha">Mostrar</button></span></label>
+          <p id="caps-lock" class="caps-lock" hidden>Caps Lock está ativado.</p>
           <p id="login-error" class="form-error" role="alert"></p>
           <button class="primary wide" type="submit" id="login-submit">
-            Entrar</button
-          ><button type="button" class="text-button wide" id="auth-toggle">
-            Criar uma conta de operador
-          </button>
+            <span>Entrar no painel</span><span aria-hidden="true">→</span></button>
+          <p class="login-help"><strong>Precisa de acesso?</strong> Solicite uma conta ao administrador do estacionamento.</p>
         </form>
       </div>
     </section>
 
     <div id="app" class="app" hidden>
-      <aside class="sidebar">
-        <a class="brand" href="./"
-          ><span class="brand-icon">P</span
-          ><span>Estacionamento<small>PAINEL DE OPERAÇÃO</small></span></a
-        ><span class="nav-label">PRINCIPAL</span>
-        <nav aria-label="Menu principal">
-          <button data-view="patio" class="nav-item active">
-            <span aria-hidden="true">▦</span> Visão geral</button
-          ><button data-view="veiculos" class="nav-item">
-            <span aria-hidden="true">▤</span> Veículos</button
-          ><button data-view="vagas" class="nav-item">
-            <span aria-hidden="true">⊞</span> Mapa de vagas</button
-          ><button data-view="relatorios" class="nav-item">
-            <span aria-hidden="true">▥</span> Relatórios
-          </button>
-        </nav>
-        <div class="sidebar-note">
-          <span class="status-dot"></span> Operação conectada
-          <p>Entradas e saídas organizadas.<br />Mais espaço para o seu dia.</p>
-        </div>
+      <header class="topbar">
+        <a class="brand" href="./"><span class="brand-icon">P</span><span>Estacionamento<small><span class="status-dot"></span>Painel de operação</small></span></a>
+        <time id="today"></time>
         <div class="user-menu">
+          <button id="manage-users" data-view="usuarios" type="button" class="text-button" hidden>Equipe</button>
           <span id="user-initial" class="avatar">O</span>
-          <div>
-            <strong id="user-name">Operador</strong
-            ><small>Área de operação</small>
-          </div>
-          <button
-            id="logout"
-            class="icon-button"
-            aria-label="Sair da conta"
-            title="Sair da conta"
-          >
-            ↪
-          </button>
+          <strong id="user-name">Operador</strong>
+          <button id="logout" class="icon-button" aria-label="Sair da conta" title="Sair da conta">↪</button>
         </div>
-      </aside>
+      </header>
       <div class="workspace">
-        <header class="topbar">
-          <span>Seu estacionamento, em movimento.</span><time id="today"></time>
-        </header>
         <main id="main-content">
           <div class="page-heading">
             <div>
@@ -117,34 +97,24 @@
             </div>
             <div class="actions">
               <button id="refresh" class="secondary">↻ Atualizar</button
-              ><button class="primary" data-action="nova-entrada">
-                + Nova entrada
-              </button>
+              >
             </div>
           </div>
           <div id="load-error" class="load-error" role="alert" hidden></div>
           <section id="view-patio" class="view" aria-label="Visão geral">
-            <div class="stats">
-              <article class="stat">
-                <span>Vagas disponíveis</span><strong id="stat-free">—</strong
-                ><small>Prontas para a próxima chegada</small>
-              </article>
-              <article class="stat">
-                <span>Veículos no pátio</span><strong id="stat-active">—</strong
-                ><small>Estacionados neste momento</small>
-              </article>
-              <article class="stat">
-                <span>Ocupação do espaço</span
-                ><strong id="stat-occupancy">—</strong>
+            <div class="hero">
+              <div class="hero-info">
+                <span>Agora no pátio</span>
+                <strong id="stat-free" class="big">—</strong>
+                <p>vagas livres · <b id="stat-active">—</b> veículos estacionados</p>
                 <div class="progress"><i id="occupancy-bar"></i></div>
-              </article>
-              <article class="stat featured">
-                <span>Faturamento de hoje</span
-                ><strong id="stat-revenue">—</strong
-                ><small>Saídas concluídas no dia</small>
-              </article>
+                <small>Ocupação do espaço: <b id="stat-occupancy">—</b></small>
+                <button class="text-button" data-action="mapa">Abrir mapa de vagas →</button>
+              </div>
+              <div id="mini-lot" class="mini-lot" aria-label="Pátio em miniatura"></div>
             </div>
-            <div class="panel">
+            <div class="overview">
+              <div class="panel">
               <div class="panel-heading">
                 <div>
                   <h2>
@@ -182,29 +152,18 @@
                 >
               </div>
             </div>
-            <div class="bottom-grid">
-              <section class="panel compact">
-                <div class="panel-heading">
-                  <h2>Disponibilidade por tipo</h2>
-                  <button class="text-button" data-action="mapa">
-                    Ver mapa →
-                  </button>
+              <aside class="side">
+                <div class="ticket">
+                  <span>Faturamento de hoje</span>
+                  <strong id="stat-revenue">—</strong>
+                  <small>Saídas concluídas no dia</small>
                 </div>
-                <div id="availability" class="availability"></div>
-              </section>
-              <section class="tariff-card">
-                <span class="eyebrow">TARIFAS DO ESTACIONAMENTO</span>
-                <h2>Clareza em cada estadia.</h2>
-                <div>
-                  <span>Carro<strong>R$ 20,00</strong></span
-                  ><span>Moto<strong>R$ 15,00</strong></span
-                  ><span>Elétrico<strong>R$ 19,00</strong></span>
-                </div>
-                <small
-                  >Por hora iniciada, mínimo de 1 hora · modalidade mensal com
-                  15% de desconto.</small
-                >
-              </section>
+                <section class="tariff-card">
+                  <h2>Tarifas</h2>
+                  <div><span>Carro<strong>R$ 20,00</strong></span><span>Moto<strong>R$ 15,00</strong></span><span>Elétrico<strong>R$ 19,00</strong></span></div>
+                  <small>Por hora iniciada, mínimo de 1 hora · modalidade mensal com 15% de desconto.</small>
+                </section>
+              </aside>
             </div>
           </section>
           <section
@@ -338,11 +297,17 @@
               </div>
             </div>
           </section>
+          <section id="view-usuarios" class="view" aria-label="Equipe" hidden>
+            <div class="panel"><div class="panel-heading"><div><h2>Acesso da equipe</h2><p class="muted">Crie contas para administradores e funcionários do estacionamento.</p></div><button class="primary" data-action="novo-usuario">+ Criar conta</button></div><div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Criado em</th></tr></thead><tbody id="user-rows"></tbody></table></div><div class="panel-footer">Administradores podem criar contas. Funcionários têm acesso à operação do estacionamento.</div></div>
+          </section>
         </main>
-        <footer class="main-footer">
-          Estacionamento
-          <span>Uma operação mais tranquila, a cada chegada.</span>
-        </footer>
+        <nav class="dock" aria-label="Menu principal">
+          <button data-view="patio" class="nav-item active"><span aria-hidden="true">▦</span>Visão geral</button>
+          <button data-view="veiculos" class="nav-item"><span aria-hidden="true">▤</span>Veículos</button>
+          <button class="dock-new" data-action="nova-entrada" aria-label="Nova entrada"><b aria-hidden="true">+</b>Entrada</button>
+          <button data-view="vagas" class="nav-item"><span aria-hidden="true">⊞</span>Vagas</button>
+          <button data-view="relatorios" class="nav-item"><span aria-hidden="true">▥</span>Relatórios</button>
+        </nav>
       </div>
     </div>
 

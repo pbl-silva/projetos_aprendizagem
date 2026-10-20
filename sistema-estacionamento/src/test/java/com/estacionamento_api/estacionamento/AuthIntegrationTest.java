@@ -3,6 +3,7 @@ package com.estacionamento_api.estacionamento;
 import com.estacionamento_api.estacionamento.dto.LoginRequestDTO;
 import com.estacionamento_api.estacionamento.dto.LoginResponseDTO;
 import com.estacionamento_api.estacionamento.dto.RegistroDTO;
+import com.estacionamento_api.estacionamento.service.UsuarioService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.DisplayName;
@@ -33,18 +34,23 @@ class AuthIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UsuarioService usuarioService;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
         .registerModule(new JavaTimeModule());
 
     @Test
     @DisplayName("Deve registrar um novo usuário")
     void testRegistrarUsuario() throws Exception {
+        String token = adminToken();
         RegistroDTO dto = RegistroDTO.builder()
             .username("novousuario")
             .senha("senha123")
             .build();
 
         mockMvc.perform(post("/auth/registrar")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isCreated());
@@ -53,17 +59,20 @@ class AuthIntegrationTest {
     @Test
     @DisplayName("Não deve permitir registrar o mesmo username duas vezes")
     void testNaoDevePermitirUsernameDuplicado() throws Exception {
+        String token = adminToken();
         RegistroDTO dto = RegistroDTO.builder()
             .username("duplicado")
             .senha("senha123")
             .build();
 
         mockMvc.perform(post("/auth/registrar")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isCreated());
 
         mockMvc.perform(post("/auth/registrar")
+                .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isConflict());
@@ -150,11 +159,90 @@ class AuthIntegrationTest {
     }
 
     private void registrarUsuario(String username, String senha) throws Exception {
-        RegistroDTO dto = RegistroDTO.builder().username(username).senha(senha).build();
-        mockMvc.perform(post("/auth/registrar")
+        usuarioService.registrar(username, senha, "OPERADOR");
+    }
+
+    private String adminToken() throws Exception {
+        usuarioService.registrar("admin-teste", "senhaAdmin123", "ADMIN");
+        return login("admin-teste", "senhaAdmin123");
+    }
+
+    @Test
+    void deveBloquearCadastroSemAutenticacao() throws Exception {
+        mockMvc.perform(post("/auth/registrar").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"invasor\",\"senha\":\"senha123\",\"role\":\"ADMIN\"}"))
+            .andExpect(status().isUnauthorized());
+        assertFalse(usuarioService.existeUsuario("invasor"));
+    }
+
+    @Test
+    void funcionarioNaoPodeCriarContasNemListarEquipe() throws Exception {
+        registrarUsuario("funcionario", "senha123");
+        String token = login("funcionario", "senha123");
+        for (String role : new String[] { "OPERADOR", "ADMIN" }) {
+            mockMvc.perform(post("/auth/registrar").header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(RegistroDTO.builder()
+                        .username("contabloqueada").senha("senha123").role(role).build())))
+                .andExpect(status().isForbidden());
+        }
+        mockMvc.perform(get("/usuarios").header("Authorization", "Bearer " + token))
+            .andExpect(status().isForbidden());
+        assertFalse(usuarioService.existeUsuario("contabloqueada"));
+    }
+
+    @Test
+    void administradorPodeCriarOutroAdministradorQueTambemPodeCadastrar() throws Exception {
+        String token = adminToken();
+        mockMvc.perform(post("/auth/registrar").header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
+                .content(objectMapper.writeValueAsString(RegistroDTO.builder()
+                    .username("novo-admin").senha("senha123").role("ADMIN").build())))
             .andExpect(status().isCreated());
+        String novoToken = login("novo-admin", "senha123");
+        mockMvc.perform(post("/auth/registrar").header("Authorization", "Bearer " + novoToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(RegistroDTO.builder()
+                    .username("novo-funcionario").senha("senha123").role("OPERADOR").build())))
+            .andExpect(status().isCreated());
+        assertEquals("OPERADOR", usuarioService.obterUsuario("novo-funcionario").role());
+    }
+
+    @Test
+    void deveRejeitarPerfilInvalidoOuNulo() throws Exception {
+        String token = adminToken();
+        for (String role : new String[] { "SUPER_ADMIN", "", null }) {
+            mockMvc.perform(post("/auth/registrar").header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(RegistroDTO.builder()
+                        .username("perfil-invalido").senha("senha123").role(role).build())))
+                .andExpect(status().isBadRequest());
+        }
+        assertFalse(usuarioService.existeUsuario("perfil-invalido"));
+    }
+
+    @Test
+    void deveConsultarPerfilAtualSemExporSenha() throws Exception {
+        registrarUsuario("operador-atual", "senha123");
+        String token = login("operador-atual", "senha123");
+        MvcResult result = mockMvc.perform(get("/auth/me").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andReturn();
+        var json = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertEquals("OPERADOR", json.get("role").asText());
+        assertEquals("operador-atual", json.get("username").asText());
+        assertFalse(json.has("senha"));
+        mockMvc.perform(get("/auth/me")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void administradorPodeListarEquipeSemExporCredenciais() throws Exception {
+        String token = adminToken();
+        MvcResult result = mockMvc.perform(get("/usuarios").header("Authorization", "Bearer " + token))
+            .andExpect(status().isOk()).andReturn();
+        var users = objectMapper.readTree(result.getResponse().getContentAsString());
+        assertTrue(users.size() > 0);
+        users.forEach(user -> { assertFalse(user.has("senha")); assertFalse(user.has("password")); });
+        mockMvc.perform(get("/usuarios")).andExpect(status().isUnauthorized());
     }
 
     private String login(String username, String senha) throws Exception {

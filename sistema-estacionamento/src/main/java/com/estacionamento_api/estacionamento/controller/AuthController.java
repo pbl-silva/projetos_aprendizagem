@@ -3,6 +3,8 @@ package com.estacionamento_api.estacionamento.controller;
 import com.estacionamento_api.estacionamento.dto.LoginRequestDTO;
 import com.estacionamento_api.estacionamento.dto.LoginResponseDTO;
 import com.estacionamento_api.estacionamento.dto.RegistroDTO;
+import com.estacionamento_api.estacionamento.dto.UsuarioDTO;
+import org.springframework.security.core.Authentication;
 import com.estacionamento_api.estacionamento.security.JwtService;
 import com.estacionamento_api.estacionamento.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,11 +32,16 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/registrar")
-    @Operation(summary = "Registrar um novo usuário")
+    @Operation(summary = "Criar conta de administrador ou funcionário (somente administrador)")
     public ResponseEntity<Map<String, String>> registrar(@Valid @RequestBody RegistroDTO dto) {
-        usuarioService.registrar(dto.getUsername(), dto.getSenha(), "OPERADOR");
+        usuarioService.registrar(dto.getUsername(), dto.getSenha(), dto.getRole());
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(Map.of("mensagem", "Usuário registrado com sucesso"));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UsuarioDTO> usuarioAtual(Authentication authentication) {
+        return ResponseEntity.ok(usuarioService.obterUsuario(authentication.getName()));
     }
 
     @PostMapping("/login")

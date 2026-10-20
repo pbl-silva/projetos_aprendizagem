@@ -2,6 +2,8 @@ package com.estacionamento_api.estacionamento.service;
 
 import com.estacionamento_api.estacionamento.model.Usuario;
 import com.estacionamento_api.estacionamento.repository.UsuarioRepository;
+import com.estacionamento_api.estacionamento.dto.UsuarioDTO;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.User;
@@ -35,6 +37,9 @@ public class UsuarioService implements UserDetailsService {
     }
 
     public Usuario registrar(String username, String senhaPura, String role) {
+        if (!"ADMIN".equals(role) && !"OPERADOR".equals(role)) {
+            throw new IllegalArgumentException("Perfil de usuário inválido");
+        }
         if (usuarioRepository.existsByUsername(username)) {
             log.warn("Tentativa de registro com username já existente: {}", username);
             throw new IllegalArgumentException(
@@ -55,5 +60,20 @@ public class UsuarioService implements UserDetailsService {
     @Transactional(readOnly = true)
     public boolean existeUsuario(String username) {
         return usuarioRepository.existsByUsername(username);
+    }
+
+    @Transactional(readOnly = true)
+    public UsuarioDTO obterUsuario(String username) {
+        return resumo(usuarioRepository.findByUsername(username)
+            .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado")));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioDTO> listarUsuarios() {
+        return usuarioRepository.findAll().stream().map(this::resumo).toList();
+    }
+
+    private UsuarioDTO resumo(Usuario usuario) {
+        return new UsuarioDTO(usuario.getId(), usuario.getUsername(), usuario.getRole(), usuario.getDataCriacao());
     }
 }

@@ -8,7 +8,7 @@ const state = {
   vehicles: [],
   spots: [],
   view: "patio",
-  registering: false,
+  role: "",
   report: null,
   period: null,
   reportVersion: 0,
@@ -34,6 +34,7 @@ const views = {
   veiculos: ["Veículos", "Um cadastro organizado para cada nova visita."],
   vagas: ["Mapa de vagas", "Veja a disponibilidade e organize seu espaço."],
   relatorios: ["Relatórios", "O movimento da operação, com todos os detalhes."],
+  usuarios: ["Equipe", "As pessoas que cuidam da sua operação."],
 };
 const money = (value) =>
   Number(value ?? 0).toLocaleString("pt-BR", {
@@ -77,6 +78,9 @@ function resetSession(message = "") {
   state.reportVersion++;
   state.token = "";
   state.username = "";
+  state.role = "";
+  $("#manage-users").hidden = true;
+  $("#user-rows").innerHTML = "";
   state.entries = [];
   state.vehicles = [];
   state.spots = [];
@@ -93,6 +97,7 @@ function resetSession(message = "") {
   $("#login-screen").hidden = false;
   $("#login-error").textContent = message;
   $("#login-form").elements.senha.value = "";
+  hidePassword();
   $("#report-rows").innerHTML = emptyRow(6, "Consulte um período");
   $("#report-revenue").textContent = "—";
   $("#report-prev").disabled = true;
@@ -122,12 +127,12 @@ async function api(path, { method = "GET", body, blob = false } = {}) {
     throw new Error("A sessão foi encerrada. Entre novamente.");
   if (!response.ok) {
     const problem = await response.json().catch(() => ({}));
-    if (response.status === 401 && !path.startsWith("/auth/"))
+    if (response.status === 401 && path !== "/auth/login")
       resetSession("Sua sessão expirou. Entre novamente para continuar.");
     const error = new Error(
       problem.campos
         ? Object.values(problem.campos).join(" · ")
-        : problem.mensagem ||
+        : problem.mensagem || (response.status === 403 ? "Você não tem permissão para realizar esta operação." : "") ||
             "Não foi possível concluir a operação. Tente novamente.",
     );
     error.status = response.status;
@@ -141,6 +146,10 @@ async function enterApp(login) {
   state.epoch++;
   state.token = login.token;
   state.username = login.username;
+  const currentUser = await api("/auth/me");
+  state.role = currentUser.role;
+  state.username = currentUser.username;
+  $("#manage-users").hidden = state.role !== "ADMIN";
   try {
     sessionStorage.setItem(
       "estacionamento.session",
@@ -153,6 +162,7 @@ async function enterApp(login) {
   $("#user-initial").textContent = state.username.slice(0, 1).toUpperCase();
   $("#login-form").elements.senha.value = "";
   $("#login-screen").hidden = true;
+  hidePassword();
   $("#app").hidden = false;
   $("#load-error").hidden = true;
   ["stat-free", "stat-active", "stat-occupancy", "stat-revenue"].forEach(
@@ -167,6 +177,7 @@ async function enterApp(login) {
 }
 
 function setView(view) {
+  if (view === "usuarios" && state.role !== "ADMIN") return;
   state.view = view;
   document.querySelectorAll(".view").forEach((section) => {
     section.hidden = section.id !== `view-${view}`;
@@ -181,6 +192,7 @@ function setView(view) {
   $("#page-description").textContent = views[view][1];
   if (view === "relatorios" && !state.report)
     loadReport(0).catch(showLoadError);
+  if (view === "usuarios") loadUsers().catch(showLoadError);
 }
 
 function showLoadError(error) {
@@ -224,9 +236,10 @@ async function refresh() {
     renderEntries();
     renderVehicles();
     renderSpots();
-    renderAvailability();
+    renderMini();
     if (state.view === "relatorios")
       await loadReport(state.report?.paginaAtual ?? 0, state.period);
+    if (state.view === "usuarios") await loadUsers();
   } catch (error) {
     showLoadError(error);
   } finally {
@@ -302,6 +315,11 @@ function spotStatus(spot) {
       ? "free"
       : "maintenance";
 }
+const CAR_SVG =
+  '<svg class="car" viewBox="0 0 54 100" aria-hidden="true"><rect x="2" y="16" width="8" height="18" rx="3" fill="#111"/><rect x="44" y="16" width="8" height="18" rx="3" fill="#111"/><rect x="2" y="66" width="8" height="18" rx="3" fill="#111"/><rect x="44" y="66" width="8" height="18" rx="3" fill="#111"/><rect x="6" y="3" width="42" height="94" rx="17" fill="currentColor"/><path d="M12 30q15-6 30 0l-3 14H15z" fill="#10161d" opacity=".85"/><rect x="14" y="50" width="26" height="22" rx="5" fill="#fff" opacity=".22"/><path d="M15 76h24l3 9q-15 5-30 0z" fill="#10161d" opacity=".85"/><rect x="11" y="6" width="9" height="4" rx="2" fill="#fff8c9"/><rect x="34" y="6" width="9" height="4" rx="2" fill="#fff8c9"/><rect x="11" y="90" width="9" height="3" rx="1.5" fill="#000" opacity=".35"/><rect x="34" y="90" width="9" height="3" rx="1.5" fill="#000" opacity=".35"/></svg>';
+const MOTO_SVG =
+  '<svg class="car" viewBox="0 0 34 100" aria-hidden="true"><rect x="13" y="3" width="8" height="24" rx="4" fill="#111"/><rect x="13" y="73" width="8" height="24" rx="4" fill="#111"/><rect x="2" y="24" width="30" height="5" rx="2.5" fill="#111"/><rect x="9" y="30" width="16" height="42" rx="8" fill="currentColor"/><rect x="12" y="40" width="10" height="14" rx="4" fill="#10161d" opacity=".8"/><circle cx="17" cy="62" r="4" fill="#fff" opacity=".25"/></svg>';
+const spotTag = { PCD: "♿", ELETRICA: "⚡" };
 function renderSpots() {
   const filter = $("#spot-filter").value;
   $("#spot-grid").innerHTML =
@@ -315,15 +333,24 @@ function renderSpots() {
             : status === "free"
               ? "Disponível"
               : "Indisponível";
-        return `<button class="spot ${status}" data-action="editar-vaga" data-id="${spot.id}" aria-label="Vaga ${escapeHtml(spot.numero)}, ${escapeHtml(labels[spot.tipoVaga])}, ${name}"><strong>${escapeHtml(spot.numero)}</strong><small>${escapeHtml(labels[spot.tipoVaga])} · ${name}</small></button>`;
+        const entry = state.entries.find((item) => item.vagaId === spot.id);
+        const caption = entry
+          ? `<span class="plate">${escapeHtml(entry.placaVeiculo)}</span>`
+          : `<small>${name}</small>`;
+        const tag = spotTag[spot.tipoVaga]
+          ? `<span class="tag" aria-hidden="true">${spotTag[spot.tipoVaga]}</span>`
+          : "";
+        return `<button class="spot ${status}" data-type="${spot.tipoVaga}" data-action="editar-vaga" data-id="${spot.id}" title="${escapeHtml(labels[spot.tipoVaga])} · ${name}" aria-label="Vaga ${escapeHtml(spot.numero)}, ${escapeHtml(labels[spot.tipoVaga])}, ${name}">${tag}${spot.tipoVaga === "MOTO" ? MOTO_SVG : CAR_SVG}<strong>${escapeHtml(spot.numero)}</strong>${caption}</button>`;
       })
       .join("") || '<p class="empty">Nenhuma vaga deste tipo.</p>';
 }
-function renderAvailability() {
-  $("#availability").innerHTML = ["COMUM", "PCD", "MOTO", "ELETRICA"]
+function renderMini() {
+  $("#mini-lot").innerHTML = ["COMUM", "PCD", "MOTO", "ELETRICA"]
     .map((type) => {
       const spots = state.spots.filter((spot) => spot.tipoVaga === type);
-      return `<div><span>${labels[type]}</span><strong>${spots.filter((spot) => spot.disponivel).length}<small> / ${spots.length}</small></strong><small>disponíveis</small></div>`;
+      if (!spots.length) return "";
+      const free = spots.filter((spot) => spotStatus(spot) === "free").length;
+      return `<div class="lane"><div><b>${labels[type]}</b><small>${free} de ${spots.length} livres</small></div><div class="lane-cars">${spots.map((spot) => `<i class="mini ${spotStatus(spot)}" title="${escapeHtml(spot.numero)}">${type === "MOTO" ? MOTO_SVG : CAR_SVG}</i>`).join("")}</div></div>`;
     })
     .join("");
 }
@@ -586,40 +613,56 @@ $("#login-form").addEventListener("submit", async (event) => {
     senha: form.elements.senha.value,
   };
   try {
-    if (state.registering) {
-      await api("/auth/registrar", { method: "POST", body: credentials });
-      toggleAuth(false);
-      toast("Conta criada. Entre com seu usuário e senha.");
-    } else
-      await enterApp(
-        await api("/auth/login", { method: "POST", body: credentials }),
-      );
+    button.textContent = "Entrando…";
+    form.setAttribute("aria-busy", "true");
+    await enterApp(await api("/auth/login", { method: "POST", body: credentials }));
   } catch (error) {
     $("#login-error").textContent = error.message;
   } finally {
     button.disabled = false;
+    button.innerHTML = '<span>Entrar no painel</span><span aria-hidden="true">→</span>';
+    form.removeAttribute("aria-busy");
   }
 });
-function toggleAuth(registering) {
-  state.registering = registering;
-  $("#login-title").textContent = registering
-    ? "Crie sua conta"
-    : "Acesse sua operação";
-  $("#login-description").textContent = registering
-    ? "Cadastre um usuário para operar o estacionamento."
-    : "Entre com sua conta para começar.";
-  $("#login-submit").textContent = registering ? "Criar conta" : "Entrar";
-  $("#auth-toggle").textContent = registering
-    ? "Já tenho uma conta"
-    : "Criar uma conta de operador";
-  const password = $("#login-form").elements.senha;
-  password.minLength = registering ? 6 : 1;
-  password.autocomplete = registering ? "new-password" : "current-password";
-  $("#login-error").textContent = "";
+function hidePassword() {
+  $("#login-password").type = "password";
+  $("#password-toggle").textContent = "Mostrar";
+  $("#password-toggle").setAttribute("aria-label", "Mostrar senha");
+  $("#password-toggle").setAttribute("aria-pressed", "false");
+  $("#caps-lock").hidden = true;
 }
-$("#auth-toggle").addEventListener("click", () => {
-  if (!$("#login-submit").disabled) toggleAuth(!state.registering);
+$("#password-toggle").addEventListener("click", () => {
+  const show = $("#login-password").type === "password";
+  $("#login-password").type = show ? "text" : "password";
+  $("#password-toggle").textContent = show ? "Ocultar" : "Mostrar";
+  $("#password-toggle").setAttribute("aria-label", show ? "Ocultar senha" : "Mostrar senha");
+  $("#password-toggle").setAttribute("aria-pressed", String(show));
 });
+for (const eventName of ["keydown", "keyup"]) {
+  $("#login-password").addEventListener(eventName, event => {
+    $("#caps-lock").hidden = !event.getModifierState("CapsLock");
+  });
+}
+$("#login-password").addEventListener("blur", () => { $("#caps-lock").hidden = true; });
+
+async function loadUsers() {
+  const epoch = state.epoch;
+  $("#user-rows").innerHTML = emptyRow(3, "Carregando a equipe…");
+  const users = await api("/usuarios");
+  if (epoch !== state.epoch || state.role !== "ADMIN") return;
+  $("#user-rows").innerHTML = users.map(user => `<tr><td><strong>${escapeHtml(user.username)}</strong>${user.username === state.username ? '<small class="account-profile">Sua conta</small>' : ''}</td><td><span class="badge">${user.role === 'ADMIN' ? 'Administrador' : 'Funcionário'}</span></td><td>${escapeHtml(dateTime(user.dataCriacao))}</td></tr>`).join('') || emptyRow(3, "Nenhuma conta cadastrada");
+  $("#load-error").hidden = true;
+}
+function userEditor() {
+  if (state.role !== "ADMIN") return;
+  openEditor("Criar conta da equipe", `<p class="notice">Funcionários acessam a operação. Administradores também podem criar contas para a equipe.</p><div class="form-grid"><label>Usuário<input name="username" required minlength="3" maxlength="50" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Ex.: ana.silva"></label><label>Perfil<select name="role"><option value="OPERADOR">Funcionário</option><option value="ADMIN">Administrador</option></select></label><label class="full">Senha inicial<input name="senha" type="password" required minlength="6" maxlength="72" autocomplete="new-password" placeholder="Pelo menos 6 caracteres"></label></div>`, "Criar conta", async form => {
+    await api("/auth/registrar", { method: "POST", body: { username: form.elements.username.value.trim(), senha: form.elements.senha.value, role: form.elements.role.value } });
+    form.elements.senha.value = "";
+    $("#editor").close();
+    toast("Conta criada. Informe o usuário e a senha à pessoa da equipe.");
+    await loadUsers();
+  });
+}
 $("#logout").addEventListener("click", () => resetSession());
 $("#refresh").addEventListener("click", refresh);
 $("#patio-search").addEventListener("input", renderEntries);
@@ -670,6 +713,9 @@ document.addEventListener("click", async (event) => {
   const id = Number(button.dataset.id);
   try {
     switch (button.dataset.action) {
+      case "novo-usuario":
+        userEditor();
+        break;
       case "nova-entrada":
         entryEditor();
         break;
@@ -765,7 +811,7 @@ setInterval(() => {
 try {
   const saved = JSON.parse(sessionStorage.getItem("estacionamento.session"));
   if (saved?.token && typeof saved.username === "string")
-    enterApp(saved).catch(showLoadError);
+    enterApp(saved).catch(error => resetSession(error.message));
 } catch {
   /* Sem sessão salva: permanece na tela de login. */
 }

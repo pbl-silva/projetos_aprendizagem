@@ -1,6 +1,6 @@
 # Sistema Estacionamento
 
-Painel web para operar o estacionamento: login e cadastro de operadores, entrada de veículos com atribuição automática de vaga, saída com prévia de cobrança e recibo para impressão, cadastro de veículos, mapa de vagas e relatórios com exportação em PDF.
+Painel web para operar o estacionamento: login da equipe, entrada de veículos com atribuição automática de vaga, saída com prévia de cobrança e recibo para impressão, cadastro de veículos, mapa de vagas e relatórios com exportação em PDF.
 
 O HTML, CSS e JavaScript são servidos pelo próprio Spring Boot. A interface substitui o cliente desktop Swing e usa a mesma API com autenticação JWT.
 
@@ -8,7 +8,7 @@ O HTML, CSS e JavaScript são servidos pelo próprio Spring Boot. A interface su
 
 Com o JDK 21 ou superior instalado, execute `iniciar-estacionamento.cmd`. O iniciador compila a aplicação e abre `http://localhost:8080/api/` no navegador quando o servidor estiver pronto.
 
-A conta inicial de desenvolvimento usa o usuário `admin` e a senha `admin123`. Você também pode criar uma conta de operador na tela de acesso. Para mudar as credenciais iniciais, defina `BOOTSTRAP_ADMIN_USERNAME` e `BOOTSTRAP_ADMIN_PASSWORD` antes da primeira execução. Contas já existentes mantêm suas senhas.
+A conta inicial de desenvolvimento usa o usuário `admin` e a senha `admin123`. Após entrar como administrador, abra **Equipe** para criar contas de outros administradores ou funcionários. O cadastro público está desativado; funcionários podem operar o estacionamento, mas não criar contas nem consultar a equipe. Para mudar as credenciais iniciais, defina `BOOTSTRAP_ADMIN_USERNAME` e `BOOTSTRAP_ADMIN_PASSWORD` antes da primeira execução. Contas já existentes mantêm suas senhas e seus perfis.
 
 O iniciador salva os dados na pasta local `data/`, ignorada pelo Git. Encerre com `Ctrl+C` no terminal. Para executar junto com o e-commerce, defina `SERVER_PORT=8081` no ambiente do estacionamento; o painel ficará em `http://localhost:8081/api/`.
 
