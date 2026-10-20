@@ -9,16 +9,3 @@ Repositório de projetos de estudo com Java, Spring Boot e interfaces web ou des
 | [Sistema Estacionamento](sistema-estacionamento/) | Controle de vagas, entradas, saídas, tarifas e recibos | Spring Boot, Spring Security, JWT, JPA, H2, HTML, CSS e JavaScript | 21 |
 | [SPBank](spbank/) | Aplicação bancária de estudo com contas, transferências e PIX | Spring Boot, JPA, MySQL, Flyway, HTML, CSS e JavaScript | 25 |
 
-## Organização
-
-```text
-projetos_aprendizagem/
-├── sistema-biblioteca/
-├── sistema-ecommerce/
-├── sistema-estacionamento/
-└── spbank/
-    ├── spbank-backend/
-    └── spbank-frontend/
-```
-
-As pastas foram padronizadas como `sistema-biblioteca`, `sistema-ecommerce` e `sistema-estacionamento`. Os identificadores Maven e os pacotes Java existentes foram preservados.
