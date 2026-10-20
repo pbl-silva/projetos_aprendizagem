@@ -620,7 +620,7 @@ $("#login-form").addEventListener("submit", async (event) => {
     $("#login-error").textContent = error.message;
   } finally {
     button.disabled = false;
-    button.innerHTML = '<span>Entrar no painel</span><span aria-hidden="true">→</span>';
+    button.innerHTML = '<span>Entrar</span><span aria-hidden="true">→</span>';
     form.removeAttribute("aria-busy");
   }
 });
