@@ -20,6 +20,15 @@ public class Usuario {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
+    @Column(length = 100)
+    private String nome;
+
+    @Column(length = 254)
+    private String email;
+
+    @Column(length = 30)
+    private String telefone;
+
     // Hash bcrypt, nunca a senha em texto puro
     @Column(nullable = false)
     private String senha;

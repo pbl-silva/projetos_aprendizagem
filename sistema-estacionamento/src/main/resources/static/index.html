@@ -80,8 +80,7 @@
         <time id="today"></time>
         <div class="user-menu">
           <button id="manage-users" data-view="usuarios" type="button" class="text-button" hidden>Equipe</button>
-          <span id="user-initial" class="avatar">O</span>
-          <strong id="user-name">Operador</strong>
+          <button id="my-account" data-view="conta" type="button" class="account-trigger" aria-label="Minha conta" title="Minha conta"><span id="user-initial" class="avatar">O</span><span class="account-label"><strong id="user-name">Operador</strong><small>Minha conta</small></span></button>
           <button id="logout" class="icon-button" aria-label="Sair da conta" title="Sair da conta">↪</button>
         </div>
       </header>
@@ -299,6 +298,17 @@
           </section>
           <section id="view-usuarios" class="view" aria-label="Equipe" hidden>
             <div class="panel"><div class="panel-heading"><div><h2>Acesso da equipe</h2><p class="muted">Crie contas para administradores e funcionários do estacionamento.</p></div><button class="primary" data-action="novo-usuario">+ Criar conta</button></div><div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Criado em</th></tr></thead><tbody id="user-rows"></tbody></table></div><div class="panel-footer">Administradores podem criar contas. Funcionários têm acesso à operação do estacionamento.</div></div>
+          </section>
+          <section id="view-conta" class="view" aria-label="Minha conta" hidden>
+            <div class="account-summary"><span class="avatar" id="account-initial">O</span><div><h2 id="account-name">Minha conta</h2><p class="muted"><span id="account-role"></span> · Conta criada em <span id="account-created"></span></p></div></div>
+            <div class="account-panels">
+              <section class="panel"><div class="panel-heading"><div><h2>Meus dados</h2><p class="muted">Mantenha suas informações de acesso e contato atualizadas.</p></div></div>
+                <form id="account-form" class="account-form"><fieldset id="account-data" disabled><div class="form-grid"><label class="full">Nome<input name="nome" autocomplete="name" maxlength="100" placeholder="Seu nome completo"></label><label class="full">E-mail<input name="email" type="email" autocomplete="email" maxlength="254" placeholder="voce@exemplo.com"></label><label>Telefone<input name="telefone" type="tel" autocomplete="tel" maxlength="30" placeholder="(11) 99999-9999"></label><label>Usuário de acesso<input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="50"></label><label class="full">Senha atual para confirmar<input name="senhaAtual" type="password" autocomplete="current-password" required maxlength="72" placeholder="Informe sua senha atual"></label></div><p id="account-error" class="form-error" role="alert"></p><button class="primary" type="submit">Salvar meus dados</button></fieldset></form>
+              </section>
+              <section class="panel"><div class="panel-heading"><div><h2>Alterar senha</h2><p class="muted">Escolha uma senha com pelo menos 6 caracteres.</p></div></div>
+                <form id="password-form" class="account-form"><fieldset id="account-password" disabled><label>Senha atual<input name="senhaAtual" type="password" autocomplete="current-password" required maxlength="72"></label><label>Nova senha<input name="novaSenha" type="password" autocomplete="new-password" required minlength="6" maxlength="72"></label><label>Confirmar nova senha<input name="confirmacaoSenha" type="password" autocomplete="new-password" required minlength="6" maxlength="72"></label><p class="muted account-hint">Após a troca, os outros acessos com a senha anterior serão encerrados.</p><p id="password-error" class="form-error" role="alert"></p><button class="primary" type="submit">Atualizar senha</button></fieldset></form>
+              </section>
+            </div>
           </section>
         </main>
         <nav class="dock" aria-label="Menu principal">

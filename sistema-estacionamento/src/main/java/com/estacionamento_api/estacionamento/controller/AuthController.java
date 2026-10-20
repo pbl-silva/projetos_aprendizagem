@@ -4,6 +4,9 @@ import com.estacionamento_api.estacionamento.dto.LoginRequestDTO;
 import com.estacionamento_api.estacionamento.dto.LoginResponseDTO;
 import com.estacionamento_api.estacionamento.dto.RegistroDTO;
 import com.estacionamento_api.estacionamento.dto.UsuarioDTO;
+import com.estacionamento_api.estacionamento.dto.AtualizacaoContaDTO;
+import com.estacionamento_api.estacionamento.dto.AlteracaoSenhaDTO;
+import com.estacionamento_api.estacionamento.dto.SessaoContaDTO;
 import org.springframework.security.core.Authentication;
 import com.estacionamento_api.estacionamento.security.JwtService;
 import com.estacionamento_api.estacionamento.service.UsuarioService;
@@ -42,6 +45,20 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UsuarioDTO> usuarioAtual(Authentication authentication) {
         return ResponseEntity.ok(usuarioService.obterUsuario(authentication.getName()));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<SessaoContaDTO> atualizarConta(Authentication authentication,
+            @Valid @RequestBody AtualizacaoContaDTO dto) {
+        UsuarioDTO usuario = usuarioService.atualizarConta(authentication.getName(), dto);
+        return ResponseEntity.ok(new SessaoContaDTO(usuario, jwtService.gerarToken(usuario.username())));
+    }
+
+    @PutMapping("/me/senha")
+    public ResponseEntity<SessaoContaDTO> alterarSenha(Authentication authentication,
+            @Valid @RequestBody AlteracaoSenhaDTO dto) {
+        UsuarioDTO usuario = usuarioService.alterarSenha(authentication.getName(), dto);
+        return ResponseEntity.ok(new SessaoContaDTO(usuario, jwtService.gerarToken(usuario.username())));
     }
 
     @PostMapping("/login")

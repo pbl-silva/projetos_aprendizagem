@@ -9,6 +9,7 @@ const state = {
   spots: [],
   view: "patio",
   role: "",
+  profile: null,
   report: null,
   period: null,
   reportVersion: 0,
@@ -35,6 +36,7 @@ const views = {
   vagas: ["Mapa de vagas", "Veja a disponibilidade e organize seu espaço."],
   relatorios: ["Relatórios", "O movimento da operação, com todos os detalhes."],
   usuarios: ["Equipe", "As pessoas que cuidam da sua operação."],
+  conta: ["Minha conta", "Seus dados de acesso e contato, sempre atualizados."],
 };
 const money = (value) =>
   Number(value ?? 0).toLocaleString("pt-BR", {
@@ -79,6 +81,11 @@ function resetSession(message = "") {
   state.token = "";
   state.username = "";
   state.role = "";
+  state.profile = null;
+  $("#account-form").reset();
+  $("#password-form").reset();
+  $("#account-data").disabled = true;
+  $("#account-password").disabled = true;
   $("#manage-users").hidden = true;
   $("#user-rows").innerHTML = "";
   state.entries = [];
@@ -148,6 +155,7 @@ async function enterApp(login) {
   state.username = login.username;
   const currentUser = await api("/auth/me");
   state.role = currentUser.role;
+  state.profile = currentUser;
   state.username = currentUser.username;
   $("#manage-users").hidden = state.role !== "ADMIN";
   try {
@@ -158,8 +166,7 @@ async function enterApp(login) {
   } catch {
     /* Armazenamento opcional. */
   }
-  $("#user-name").textContent = state.username;
-  $("#user-initial").textContent = state.username.slice(0, 1).toUpperCase();
+  updateAccountHeader();
   $("#login-form").elements.senha.value = "";
   $("#login-screen").hidden = true;
   hidePassword();
@@ -193,6 +200,7 @@ function setView(view) {
   if (view === "relatorios" && !state.report)
     loadReport(0).catch(showLoadError);
   if (view === "usuarios") loadUsers().catch(showLoadError);
+  if (view === "conta") loadAccount().catch(showLoadError);
 }
 
 function showLoadError(error) {
@@ -644,6 +652,82 @@ for (const eventName of ["keydown", "keyup"]) {
   });
 }
 $("#login-password").addEventListener("blur", () => { $("#caps-lock").hidden = true; });
+
+function updateAccountHeader() {
+  const name = state.profile?.nome || state.username;
+  $("#user-name").textContent = name;
+  $("#user-initial").textContent = name.slice(0, 1).toUpperCase();
+  $("#account-initial").textContent = name.slice(0, 1).toUpperCase();
+  $("#account-name").textContent = name;
+  $("#account-role").textContent = state.role === "ADMIN" ? "Administrador" : "Funcionário";
+  $("#account-created").textContent = dateTime(state.profile?.dataCriacao);
+}
+function renderAccount() {
+  updateAccountHeader();
+  const form = $("#account-form");
+  for (const field of ["username", "nome", "email", "telefone"]) {
+    form.elements[field].value = state.profile?.[field] || "";
+  }
+  form.elements.senhaAtual.value = "";
+  $("#password-form").reset();
+  $("#account-error").textContent = "";
+  $("#password-error").textContent = "";
+  $("#account-data").disabled = false;
+  $("#account-password").disabled = false;
+}
+async function loadAccount() {
+  const epoch = state.epoch;
+  $("#account-data").disabled = true;
+  $("#account-password").disabled = true;
+  const profile = await api("/auth/me");
+  if (epoch !== state.epoch) return;
+  state.profile = profile;
+  renderAccount();
+  $("#load-error").hidden = true;
+}
+function applyAccountSession(result) {
+  state.epoch++;
+  state.loading = false;
+  state.token = result.token;
+  state.username = result.usuario.username;
+  state.role = result.usuario.role;
+  state.profile = result.usuario;
+  try {
+    sessionStorage.setItem("estacionamento.session", JSON.stringify({ token: state.token, username: state.username }));
+  } catch { /* A sessão permanece em memória quando o armazenamento não está disponível. */ }
+  renderAccount();
+}
+$("#account-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (form.dataset.saving === "true") return;
+  const body = Object.fromEntries(new FormData(form));
+  form.dataset.saving = "true";
+  form.inert = true;
+  $("#account-error").textContent = "";
+  try {
+    applyAccountSession(await api("/auth/me", { method: "PUT", body }));
+    toast("Seus dados foram atualizados.");
+  } catch (error) { $("#account-error").textContent = error.message; }
+  finally { form.dataset.saving = "false"; form.inert = false; }
+});
+$("#password-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (form.dataset.saving === "true") return;
+  $("#password-error").textContent = "";
+  if (form.elements.novaSenha.value !== form.elements.confirmacaoSenha.value) {
+    $("#password-error").textContent = "A confirmação da nova senha não confere.";
+    return;
+  }
+  const body = Object.fromEntries(new FormData(form));
+  form.dataset.saving = "true"; form.inert = true;
+  try {
+    applyAccountSession(await api("/auth/me/senha", { method: "PUT", body }));
+    toast("Senha atualizada. Os outros acessos anteriores foram encerrados.");
+  } catch (error) { $("#password-error").textContent = error.message; }
+  finally { form.dataset.saving = "false"; form.inert = false; }
+});
 
 async function loadUsers() {
   const epoch = state.epoch;

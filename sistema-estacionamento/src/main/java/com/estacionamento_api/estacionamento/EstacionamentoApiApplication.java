@@ -37,7 +37,7 @@ public class EstacionamentoApiApplication {
 			@Value("${app.bootstrap-admin.username}") String username,
 			@Value("${app.bootstrap-admin.password}") String password) {
 		return args -> {
-			if (!usuarioService.existeUsuario(username)) {
+            if (!usuarioService.existeAdministrador()) {
 				usuarioService.registrar(username, password, "ADMIN");
 				log.info("Usuário administrador inicial criado: {}", username);
 			}

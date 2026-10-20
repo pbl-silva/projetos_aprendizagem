@@ -20,6 +20,10 @@ O iniciador salva os dados na pasta local `data/`, ignorada pelo Git. Encerre co
 
 Sem o iniciador, a configuração padrão usa H2 em memória: os dados são apagados ao encerrar. Para persistir manualmente, defina `SPRING_DATASOURCE_URL=jdbc:h2:file:./data/estacionamentodb` e `SPRING_JPA_HIBERNATE_DDL_AUTO=update` no ambiente.
 
+## Minha conta
+
+Administradores e funcionários podem abrir **Minha conta** pelo botão do usuário no topo da página para consultar e alterar nome, e-mail, telefone, usuário de acesso e senha. As alterações exigem a senha atual. A troca do usuário ou da senha invalida os acessos anteriores e mantém a sessão em uso atualizada. O perfil de acesso é apenas consultado nessa área.
+
 ## Cobrança
 
 As regras existentes foram mantidas: carro R$ 20,00, moto R$ 15,00 e carro elétrico R$ 19,00 por hora iniciada, com cobrança mínima de uma hora. A modalidade mensal aplica 15% de desconto. A prévia é calculada pelo servidor; o valor definitivo é recalculado ao registrar a saída. A forma de pagamento é registrada para controle, sem integração com operadoras ou bancos.

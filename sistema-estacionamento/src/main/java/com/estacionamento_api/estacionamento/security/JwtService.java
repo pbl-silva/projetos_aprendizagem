@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import com.estacionamento_api.estacionamento.service.UsuarioService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +24,10 @@ import java.util.Date;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtService {
+
+    private final UsuarioService usuarioService;
 
     @Value("${jwt.secret}")
     private String secret;
@@ -53,6 +59,7 @@ public class JwtService {
 
         return Jwts.builder()
             .subject(username)
+            .claim("credencial", usuarioService.credencialAtual(username))
             .issuedAt(agora)
             .expiration(expiracao)
             .signWith(getKey())
@@ -66,8 +73,9 @@ public class JwtService {
     public boolean tokenValido(String token) {
         try {
             Claims claims = parseClaims(token);
-            return claims.getExpiration().after(new Date());
-        } catch (JwtException | IllegalArgumentException e) {
+            return claims.getExpiration().after(new Date())
+                && usuarioService.credencialAtual(claims.getSubject()).equals(claims.get("credencial", String.class));
+        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException e) {
             log.warn("Token JWT inválido ou expirado: {}", e.getMessage());
             return false;
         }
