@@ -190,7 +190,7 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
     @Override
     @Transactional(readOnly = true)
     public EstatisticasDTO calcularEstatisticas(Long usuarioId) {
-        Usuario usuario = buscarUsuarioPorId(usuarioId);
+        buscarUsuarioPorId(usuarioId);
         List<Emprestimo> emprestimos = emprestimoRepository.findByUsuarioId(usuarioId);
 
         long totalEmprestimos = emprestimos.size();

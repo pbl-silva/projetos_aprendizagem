@@ -159,9 +159,10 @@ h2 {
   min-height: 100dvh;
 }
 .topbar {
-  height: 69px;
+  max-width: 1550px;
+  margin: auto;
+  height: 48px;
   padding: 0 40px;
-  border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -704,7 +705,6 @@ dialog::backdrop {
 }
 @media (max-width: 850px) {
   .topbar {
-    height: 48px;
     padding-inline: 23px;
   }
   .stats {
@@ -898,12 +898,6 @@ dialog::backdrop {
   border-bottom-color: var(--wine);
   color: var(--wine);
   font-weight: 650;
-}
-.topbar {
-  max-width: 1550px;
-  margin: auto;
-  height: 48px;
-  border: 0;
 }
 @media (max-width: 850px) {
   .header-inner {

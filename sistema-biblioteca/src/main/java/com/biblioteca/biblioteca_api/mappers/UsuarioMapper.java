@@ -4,7 +4,6 @@ import com.biblioteca.biblioteca_api.dto.request.UsuarioRequestDTO;
 import com.biblioteca.biblioteca_api.dto.response.UsuarioResponseDTO;
 import com.biblioteca.biblioteca_api.entities.Usuario;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,7 +14,6 @@ public class UsuarioMapper {
                 .email(dto.getEmail())
                 .cpf(dto.getCpf())
                 .tipoUsuario(dto.getTipoUsuario())
-                .dataCadastro(LocalDate.now()) // ou outra lógica para a data
                 .build();
     }
 

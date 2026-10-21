@@ -1,10 +1,7 @@
 package com.biblioteca.biblioteca_api.enums;
 
-import com.biblioteca.biblioteca_api.entities.Usuario;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.time.LocalDate;
 
 @AllArgsConstructor
 @Getter
@@ -27,9 +24,5 @@ public enum TipoUsuario {
 
     public int getDiasTolerancia() {
         return diasToleranciaMulta;
-    }
-
-    private LocalDate calcularDataDevolucaoPrevista(Usuario usuario) {
-        return LocalDate.now().plusDays(usuario.getTipoUsuario().getDiasPrazo());
     }
 }
