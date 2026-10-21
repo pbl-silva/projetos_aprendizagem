@@ -8,7 +8,7 @@ Execute **Iniciar Biblioteca.exe**, dentro desta pasta. O iniciador confere o Ja
 
 É necessário ter o **JDK 21 ou superior** no PATH. O Maven Wrapper está incluído. A primeira compilação precisa de internet para baixar dependências. O executável é um iniciador do projeto, não um instalador com Java embutido; mantenha-o junto de `pom.xml`, `mvnw.cmd`, `.mvn` e `src`.
 
-Os dados ficam na pasta local `data/` e permanecem após encerrar o sistema. Na primeira abertura desta versão, o acervo recebe cinco livros iniciais. Livros já cadastrados são preservados e a importação não se repete, inclusive se você excluir um desses títulos. Os leitores e empréstimos de demonstração continuam disponíveis apenas na execução em memória por `mvnw.cmd spring-boot:run`.
+Os dados ficam na pasta local `data/` e permanecem após encerrar o sistema. O sistema inclui cinco livros e três leitores fictícios para experimentar os empréstimos: Ananias Nicolau (comum), Bruno Costa Lima e Carla Mendes (premium). Os cadastros existentes são preservados e cada importação ocorre uma única vez, inclusive se você excluir um desses registros. Empréstimos de demonstração são carregados apenas na execução em memória por `mvnw.cmd spring-boot:run`.
 
 Para mudar a porta do iniciador, defina `BIBLIOTECA_PORT`. O arquivo `logs/iniciador.log` registra a abertura e eventuais erros.
 

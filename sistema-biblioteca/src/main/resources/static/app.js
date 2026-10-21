@@ -301,10 +301,16 @@ function editReader(reader) {
 function newLoan(bookId) {
   const books = state.books.filter((b) => b.disponivel);
   if (!books.length || !state.readers.length) {
-    toast(
+    openEditor(
+      "Antes de registrar o empréstimo",
       !books.length
-        ? "Cadastre um livro disponível antes de emprestar."
-        : "Cadastre um leitor antes de emprestar.",
+        ? '<p class="notice">Não há livros disponíveis para empréstimo. Cadastre um livro ou registre a devolução de um exemplar emprestado.</p>'
+        : '<p class="notice">Cadastre um leitor para selecionar quem receberá o livro.</p>',
+      !books.length ? "Cadastrar livro" : "Cadastrar leitor",
+      () => {
+        if (!books.length) editBook();
+        else editReader();
+      },
     );
     return;
   }
