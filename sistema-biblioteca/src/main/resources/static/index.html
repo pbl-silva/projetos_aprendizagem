@@ -14,32 +14,23 @@
     <script src="./app.js" defer></script>
   </head>
   <body>
-    <aside class="sidebar">
-      <a class="brand" href="./"
-        ><span class="brand-mark" aria-hidden="true">B<span>↗</span></span
-        ><span>Biblioteca<small>HISTÓRIAS EM MOVIMENTO</small></span></a
-      ><span class="nav-label">SUA BIBLIOTECA</span>
-      <nav aria-label="Menu principal">
-        <button data-view="inicio" class="active">
-          <span aria-hidden="true">◫</span> Visão geral</button
-        ><button data-view="acervo">
-          <span aria-hidden="true">▥</span> Acervo</button
-        ><button data-view="leitores">
-          <span aria-hidden="true">♧</span> Leitores</button
-        ><button data-view="emprestimos">
-          <span aria-hidden="true">⇄</span> Empréstimos</button
-        ><button data-view="relatorios">
-          <span aria-hidden="true">▤</span> Relatórios
-        </button>
-      </nav>
-      <div class="sidebar-bottom">
-        <div class="shelf" aria-hidden="true">
-          <i></i><i></i><i></i><i></i><i></i>
-        </div>
-        <p>Um livro na estante.<br />Mil caminhos lá fora.</p>
-        <small>Gestão da biblioteca</small>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="./"
+          ><span class="brand-mark" aria-hidden="true">B<span>↗</span></span
+          ><span>Biblioteca<small>HISTÓRIAS EM MOVIMENTO</small></span></a
+        >
+        <nav aria-label="Menu principal">
+          <button data-view="inicio" class="active" aria-current="page">
+            Visão geral
+          </button>
+          <button data-view="acervo">Acervo</button>
+          <button data-view="leitores">Leitores</button>
+          <button data-view="emprestimos">Empréstimos</button>
+          <button data-view="relatorios">Relatórios</button>
+        </nav>
       </div>
-    </aside>
+    </header>
     <div class="workspace">
       <header class="topbar">
         <span>Um novo capítulo, todos os dias.</span><time id="today"></time>
