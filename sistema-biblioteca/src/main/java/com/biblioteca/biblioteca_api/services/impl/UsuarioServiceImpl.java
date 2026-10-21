@@ -14,6 +14,7 @@ import com.biblioteca.biblioteca_api.repositories.UsuarioRepository;
 import com.biblioteca.biblioteca_api.services.GerenciadorUsuario;
 import com.biblioteca.biblioteca_api.services.NotificadorUsuario;
 import com.biblioteca.biblioteca_api.services.RelatorioUsuario;
+import com.biblioteca.biblioteca_api.reports.RelatorioPdf;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,7 +184,7 @@ public class UsuarioServiceImpl implements GerenciadorUsuario, NotificadorUsuari
             sb.append("----------------------------------------\n");
         }
 
-        return sb.toString().getBytes();
+        return RelatorioPdf.gerar(sb.toString());
     }
 
     @Override
