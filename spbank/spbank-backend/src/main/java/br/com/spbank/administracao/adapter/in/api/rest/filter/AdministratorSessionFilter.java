@@ -23,6 +23,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 20)
+@org.jspecify.annotations.NullMarked
 public final class AdministratorSessionFilter
         extends OncePerRequestFilter {
 

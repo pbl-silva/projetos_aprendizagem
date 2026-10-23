@@ -98,10 +98,10 @@ public record CustomerCardCredit(
 
         return lines.values()
                 .stream()
-                .map(CardCreditLine::allocated)
+                .map((CardCreditLine value) -> java.util.Objects.requireNonNull(value).allocated())
                 .reduce(
                         BigDecimal.ZERO,
-                        BigDecimal::add
+                        (left, right) -> java.util.Objects.requireNonNull(left).add(java.util.Objects.requireNonNull(right))
                 );
     }
 

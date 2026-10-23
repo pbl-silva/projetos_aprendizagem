@@ -127,7 +127,7 @@ public final class AuthenticationMysqlPersistence
             UUID customerId
     ) {
         return findCustomerById(customerId)
-                .map(Customer::plan)
+                .map((Customer value) -> java.util.Objects.requireNonNull(value).plan())
                 .orElseThrow(
                         () -> new NotFoundException("CUSTOMER_NOT_FOUND")
                 );
@@ -138,7 +138,7 @@ public final class AuthenticationMysqlPersistence
             UUID customerId
     ) {
         return findCustomerByIdForUpdate(customerId)
-                .map(Customer::plan)
+                .map((Customer value) -> java.util.Objects.requireNonNull(value).plan())
                 .orElseThrow(
                         () -> new NotFoundException("CUSTOMER_NOT_FOUND")
                 );

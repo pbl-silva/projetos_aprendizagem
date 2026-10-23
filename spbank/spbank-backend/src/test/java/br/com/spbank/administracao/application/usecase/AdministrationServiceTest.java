@@ -202,42 +202,38 @@ class AdministrationServiceTest {
         when(customers.findCustomerByIdForUpdate(CUSTOMER_ID))
                 .thenReturn(Optional.of(customer));
 
-        assertThatThrownBy(
-                () -> service.changeCustomerPlan(
+        {
+            var failure=org.assertj.core.api.Assertions.catchThrowable(() -> service.changeCustomerPlan(
                         ADMIN_ID,
                         CUSTOMER_ID,
                         new ChangeCustomerPlanCommand(
                                 CustomerPlan.STANDARD,
                                 "Sem mudança"
                         )
-                )
-        )
-                .isInstanceOf(BusinessException.class)
-                .extracting(error ->
-                        ((BusinessException) error).getCode()
-                )
-                .isEqualTo("CUSTOMER_PLAN_UNCHANGED");
+                ));
+            assertThat(failure).isInstanceOf(BusinessException.class);
+            var businessFailure=(BusinessException) java.util.Objects.requireNonNull(failure);
+            assertThat(businessFailure.getCode()).isEqualTo("CUSTOMER_PLAN_UNCHANGED");
+        }
 
         verify(administration, never()).savePlanChange(any());
     }
 
     @Test
     void shouldRejectAPlanChangeWithoutReason() {
-        assertThatThrownBy(
-                () -> service.changeCustomerPlan(
+        {
+            var failure=org.assertj.core.api.Assertions.catchThrowable(() -> service.changeCustomerPlan(
                         ADMIN_ID,
                         CUSTOMER_ID,
                         new ChangeCustomerPlanCommand(
                                 CustomerPlan.PLUS,
                                 "   "
                         )
-                )
-        )
-                .isInstanceOf(BusinessException.class)
-                .extracting(error ->
-                        ((BusinessException) error).getCode()
-                )
-                .isEqualTo("CUSTOMER_PLAN_REASON_REQUIRED");
+                ));
+            assertThat(failure).isInstanceOf(BusinessException.class);
+            var businessFailure=(BusinessException) java.util.Objects.requireNonNull(failure);
+            assertThat(businessFailure.getCode()).isEqualTo("CUSTOMER_PLAN_REASON_REQUIRED");
+        }
 
         verifyNoInteractions(accounts);
         verify(administration, never()).savePlanChange(any());

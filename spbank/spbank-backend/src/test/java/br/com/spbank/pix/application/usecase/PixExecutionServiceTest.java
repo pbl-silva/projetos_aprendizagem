@@ -88,13 +88,13 @@ class PixExecutionServiceTest {
         );
 
         AccountPersistence accounts =
-                mock(AccountPersistence.class);
+                java.util.Objects.requireNonNull(mock(AccountPersistence.class));
 
         AccountEntryPersistence entries =
-                mock(AccountEntryPersistence.class);
+                java.util.Objects.requireNonNull(mock(AccountEntryPersistence.class));
 
         PixPersistence persistence =
-                mock(PixPersistence.class);
+                java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findAllForUpdate(
                 List.of(sourceId, targetId)
@@ -180,16 +180,16 @@ class PixExecutionServiceTest {
         );
 
         AccountPersistence accounts =
-                mock(AccountPersistence.class);
+                java.util.Objects.requireNonNull(mock(AccountPersistence.class));
 
         AccountEntryPersistence entries =
-                mock(AccountEntryPersistence.class);
+                java.util.Objects.requireNonNull(mock(AccountEntryPersistence.class));
 
         PixPersistence persistence =
-                mock(PixPersistence.class);
+                java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         PixSettlementPort settlement =
-                mock(PixSettlementPort.class);
+                java.util.Objects.requireNonNull(mock(PixSettlementPort.class));
 
         when(accounts.findAllForUpdate(
                 List.of(sourceId)

@@ -29,11 +29,11 @@ public final class AccountEntryMysqlPersistenceImpl
             Collection<AccountEntry> entries
     ) {
 
-        repository.saveAll(
+        repository.saveAll(java.util.Objects.requireNonNull(
                 entries.stream()
                         .map(AccountEntryPersistenceMapper::toData)
                         .toList()
-        );
+        ));
     }
 
     @Override

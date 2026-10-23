@@ -5,5 +5,7 @@ public enum EntryType {
     TRANSFER_IN,
     PIX_OUT,
     PIX_IN,
+    CARD_PAYMENT,
+    INVESTMENT_APPLICATION,
     FEE
 }

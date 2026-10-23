@@ -32,6 +32,9 @@ spbank:
   auth:
     session-hours: 8
 
+  card:
+    data-secret: ${CARD_DATA_SECRET}
+
   transfer:
     scheduler-delay: 5000
 

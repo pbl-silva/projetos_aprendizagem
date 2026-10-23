@@ -175,12 +175,12 @@ public final class PixController {
             );
 
         return ResponseEntity
-            .created(
+            .created(java.util.Objects.requireNonNull(
                 URI.create(
                     "/api/v1/pix/"
                         + receipt.id()
                 )
-            )
+            ))
             .body(receipt);
     }
 

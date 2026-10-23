@@ -24,7 +24,7 @@ class AdministratorSessionFilterTest {
             throws Exception {
 
         AdministrationUseCase administration =
-                mock(AdministrationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AdministrationUseCase.class));
 
         when(
                 administration.resolveSession(
@@ -54,7 +54,7 @@ class AdministratorSessionFilterTest {
                 };
 
         FilterChain chain =
-                mock(FilterChain.class);
+                java.util.Objects.requireNonNull(mock(FilterChain.class));
 
         var request =
                 new MockHttpServletRequest(
@@ -89,7 +89,7 @@ class AdministratorSessionFilterTest {
             throws Exception {
 
         AdministrationUseCase administration =
-                mock(AdministrationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AdministrationUseCase.class));
 
         when(
                 administration.resolveSession(
@@ -119,7 +119,7 @@ class AdministratorSessionFilterTest {
                 };
 
         FilterChain chain =
-                mock(FilterChain.class);
+                java.util.Objects.requireNonNull(mock(FilterChain.class));
 
         var request =
                 new MockHttpServletRequest(

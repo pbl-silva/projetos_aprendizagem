@@ -1,6 +1,7 @@
 package br.com.spbank.shared.adapter.in.api.rest.handler;
 
 import br.com.spbank.shared.application.exception.BusinessException;
+import br.com.spbank.shared.application.exception.IdempotencyConflictException;
 import br.com.spbank.shared.application.exception.NotFoundException;
 import br.com.spbank.shared.application.exception.UnauthorizedException;
 
@@ -24,7 +25,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
-import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -58,7 +59,9 @@ public final class GlobalExceptionHandler {
                         ? HttpStatus.UNAUTHORIZED
                         : ex instanceof NotFoundException
                                 ? HttpStatus.NOT_FOUND
-                                : HttpStatus.UNPROCESSABLE_CONTENT;
+                                : ex instanceof IdempotencyConflictException
+                                        ? HttpStatus.CONFLICT
+                                        : HttpStatus.UNPROCESSABLE_CONTENT;
 
         String domain =
                 domain(
@@ -146,7 +149,7 @@ public final class GlobalExceptionHandler {
 
     @ExceptionHandler({
             MethodArgumentTypeMismatchException.class,
-            MissingRequestHeaderException.class
+            ServletRequestBindingException.class
     })
     ResponseEntity<ProblemDetail> invalidParameter(
             Exception ex,
@@ -236,9 +239,9 @@ public final class GlobalExceptionHandler {
     ) {
         ProblemDetail problem =
                 ProblemDetail.forStatusAndDetail(
-                        status,
+                        Objects.requireNonNull(status),
                         messages.getMessage(
-                                key,
+                                Objects.requireNonNull(key),
                                 null,
                                 locale
                         )
@@ -287,11 +290,11 @@ public final class GlobalExceptionHandler {
         );
 
         extensions.forEach(
-                problem::setProperty
+                (name, value) -> problem.setProperty(Objects.requireNonNull(name), value)
         );
 
         return ResponseEntity
-                .status(status)
+                .status(Objects.requireNonNull(status))
                 .contentType(
                         MediaType.APPLICATION_PROBLEM_JSON
                 )
@@ -326,6 +329,10 @@ public final class GlobalExceptionHandler {
 
     if (path.startsWith("/api/v1/transfers")) {
         return "TRANSFER";
+    }
+
+    if (path.startsWith("/api/v1/investments")) {
+        return "INVESTMENT";
     }
 
     if (path.startsWith("/api/v1/pix")) {

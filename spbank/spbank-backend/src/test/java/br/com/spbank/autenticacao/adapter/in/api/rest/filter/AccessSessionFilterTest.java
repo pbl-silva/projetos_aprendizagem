@@ -24,13 +24,13 @@ class AccessSessionFilterTest {
             throws Exception {
 
         AuthenticationUseCase authentication =
-                mock(AuthenticationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AuthenticationUseCase.class));
 
         HandlerExceptionResolver resolver =
-                mock(HandlerExceptionResolver.class);
+                java.util.Objects.requireNonNull(mock(HandlerExceptionResolver.class));
 
         FilterChain chain =
-                mock(FilterChain.class);
+                java.util.Objects.requireNonNull(mock(FilterChain.class));
 
         var request =
                 new MockHttpServletRequest(
@@ -67,7 +67,7 @@ class AccessSessionFilterTest {
             throws Exception {
 
         AuthenticationUseCase authentication =
-                mock(AuthenticationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AuthenticationUseCase.class));
 
         when(
                 authentication.resolveSession(
@@ -97,7 +97,7 @@ class AccessSessionFilterTest {
                 };
 
         FilterChain chain =
-                mock(FilterChain.class);
+                java.util.Objects.requireNonNull(mock(FilterChain.class));
 
         var request =
                 new MockHttpServletRequest(
@@ -132,7 +132,7 @@ class AccessSessionFilterTest {
             throws Exception {
 
         AuthenticationUseCase authentication =
-                mock(AuthenticationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AuthenticationUseCase.class));
 
         when(
                 authentication.resolveSession(
@@ -162,7 +162,7 @@ class AccessSessionFilterTest {
                 };
 
         FilterChain chain =
-                mock(FilterChain.class);
+                java.util.Objects.requireNonNull(mock(FilterChain.class));
 
         var request =
                 new MockHttpServletRequest(

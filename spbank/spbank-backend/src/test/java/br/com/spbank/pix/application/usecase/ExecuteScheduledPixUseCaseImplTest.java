@@ -67,13 +67,13 @@ class ExecuteScheduledPixUseCaseImplTest {
             );
 
         PixPersistence persistence =
-            mock(PixPersistence.class);
+            java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         PixExecutionService execution =
-            mock(PixExecutionService.class);
+            java.util.Objects.requireNonNull(mock(PixExecutionService.class));
 
         PixBusinessLogPort logs =
-            mock(PixBusinessLogPort.class);
+            java.util.Objects.requireNonNull(mock(PixBusinessLogPort.class));
 
         when(
             persistence.findPaymentForUpdate(

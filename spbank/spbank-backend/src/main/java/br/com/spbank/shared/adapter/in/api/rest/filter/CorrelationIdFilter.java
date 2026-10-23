@@ -17,6 +17,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
+@org.jspecify.annotations.NullMarked
 public final class CorrelationIdFilter
         extends OncePerRequestFilter {
 

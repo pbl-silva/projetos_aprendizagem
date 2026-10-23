@@ -20,6 +20,8 @@ public final class EntryTypeConverter
             case TRANSFER_IN -> "TRANSFERENCIA_ENTRADA";
             case PIX_OUT -> "PIX_SAIDA";
             case PIX_IN -> "PIX_ENTRADA";
+            case CARD_PAYMENT -> "PAGAMENTO_CARTAO";
+            case INVESTMENT_APPLICATION -> "INVESTIMENTO_APLICACAO";
             case FEE -> "TAXA";
         };
     }
@@ -36,6 +38,8 @@ public final class EntryTypeConverter
             case "TRANSFERENCIA_ENTRADA" -> EntryType.TRANSFER_IN;
             case "PIX_SAIDA" -> EntryType.PIX_OUT;
             case "PIX_ENTRADA" -> EntryType.PIX_IN;
+            case "PAGAMENTO_CARTAO" -> EntryType.CARD_PAYMENT;
+            case "INVESTIMENTO_APLICACAO" -> EntryType.INVESTMENT_APPLICATION;
             case "TAXA" -> EntryType.FEE;
 
             default -> throw new IllegalArgumentException(

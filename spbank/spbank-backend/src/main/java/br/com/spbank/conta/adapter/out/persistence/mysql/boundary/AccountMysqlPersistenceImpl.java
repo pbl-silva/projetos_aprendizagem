@@ -145,12 +145,12 @@ public final class AccountMysqlPersistenceImpl
             Collection<Account> accounts
     ) {
 
-        repository.saveAll(
+        repository.saveAll(java.util.Objects.requireNonNull(
                 accounts.stream()
                         .map(account ->
                                 AccountPersistenceMapper.toData(account)
                         )
                         .toList()
-        );
+        ));
     }
 }

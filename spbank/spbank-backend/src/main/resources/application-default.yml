@@ -11,3 +11,8 @@ spring:
 
   flyway:
     locations: classpath:db/migration,classpath:db/devmigration
+
+# Somente para o perfil local de estudo; manter estável para ler cartões já emitidos.
+spbank:
+  card:
+    data-secret: ${CARD_DATA_SECRET:spbank-local-study-card-secret-change-before-deployment}

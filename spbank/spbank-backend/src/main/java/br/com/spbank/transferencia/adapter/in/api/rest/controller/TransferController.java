@@ -98,12 +98,12 @@ public final class TransferController {
         );
 
         return ResponseEntity
-                .created(
+                .created(java.util.Objects.requireNonNull(
                         URI.create(
                                 "/api/v1/transfers/"
                                         + receipt.id()
                         )
-                )
+                ))
                 .body(receipt);
     }
 

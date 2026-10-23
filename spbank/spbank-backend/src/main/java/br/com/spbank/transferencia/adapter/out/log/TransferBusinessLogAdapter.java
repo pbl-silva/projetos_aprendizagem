@@ -23,6 +23,6 @@ public final class TransferBusinessLogAdapter
     public void publish(
             TransferBusinessEvent event
     ) {
-        events.publishEvent(event);
+        events.publishEvent(java.util.Objects.requireNonNull(event));
     }
 }

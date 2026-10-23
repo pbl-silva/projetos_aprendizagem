@@ -17,6 +17,31 @@ class ArchitectureTest {
                     );
 
     @Test
+    void investmentsMustNotAccessExternalMarketDataOverTheNetwork() {
+        noClasses().that().resideInAPackage("br.com.spbank.investimento..")
+            .should().dependOnClassesThat().resideInAnyPackage("java.net.http..",
+                "org.springframework.web.client..","org.springframework.web.reactive.function.client..",
+                "okhttp3..","retrofit2..")
+            .check(classes);
+        noClasses().that().resideInAPackage("br.com.spbank.investimento..")
+            .should().dependOnClassesThat().haveNameMatching("java\\.net\\.(Socket|URL|URLConnection|HttpURLConnection)")
+            .check(classes);
+    }
+
+    @Test
+    void adaptersOfEveryBusinessModuleStayIsolated() {
+        var modules=classes.stream().map(type -> type.getPackageName())
+            .filter(name -> name.startsWith("br.com.spbank.") && name.contains(".adapter."))
+            .map(name -> name.split("\\.")[3]).filter(name -> !name.equals("shared"))
+            .collect(java.util.stream.Collectors.toSet());
+        for(var source:modules)for(var target:modules)if(!source.equals(target)) {
+            noClasses().that().resideInAPackage("br.com.spbank."+source+"..adapter..")
+                .should().dependOnClassesThat().resideInAPackage("br.com.spbank."+target+"..adapter..")
+                .check(classes);
+        }
+    }
+
+    @Test
     void applicationMustNotDependOnAdaptersOrFrameworkBoundaries() {
 
         noClasses()

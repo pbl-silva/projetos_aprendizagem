@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ConfigurationPropertiesScan
 @SpringBootApplication
+@org.jspecify.annotations.NullMarked
 public class SpbankBackendApplication {
 
     public static void main(String[] args) {

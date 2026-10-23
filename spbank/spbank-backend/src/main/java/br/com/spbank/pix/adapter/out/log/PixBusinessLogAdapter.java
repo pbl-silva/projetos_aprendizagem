@@ -22,6 +22,6 @@ public final class PixBusinessLogAdapter
     public void publish(
         PixBusinessEvent event
     ) {
-        events.publishEvent(event);
+        events.publishEvent(java.util.Objects.requireNonNull(event));
     }
 }

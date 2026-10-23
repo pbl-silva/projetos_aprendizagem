@@ -213,14 +213,14 @@ public final class PixMysqlPersistenceImpl
         Collection<PixPayment> values
     ) {
         return payments
-            .saveAll(
+            .saveAll(java.util.Objects.requireNonNull(
                 values
                     .stream()
                     .map(
                         PixMysqlPersistenceImpl::data
                     )
                     .toList()
-            )
+            ))
             .stream()
             .map(
                 PixMysqlPersistenceImpl::payment

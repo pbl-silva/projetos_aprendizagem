@@ -1,7 +1,6 @@
 package br.com.spbank.pix.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -32,8 +31,8 @@ class PixServiceTest {
                 accountId, "Alexandre Souza", "52998224725", "500.00"
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(accountId))
                 .thenReturn(Optional.of(source));
@@ -90,9 +89,9 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
-        PixExecutionService execution = mock(PixExecutionService.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
+        PixExecutionService execution = java.util.Objects.requireNonNull(mock(PixExecutionService.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -182,9 +181,9 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
-        PixExecutionService execution = mock(PixExecutionService.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
+        PixExecutionService execution = java.util.Objects.requireNonNull(mock(PixExecutionService.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -248,7 +247,7 @@ class PixServiceTest {
 
         verify(persistence).savePayments(argThat(series -> {
             List<LocalDate> dates = series.stream()
-                    .map(PixPayment::getScheduledFor)
+                    .map(row -> java.util.Objects.requireNonNull(row).getScheduledFor())
                     .toList();
 
             return dates.equals(List.of(
@@ -271,8 +270,8 @@ class PixServiceTest {
                 sourceId, "Alexandre Souza", "52998224725", "5000.00"
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -302,12 +301,12 @@ class PixServiceTest {
         assertThat(preview.destinationBankName())
                 .isEqualTo("Outra instituição");
 
-        assertThatThrownBy(
-                () -> service.preview(command(sourceId, "1000.01"))
-        )
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo("PIX_FAVORITE_REQUIRED");
+        {
+            var failure=org.assertj.core.api.Assertions.catchThrowable(() -> service.preview(command(sourceId, "1000.01")));
+            assertThat(failure).isInstanceOf(BusinessException.class);
+            var businessFailure=(BusinessException) java.util.Objects.requireNonNull(failure);
+            assertThat(businessFailure.getCode()).isEqualTo("PIX_FAVORITE_REQUIRED");
+        }
     }
 
     @Test
@@ -337,8 +336,8 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -376,12 +375,12 @@ class PixServiceTest {
                 false
         );
 
-        assertThatThrownBy(
-                () -> service.preview(highInternal)
-        )
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo("PIX_FAVORITE_REQUIRED");
+        {
+            var failure=org.assertj.core.api.Assertions.catchThrowable(() -> service.preview(highInternal));
+            assertThat(failure).isInstanceOf(BusinessException.class);
+            var businessFailure=(BusinessException) java.util.Objects.requireNonNull(failure);
+            assertThat(businessFailure.getCode()).isEqualTo("PIX_FAVORITE_REQUIRED");
+        }
 
         PixFavorite favorite = PixFavorite.internal(
                 sourceId,
@@ -431,8 +430,8 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -455,7 +454,7 @@ class PixServiceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         BankInstitutionCatalog banks =
-                mock(BankInstitutionCatalog.class);
+                java.util.Objects.requireNonNull(mock(BankInstitutionCatalog.class));
 
         when(banks.findActiveByCode("90001"))
                 .thenReturn(Optional.of(
@@ -517,8 +516,8 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -562,8 +561,8 @@ class PixServiceTest {
                 sourceId, "Alexandre Souza", "52998224725", "5000.00"
         );
 
-        AccountPersistence accounts = mock(AccountPersistence.class);
-        PixPersistence persistence = mock(PixPersistence.class);
+        AccountPersistence accounts = java.util.Objects.requireNonNull(mock(AccountPersistence.class));
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(accounts.findById(sourceId))
                 .thenReturn(Optional.of(source));
@@ -598,12 +597,12 @@ class PixServiceTest {
                 false
         );
 
-        assertThatThrownBy(
-                () -> service.preview(command)
-        )
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo("PIX_FAVORITE_REQUIRED");
+        {
+            var failure=org.assertj.core.api.Assertions.catchThrowable(() -> service.preview(command));
+            assertThat(failure).isInstanceOf(BusinessException.class);
+            var businessFailure=(BusinessException) java.util.Objects.requireNonNull(failure);
+            assertThat(businessFailure.getCode()).isEqualTo("PIX_FAVORITE_REQUIRED");
+        }
     }
 
     @Test
@@ -625,7 +624,7 @@ class PixServiceTest {
                 Instant.parse("2026-08-20T12:00:00Z")
         );
 
-        PixPersistence persistence = mock(PixPersistence.class);
+        PixPersistence persistence = java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         when(persistence.findKey(keyId, sourceId))
                 .thenReturn(Optional.of(key));

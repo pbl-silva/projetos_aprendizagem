@@ -9,6 +9,7 @@ let customerAccounts = [];
 let pendingTransfer = null;
 let pendingIdempotencyKey = null;
 let adminCustomers = [];
+let cardRevealEpoch = 0;
 
 const apiBaseUrl = window.SPBANK_API_URL ?? 'http://localhost:8080';
 const apiTimeoutMs = 10_000;
@@ -255,6 +256,7 @@ function showApiError(element, error) {
 }
 
 function clearClientSession() {
+  hideRevealedCardData();
   sessionStorage.removeItem(authTokenKey);
   if (sessionStorage.getItem(activeContextKey) === 'client') {
     sessionStorage.removeItem(activeContextKey);
@@ -440,6 +442,7 @@ function showAccessPanel(panel) {
 }
 
 function showPublicArea(panel = 'login') {
+  hideRevealedCardData();
   document.getElementById('appShell')?.classList.add('hidden');
   document.getElementById('adminShell')?.classList.add('hidden');
   document.getElementById('loginScreen')?.classList.remove('hidden');
@@ -1914,7 +1917,223 @@ async function handlePasswordChange(event) {
   }
 }
 
+async function renderCardAllocationPage() {
+  const content = document.getElementById('content');
+  content.innerHTML = '<section id="creditAllocationPage" class="card" aria-live="polite">Carregando crédito…</section><section id="cardInstruments" class="card" aria-live="polite">Carregando cartões…</section><section id="cardFinance" class="card" aria-live="polite">Carregando faturas…</section>';
+  renderCardInstruments(document.getElementById('cardInstruments'));
+  renderCardFinance(document.getElementById('cardFinance'));
+  const page = document.getElementById('creditAllocationPage');
+  try {
+    const [overview, allocation] = await Promise.all([
+      api('/api/v1/cards/credit'),
+      api('/api/v1/cards/credit/allocation')
+    ]);
+    if (!page.isConnected) return;
+    page.innerHTML = `
+      <h2>Distribuição do crédito</h2>
+      <p>Plano ${escapeHtml(overview.customerPlan)} · Teto: ${formatarMoeda(overview.ceiling)}</p>
+      <p>Aprovado: <strong>${formatarMoeda(allocation.approvedTotal)}</strong></p>
+      <p>Distribuído: <strong>${formatarMoeda(allocation.allocatedTotal)}</strong> ·
+        Não distribuído: <strong>${formatarMoeda(allocation.unallocatedTotal)}</strong></p>
+      <p>Informe o limite total desejado para cada bandeira e confirme com sua senha de login.</p>
+      <form id="creditAllocationForm">
+        <fieldset>
+          <legend>Limites por bandeira</legend>
+          ${allocation.lines.map(line => `
+            <label>${cardBrandLogo(line.brand)} ${escapeHtml(line.brand)}
+              <input type="number" name="${escapeHtml(line.brand.toLowerCase())}"
+                min="0" step="0.01" required value="${escapeHtml(line.allocated)}">
+            </label>
+            <p>Comprometido: ${formatarMoeda(line.committed)} ·
+              Disponível: ${formatarMoeda(line.available)} · Excesso: ${formatarMoeda(line.excess)}</p>
+          `).join('')}
+          <label>Senha de login
+            <input type="password" name="confirmationPassword" autocomplete="current-password"
+              maxlength="128" required>
+          </label>
+          <button type="submit" class="btn">Salvar distribuição</button>
+        </fieldset>
+      </form>
+      <div id="creditAllocationMessage" role="status" aria-live="polite"></div>
+    `;
+    page.querySelector('form').addEventListener('submit', handleCreditAllocation);
+  } catch (error) {
+    if (page.isConnected) {
+      page.innerHTML = '<h2>Distribuição do crédito</h2><div role="alert"></div>';
+      showApiError(page.querySelector('[role="alert"]'), error);
+    }
+  }
+}
+
+async function handleCreditAllocation(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = form.parentElement.querySelector('#creditAllocationMessage');
+  const fieldset = form.querySelector('fieldset');
+  const password = form.elements.confirmationPassword;
+  const values = Object.fromEntries(new FormData(form));
+  const intention = JSON.stringify({ brisa: values.brisa, mistershard: values.mistershard, elu: values.elu });
+  // Preserve the key across uncertain responses; never retain the password with it.
+  if (form.pendingAllocation?.intention !== intention) {
+    form.pendingAllocation = { intention, key: crypto.randomUUID() };
+  }
+  const body = JSON.stringify({ ...JSON.parse(intention), confirmationPassword: values.confirmationPassword });
+  password.value = '';
+  clearMessage(message);
+  fieldset.disabled = true;
+  try {
+    await api('/api/v1/cards/credit/allocation', {
+      method: 'PUT', headers: { 'Idempotency-Key': form.pendingAllocation.key }, body
+    });
+    form.pendingAllocation = null;
+    if (!form.isConnected) return;
+    // Read current state after a possible replay of an older operation.
+    await renderCardAllocationPage();
+    const currentMessage = document.getElementById('creditAllocationMessage');
+    if (currentMessage) showSuccess(currentMessage, 'Distribuição salva com sucesso.');
+  } catch (error) {
+    if (form.isConnected) showApiError(message, error);
+  } finally {
+    password.value = '';
+    fieldset.disabled = false;
+  }
+}
+
+function hideRevealedCardData() {
+  cardRevealEpoch++;
+  document.querySelectorAll('.card-sensitive').forEach(element => element.replaceChildren());
+  document.querySelectorAll('[data-card-form] input[type="password"], [data-finance-action] input[type="password"], #investmentForm input[type="password"]').forEach(input => { input.value = ''; });
+}
+
+function cardSecretInput(name, label, pin = false) {
+  return `<label>${escapeHtml(label)}<input type="password" name="${name}" required
+    autocomplete="off" ${pin ? 'inputmode="numeric" pattern="[0-9]{4}" minlength="4" maxlength="4"' : 'maxlength="128"'}></label>`;
+}
+
+function cardActionForm(cardId, path, label, fields = '', method = 'POST') {
+  return `<form data-card-form data-card-id="${escapeHtml(cardId)}" data-path="${path}" data-method="${method}">
+    <fieldset><legend>${escapeHtml(label)}</legend>${fields}
+    <button type="submit" class="btn-outline">${escapeHtml(label)}</button></fieldset>
+    <div data-card-message role="status"></div></form>`;
+}
+
+async function renderCardInstruments(container) {
+  try {
+    const cards = await api('/api/v1/cards');
+    if (!container.isConnected) return;
+    container.innerHTML = `<h2>Meus cartões</h2>
+      <form data-card-form data-path="" data-method="POST"><fieldset><legend>Emitir cartão</legend>
+        <label>Bandeira<select name="brand" required><option value="BRISA">Brisa</option>
+          <option value="MISTERSHARD">Mistershard</option><option value="ELU">Elu</option></select></label>
+        <label>Vencimento<select name="dueDay" required><option>5</option><option>10</option><option>15</option><option>20</option><option>25</option></select></label>
+        <button type="submit" class="btn">Emitir cartão</button></fieldset><div data-card-message role="status"></div></form>
+      ${cards.length ? cards.map(card => {
+        let actions = '';
+        if (card.state === 'PENDING_ACTIVATION') {
+          actions += cardActionForm(card.id, 'activate', 'Ativar cartão',
+            cardSecretInput('confirmationPassword', 'Senha de login') + cardSecretInput('pin', 'Criar PIN de quatro dígitos', true)
+              + cardSecretInput('pinConfirmation', 'Confirmar PIN', true));
+        }
+        if (card.state === 'ACTIVE') {
+          actions += cardActionForm(card.id, 'details', 'Revelar dados', cardSecretInput('pin', 'PIN', true));
+          actions += cardActionForm(card.id, 'pin', 'Alterar PIN', cardSecretInput('currentPin', 'PIN atual', true)
+            + cardSecretInput('newPin', 'Novo PIN', true) + cardSecretInput('pinConfirmation', 'Confirmar novo PIN', true), 'PUT');
+          actions += cardActionForm(card.id, 'pin/recovery', 'Recuperar PIN', cardSecretInput('confirmationPassword', 'Senha de login')
+            + cardSecretInput('newPin', 'Novo PIN', true) + cardSecretInput('pinConfirmation', 'Confirmar novo PIN', true), 'PUT');
+        }
+        if (['ACTIVE', 'PENDING_ACTIVATION'].includes(card.state) && !card.voluntaryBlocked) {
+          actions += cardActionForm(card.id, 'block', 'Bloquear voluntariamente', '<label>Motivo<input name="reason" maxlength="240" required></label>');
+        }
+        if (['ACTIVE', 'PENDING_ACTIVATION', 'EXPIRED'].includes(card.state)) {
+          actions += cardActionForm(card.id, 'cancel', 'Cancelar definitivamente o instrumento');
+        }
+        if (card.state === 'CANCELLED') actions += cardActionForm(card.id, 'replacement', 'Solicitar substituição');
+        return `<article class="card" data-card-article><h3>${cardBrandLogo(card.brand)} ${escapeHtml(card.brand)} · final ${escapeHtml(card.lastFour)}</h3>
+          <p>Estado: ${escapeHtml(card.state)} · Limite: ${formatarMoeda(card.allocated)} · Disponível: ${formatarMoeda(card.available)}</p>
+          <p>Bloqueio de PIN: ${card.pinBlocked ? 'Sim' : 'Não'} · Voluntário: ${card.voluntaryBlocked ? 'Sim' : 'Não'} · Gerencial: ${card.administrativeBlocked ? 'Sim' : 'Não'}</p>
+          ${card.voluntaryReason ? `<p>Motivo voluntário: ${escapeHtml(card.voluntaryReason)}</p>` : ''}
+          ${card.administrativeReason ? `<p>Motivo gerencial: ${escapeHtml(card.administrativeReason)}</p>` : ''}
+          <div class="card-sensitive" aria-live="polite"></div>
+          <button type="button" data-hide-card class="btn-outline">Ocultar dados</button>
+          <details><summary>Gerenciar instrumento</summary>${actions}</details></article>`;
+      }).join('') : '<p>Nenhum cartão emitido.</p>'}`;
+    container.querySelectorAll('[data-card-form]').forEach(form => form.addEventListener('submit', handleCardInstrumentAction));
+    container.querySelectorAll('[data-hide-card]').forEach(button => button.addEventListener('click', hideRevealedCardData));
+  } catch (error) {
+    if (container.isConnected) { container.innerHTML = '<h2>Meus cartões</h2><div role="alert"></div>'; showApiError(container.querySelector('[role="alert"]'), error); }
+  }
+}
+
+async function handleCardInstrumentAction(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const container = form.closest('#cardInstruments');
+  const message = form.querySelector('[data-card-message]');
+  const fields = form.querySelector('fieldset');
+  if (form.dataset.path === 'cancel' && !window.confirm('Cancelar este instrumento definitivamente? O histórico e a dívida serão preservados.')) return;
+  const body = JSON.stringify(Object.fromEntries(new FormData(form)));
+  hideRevealedCardData();
+  const revealEpoch = cardRevealEpoch;
+  fields.disabled = true;
+  clearMessage(message);
+  try {
+    const path = form.dataset.cardId ? `/${encodeURIComponent(form.dataset.cardId)}/${form.dataset.path}` : '';
+    const result = await api(`/api/v1/cards${path}`, { method: form.dataset.method, body });
+    if (!form.isConnected) return;
+    if (form.dataset.path === 'details') {
+      if (document.hidden || revealEpoch !== cardRevealEpoch) return;
+      const area = form.closest('[data-card-article]').querySelector('.card-sensitive');
+      const paragraph = document.createElement('p');
+      paragraph.textContent = `${result.holderName} · ${result.pan} · Validade ${result.expiresOn.slice(0,7).split('-').reverse().join('/')} · CVV ${result.cvv}`;
+      area.replaceChildren(paragraph);
+    } else {
+      await renderCardInstruments(container);
+    }
+  } catch (error) {
+    if (form.isConnected) showApiError(message, error);
+    // A PIN refusal can have committed a new security block; refresh the summary without retaining secrets.
+    if (error.code === 'CARD_PIN_BLOCKED' && container.isConnected) {
+      await renderCardInstruments(container);
+      const notice = document.createElement('p'); notice.textContent = error.message; notice.setAttribute('role', 'alert'); container.prepend(notice);
+    }
+  } finally {
+    form.querySelectorAll('input[type="password"]').forEach(input => { input.value = ''; });
+    fields.disabled = false;
+  }
+}
+
+async function renderAdminCardInstruments(customerId, container) {
+  let financePanel = container.parentElement.querySelector('.admin-card-finance');
+  if (!financePanel) { financePanel = document.createElement('div'); financePanel.className='admin-card-finance'; container.parentElement.append(financePanel); }
+  renderAdminCardFinance(customerId, financePanel);
+  container.textContent = 'Carregando cartões…';
+  try {
+    const cards = await adminApi(`/api/v1/admin/cards/customers/${encodeURIComponent(customerId)}`);
+    if (!container.isConnected) return;
+    container.innerHTML = cards.length ? cards.map(card => `<form data-admin-card-form data-card-id="${escapeHtml(card.id)}">
+      <h4>${escapeHtml(card.brand)} · final ${escapeHtml(card.lastFour)} · ${escapeHtml(card.state)}</h4>
+      <label>Ação<select name="action">
+        <option value="ADMINISTRATIVE:${!card.administrativeBlocked}">${card.administrativeBlocked ? 'Retirar bloqueio gerencial' : 'Aplicar bloqueio gerencial'}</option>
+        ${card.voluntaryBlocked ? '<option value="VOLUNTARY:false">Retirar bloqueio voluntário</option>' : ''}
+      </select></label><label>Motivo<input name="reason" maxlength="240" required></label>
+      <button type="submit" class="btn-outline">Confirmar ação</button><div role="status"></div></form>`).join('') : '<p>Nenhum cartão emitido.</p>';
+    container.querySelectorAll('form').forEach(form => form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const button = form.querySelector('button'); const message = form.querySelector('[role="status"]');
+      const [cause, blocked] = form.elements.action.value.split(':'); button.disabled = true;
+      try {
+        await adminApi(`/api/v1/admin/cards/customers/${encodeURIComponent(customerId)}/${encodeURIComponent(form.dataset.cardId)}`, {
+          method: 'PUT', body: JSON.stringify({ cause, blocked: blocked === 'true', reason: form.elements.reason.value })
+        });
+        if (form.isConnected) await renderAdminCardInstruments(customerId, container);
+      } catch (error) { if (form.isConnected) showApiError(message, error); }
+      finally { button.disabled = false; }
+    }));
+  } catch (error) { if (container.isConnected) showApiError(container, error); }
+}
+
 function loadPage(page) {
+  hideRevealedCardData();
   switch (page) {
     case 'dashboard':
       renderDashboard();
@@ -1935,16 +2154,10 @@ function loadPage(page) {
       );
       break;
     case 'invest':
-      renderFeaturePlaceholder(
-        'Investimentos',
-        'O módulo de investimentos do SPBank ainda não possui API oficial.'
-      );
+      renderInvestmentsPage();
       break;
     case 'cartao':
-      renderFeaturePlaceholder(
-        'Cartão',
-        'O módulo de cartão do SPBank ainda não possui API oficial.'
-      );
+      renderCardAllocationPage();
       break;
     default:
       renderDashboard();
@@ -1956,6 +2169,7 @@ function loadPage(page) {
 ========================================================= */
 
 function showAdminApp(administrator) {
+  hideRevealedCardData();
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('appShell').classList.add('hidden');
   document.getElementById('adminShell').classList.remove('hidden');
@@ -2145,7 +2359,9 @@ function renderAdminCustomers() {
             >
               Ver histórico
             </button>
+            <button class="btn-outline" type="button" data-admin-cards="${customerId}">Gerenciar cartões</button>
           </div>
+          <div data-admin-card-panel></div>
 
           <p
             class="error-message admin-row-message"
@@ -2159,6 +2375,11 @@ function renderAdminCustomers() {
 
   container.querySelectorAll('[data-plan-action]').forEach(button => {
     button.addEventListener('click', () => changeAdminCustomerPlan(button));
+  });
+
+  container.querySelectorAll('[data-admin-cards]').forEach(button => {
+    button.addEventListener('click', () => renderAdminCardInstruments(button.dataset.adminCards,
+      button.closest('article').querySelector('[data-admin-card-panel]')));
   });
 
   container.querySelectorAll('[data-plan-history]').forEach(button => {
@@ -2416,4 +2637,6 @@ async function initializeApp() {
   showPublicArea('login');
 }
 
+document.addEventListener('visibilitychange', () => { if (document.hidden) hideRevealedCardData(); });
+window.addEventListener('pagehide', hideRevealedCardData);
 initializeApp();

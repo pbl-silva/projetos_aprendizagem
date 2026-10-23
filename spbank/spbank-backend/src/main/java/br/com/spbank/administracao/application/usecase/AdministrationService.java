@@ -262,7 +262,7 @@ public class AdministrationService
                         .findCustomerByIdForUpdate(
                                 customerId
                         )
-                        .filter(Customer::active)
+                        .filter((Customer value) -> java.util.Objects.requireNonNull(value).active())
                         .orElseThrow(() ->
                                 new NotFoundException(
                                         "CUSTOMER_NOT_FOUND"

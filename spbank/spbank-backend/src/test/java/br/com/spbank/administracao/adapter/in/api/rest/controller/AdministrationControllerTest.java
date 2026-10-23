@@ -35,7 +35,7 @@ class AdministrationControllerTest {
     @Test
     void shouldMapAdministrativeLoginWithoutChangingTheToken() {
         AdministrationUseCase administration =
-                mock(AdministrationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AdministrationUseCase.class));
 
         when(administration.login("gerente", "SPBankAdmin@123"))
                 .thenReturn(new AdministratorLoginResult(
@@ -62,7 +62,7 @@ class AdministrationControllerTest {
     @Test
     void shouldMapPlanUpdateToTheAdministrativeCommand() {
         AdministrationUseCase administration =
-                mock(AdministrationUseCase.class);
+                java.util.Objects.requireNonNull(mock(AdministrationUseCase.class));
 
         CustomerPlanChange change = new CustomerPlanChange(
                 UUID.randomUUID(),

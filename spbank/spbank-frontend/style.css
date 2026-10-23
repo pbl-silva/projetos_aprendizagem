@@ -3849,3 +3849,15 @@ tr:hover {
     }
 
 }
+.card-brand-logo { width: 100px; height: 56px; object-fit: contain; vertical-align: middle; background: #f8fafc; border-radius: 8px; }
+
+#creditAllocationPage fieldset, #cardInstruments fieldset, #cardFinance fieldset {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid rgba(128, 128, 128, .35);
+    border-radius: 12px;
+}
+#cardFinance details, #cardInstruments details { margin-block: 16px; }
+#cardFinance summary, #cardInstruments summary { cursor: pointer; font-weight: 600; padding-block: 8px; }
+#cardFinance pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; }

@@ -25,12 +25,12 @@ class ScheduledPixProcessorTest {
     @Test
     void shouldContinueTheBatchWhenOnePixFailsTechnically() {
         PixPersistence persistence =
-            mock(PixPersistence.class);
+            java.util.Objects.requireNonNull(mock(PixPersistence.class));
 
         ExecuteScheduledPixUseCase execute =
-            mock(
+            java.util.Objects.requireNonNull(mock(
                 ExecuteScheduledPixUseCase.class
-            );
+            ));
 
         Clock clock =
             Clock.fixed(

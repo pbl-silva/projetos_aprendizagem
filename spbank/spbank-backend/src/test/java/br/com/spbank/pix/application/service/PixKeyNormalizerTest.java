@@ -61,14 +61,14 @@ class PixKeyNormalizerTest {
             "r***@spbank.local"
         );
 
-        assertThat(
-            PixKeyNormalizer.mask(
+        assertThat(PixKeyNormalizer.mask(
                 PixKeyType.CPF_CNPJ,
                 "11144477735"
-            )
-        )
-        .doesNotContain("1114447")
-        .endsWith("7735");
+            )).doesNotContain("1114447");
+        assertThat(PixKeyNormalizer.mask(
+                PixKeyType.CPF_CNPJ,
+                "11144477735"
+            )).endsWith("7735");
 
         assertThatExceptionOfType(
             BusinessException.class
