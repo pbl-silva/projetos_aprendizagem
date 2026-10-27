@@ -4,5 +4,6 @@ public enum EntryReferenceType {
     TRANSFER,
     PIX,
     CARD,
+    PAYMENT,
     INVESTMENT
 }

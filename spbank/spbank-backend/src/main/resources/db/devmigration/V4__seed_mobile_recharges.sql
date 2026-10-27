@@ -1,0 +1,12 @@
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000001', '{"id":"e0000000-0000-0000-0000-000000000001","carrier":"Escuro","amount":20,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000002', '{"id":"e0000000-0000-0000-0000-000000000002","carrier":"Escuro","amount":30,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000003', '{"id":"e0000000-0000-0000-0000-000000000003","carrier":"Escuro","amount":60,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000004', '{"id":"e0000000-0000-0000-0000-000000000004","carrier":"Morto","amount":20,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000005', '{"id":"e0000000-0000-0000-0000-000000000005","carrier":"Morto","amount":30,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000006', '{"id":"e0000000-0000-0000-0000-000000000006","carrier":"Morto","amount":60,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000007', '{"id":"e0000000-0000-0000-0000-000000000007","carrier":"Tchau","amount":20,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000008', '{"id":"e0000000-0000-0000-0000-000000000008","carrier":"Tchau","amount":30,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000009', '{"id":"e0000000-0000-0000-0000-000000000009","carrier":"Tchau","amount":60,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000010', '{"id":"e0000000-0000-0000-0000-000000000010","carrier":"TOM","amount":20,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000011', '{"id":"e0000000-0000-0000-0000-000000000011","carrier":"TOM","amount":30,"active":true}');
+INSERT INTO catalogo_recargas_celular VALUES ('e0000000-0000-0000-0000-000000000012', '{"id":"e0000000-0000-0000-0000-000000000012","carrier":"TOM","amount":60,"active":true}');

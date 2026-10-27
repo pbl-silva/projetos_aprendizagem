@@ -3861,3 +3861,11 @@ tr:hover {
 #cardFinance details, #cardInstruments details { margin-block: 16px; }
 #cardFinance summary, #cardInstruments summary { cursor: pointer; font-weight: 600; padding-block: 8px; }
 #cardFinance pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; }
+
+/* Shared financial workflows */
+.financial-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:24px}
+#paymentsPage form,#pixPage form,[data-redemption-form]{display:grid;gap:12px;margin-block:24px;padding:18px;border:1px solid #ddd;border-radius:12px;min-width:0}
+#paymentsPage label,#pixPage label,[data-redemption-form] label{display:grid;gap:6px}
+#paymentsPage input,#paymentsPage select,#pixPage input,#pixPage select,[data-redemption-form] input{min-width:0;width:100%;box-sizing:border-box;padding:10px;border:1px solid #bbb;border-radius:6px}
+.carrier-options{display:flex;flex-wrap:wrap;gap:16px}.carrier-options label{align-items:center;text-align:center;padding:10px;border:1px solid #ddd;border-radius:10px}.carrier-options img{object-fit:contain}.carrier-options input{width:auto!important}
+#paymentsPage dd,#pixPage dd{margin:0 0 12px;overflow-wrap:anywhere}#paymentsPage dt,#pixPage dt{font-weight:600}#paymentsPage details,#pixPage details{margin-block:12px}#paymentsPage summary,#pixPage summary{cursor:pointer;overflow-wrap:anywhere}

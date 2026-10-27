@@ -21,6 +21,7 @@ public final class EntryReferenceTypeConverter
             case TRANSFER -> "TRANSFERENCIA";
             case PIX -> "PIX";
             case CARD -> "CARTAO";
+            case PAYMENT -> "PAGAMENTO";
             case INVESTMENT -> "INVESTIMENTO";
         };
     }
@@ -38,6 +39,7 @@ public final class EntryReferenceTypeConverter
             case "TRANSFERENCIA" -> EntryReferenceType.TRANSFER;
             case "PIX" -> EntryReferenceType.PIX;
             case "CARTAO" -> EntryReferenceType.CARD;
+            case "PAGAMENTO" -> EntryReferenceType.PAYMENT;
             case "INVESTIMENTO" -> EntryReferenceType.INVESTMENT;
 
             default -> throw new IllegalArgumentException(

@@ -1,17 +1,23 @@
 # Estado do SPBank
 
-Atualizado em 23/10/2026, com resultados locais confirmados.
+Atualizado em 27/10/2026. Escopo funcional do guia concluído.
 
 | Módulo | Estado |
 |---|---|
-| Autenticação, contas, transferências e PIX | Implementação existente preservada; suíte de regressão aprovada |
-| Cartão | Etapas concluídas nesta sequência, incluindo fluxo financeiro e interface; ver `cartao-concluido.md` |
-| Investimentos INV-1/INV-2 | Catálogo tipado, prévia, confirmação segura, extrato, lotes e interface concluídos |
-| Investimentos INV-3 | Calendário persistido e execução de aplicações pendentes implementados, com testes determinísticos |
-| Investimentos INV-4 | Rentabilidade bruta por cota/CDI interno, avaliações auditáveis e interface concluídas |
-| Investimentos INV-5 | Próximo checkpoint: resgates e vencimento automático |
-| Pagamentos e recargas | Ainda não iniciados nesta sequência |
+| Autenticação, contas, planos, gestão e transferências | Implementados; regressão aprovada |
+| Pix | Backend preservado; interface de chaves, favoritos, prévia, envio, comprovante, agendamentos, recorrência e cancelamento integrada |
+| Cartão | Instrumentos, crédito, faturas, pagamento, exportação e renovação concluídos |
+| Investimentos INV-1 a INV-4 | Catálogo, aplicações, calendário, ordens pendentes e valorização auditável preservados |
+| Investimentos INV-5 | Resgate parcial/total, cotização, crédito D+1 útil e vencimento automático do CDB concluídos |
+| Pagamentos PAG-1 | Parser de boleto/convênio, gerador personalizado, prévia, senha, idempotência, débito e comprovante concluídos |
+| Recargas PAG-2 | Doze produtos, celular validado, logos, confirmação, histórico e comprovante concluídos |
+| Agendamentos PAG-3 | Criação sem reserva, execução, revalidação, falha de negócio, nova tentativa técnica e cancelamento concluídos |
+| Inicialização | README, configuração de exemplo, Compose opcional e servidor estático Node incluídos |
 
-Validação mais recente: **234 testes Java aprovados**, análise de nulabilidade sem novos diagnósticos configurados, MySQL real com V1/V2 e Hibernate, 33 chamadas HTTP de INV-4, avaliações persistidas e fluxo de valorização/indisponibilidade no Chrome. Detalhes, limites e reprodução em [investimentos-rentabilidade.md](investimentos-rentabilidade.md). A validação anterior de aplicação, concorrência e rollback está em [investimentos-iniciais.md](investimentos-iniciais.md).
+Validação: **274 testes Java, zero falhas, zero erros e zero testes ignorados**; compilação e pacote aprovados. A análise JDT de produção e testes terminou sem diagnósticos de nulabilidade, com as três violações do controle negativo detectadas.
 
-Desenvolvimento interrompido a pedido do usuário após INV-4. INV-5 não foi iniciado. A última correção declara explicitamente o retorno não nulo de InvestmentService.complete(), validado pelos 234 testes e pela análise JDT. Nenhuma base de uso foi recriada para validar esta etapa.
+MySQL 8.0.46 real: V1–V5 aplicadas desde schema vazio, Hibernate inicializado e health UP. A atualização incremental também foi validada, sem recriar qualquer base de uso.
+
+As verificações HTTP cobriram senha, titularidade, idempotência, concorrência, agendamentos, resgates, vencimento, saldo e lançamentos. Erros de gravação forçados comprovaram rollback e nova tentativa; um agendamento com falha técnica não impediu o próximo item. O Chrome confirmou pagamentos, recargas, agendamento/cancelamento, Pix e resgate, sem exceções de JavaScript e sem transbordamento horizontal em 390 px.
+
+Detalhes e reprodução: [conclusao-projeto.md](conclusao-projeto.md). Inicialização: [README](../README.md). Tributação, suitability e integração com redes bancárias reais ficam fora do escopo do laboratório.

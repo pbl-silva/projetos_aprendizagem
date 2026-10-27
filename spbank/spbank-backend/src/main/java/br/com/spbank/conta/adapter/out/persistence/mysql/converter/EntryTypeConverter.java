@@ -22,6 +22,9 @@ public final class EntryTypeConverter
             case PIX_IN -> "PIX_ENTRADA";
             case CARD_PAYMENT -> "PAGAMENTO_CARTAO";
             case INVESTMENT_APPLICATION -> "INVESTIMENTO_APLICACAO";
+            case INVESTMENT_REDEMPTION -> "INVESTIMENTO_RESGATE";
+            case PAYMENT_OUT -> "PAGAMENTO_SAIDA";
+            case MOBILE_RECHARGE_OUT -> "RECARGA_CELULAR_SAIDA";
             case FEE -> "TAXA";
         };
     }
@@ -40,6 +43,9 @@ public final class EntryTypeConverter
             case "PIX_ENTRADA" -> EntryType.PIX_IN;
             case "PAGAMENTO_CARTAO" -> EntryType.CARD_PAYMENT;
             case "INVESTIMENTO_APLICACAO" -> EntryType.INVESTMENT_APPLICATION;
+            case "INVESTIMENTO_RESGATE" -> EntryType.INVESTMENT_REDEMPTION;
+            case "PAGAMENTO_SAIDA" -> EntryType.PAYMENT_OUT;
+            case "RECARGA_CELULAR_SAIDA" -> EntryType.MOBILE_RECHARGE_OUT;
             case "TAXA" -> EntryType.FEE;
 
             default -> throw new IllegalArgumentException(

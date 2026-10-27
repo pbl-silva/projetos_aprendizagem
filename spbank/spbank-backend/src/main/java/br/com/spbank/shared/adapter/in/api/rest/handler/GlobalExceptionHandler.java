@@ -331,6 +331,7 @@ public final class GlobalExceptionHandler {
         return "TRANSFER";
     }
 
+    if (path.startsWith("/api/v1/payments")) { return "PAYMENT"; }
     if (path.startsWith("/api/v1/investments")) {
         return "INVESTMENT";
     }

@@ -1,0 +1,1 @@
+INSERT INTO catalogo_cobrancas_estudo VALUES ('d0011e6eb55809e8377ee63258dbf9d8cb37ab9a6deafacd8f86645ea76f1cb5', '{"hash":"d0011e6eb55809e8377ee63258dbf9d8cb37ab9a6deafacd8f86645ea76f1cb5","mask":"8165 **** **** 0000","beneficiary":"Água de estudo","maskedDocument":"***.***.***/****-**","amount":40,"dueDate":"2099-12-31","active":true}');

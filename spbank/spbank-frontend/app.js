@@ -1371,7 +1371,7 @@ function replaceOfficialEntries(entries) {
   extrato = entries.map(entry => ({
     id: entry.id,
     source: 'spbank-api',
-    category: 'transfer',
+    category: entry.referenceType === 'PAYMENT' ? 'payment' : entry.referenceType === 'INVESTMENT' ? 'investment' : entry.referenceType === 'PIX' ? 'pix' : entry.referenceType === 'CARD' ? 'card' : 'transfer',
     tipo: entry.type === 'FEE'
       ? 'Tarifa de transferência'
       : entry.description,
@@ -1410,7 +1410,7 @@ function filtrarExtrato(tipo, botao) {
 }
 
 function atualizarFiltroAtivo() {
-  const mapa = { todos: 'btnTodos', transfer: 'btnTransfer' };
+  const mapa = { todos: 'btnTodos', transfer: 'btnTransfer', payment: 'btnPayment', pix: 'btnPix', investment: 'btnInvestment', card: 'btnCard' };
 
   document.querySelectorAll('.filtro-btn').forEach(btn => {
     btn.classList.remove('ativo');
@@ -1426,7 +1426,7 @@ function getFilteredStatementEntries() {
     .sort((a, b) => new Date(b.data) - new Date(a.data))
     .filter(item => {
       if (filtroAtual === 'todos') return true;
-      if (filtroAtual === 'transfer') return item.category === 'transfer';
+      if (['transfer','payment','pix','investment','card'].includes(filtroAtual)) return item.category === filtroAtual;
       return false;
     });
 }
@@ -1447,7 +1447,7 @@ function renderStatementSummary() {
   if (contexto) {
     contexto.textContent = filtroAtual === 'todos'
       ? 'Todas as movimentações carregadas'
-      : 'Somente transferências';
+      : ({transfer:'Somente transferências',payment:'Pagamentos e recargas',pix:'Somente Pix',investment:'Somente investimentos',card:'Somente cartão'}[filtroAtual]||'Movimentações filtradas');
   }
 }
 
@@ -1582,6 +1582,10 @@ function renderExtratoPage() {
       >
         Transferências
       </button>
+<button id="btnPayment" class="filtro-btn" type="button" onclick="filtrarExtrato('payment',this)">Pagamentos</button>
+<button id="btnPix" class="filtro-btn" type="button" onclick="filtrarExtrato('pix',this)">Pix</button>
+<button id="btnInvestment" class="filtro-btn" type="button" onclick="filtrarExtrato('investment',this)">Investimentos</button>
+<button id="btnCard" class="filtro-btn" type="button" onclick="filtrarExtrato('card',this)">Cartão</button>
     </div>
 
     <div class="card">
@@ -2002,7 +2006,7 @@ async function handleCreditAllocation(event) {
 function hideRevealedCardData() {
   cardRevealEpoch++;
   document.querySelectorAll('.card-sensitive').forEach(element => element.replaceChildren());
-  document.querySelectorAll('[data-card-form] input[type="password"], [data-finance-action] input[type="password"], #investmentForm input[type="password"]').forEach(input => { input.value = ''; });
+  document.querySelectorAll('[data-card-form] input[type="password"], [data-finance-action] input[type="password"], #investmentForm input[type="password"], [data-financial-form] input[type="password"]').forEach(input => { input.value = ''; });
 }
 
 function cardSecretInput(name, label, pin = false) {
@@ -2148,10 +2152,10 @@ function loadPage(page) {
       renderProfilePage();
       break;
     case 'pix':
-      renderFeaturePlaceholder(
-        'Pix',
-        'O módulo Pix do SPBank será integrado ao backend em sua etapa própria.'
-      );
+      renderPixPage();
+      break;
+    case 'payments':
+      renderPaymentsPage();
       break;
     case 'invest':
       renderInvestmentsPage();
