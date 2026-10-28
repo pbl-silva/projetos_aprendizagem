@@ -5,9 +5,9 @@ services:
       - "127.0.0.1:${MYSQL_HOST_PORT:-23307}:3306"
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-spbank}
-      MYSQL_USER: ${MYSQL_USER:-spbank}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Defina MYSQL_PASSWORD no arquivo .env}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Defina MYSQL_ROOT_PASSWORD no arquivo .env}
+      MYSQL_USER: ${DB_USER:-spbank}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-spbank123}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-spbankroot123}
     volumes:
       - spbank_mysql:/var/lib/mysql
     healthcheck:

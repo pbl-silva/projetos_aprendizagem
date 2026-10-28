@@ -1,0 +1,158 @@
+/* SPBank client design system: shared by all eight workspaces. */
+:root { --bank-workspace-width:1040px; --bank-card-radius:16px; --bank-card-padding:20px; --bank-control-radius:10px; --bank-control-height:42px; --bank-font-input:.875rem; }
+#appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) form :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { min-height:var(--bank-control-height); padding:9px 11px; border:1px solid var(--border-strong); border-radius:var(--bank-control-radius); background:var(--input-bg); font-size:var(--bank-font-input); margin:0; }
+#appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) form label { font-size:.77rem; }
+#appShell #content .bank-workspace :is(.bank-money-input,.pix-money-input) { display:flex; align-items:center; gap:8px; min-height:var(--bank-control-height); padding:0 11px; border:1px solid var(--border-strong); border-radius:var(--bank-control-radius); background:var(--input-bg); color:var(--muted-secondary); }
+#appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) form :is(.bank-money-input,.pix-money-input) input[type=number] { min-height:40px; padding:0; border:0; border-radius:0; background:none; font-size:1.1rem; font-weight:550; outline:0; box-shadow:none; }
+#appShell #content .bank-workspace :is(.bank-money-input,.pix-money-input):focus-within { outline:2px solid var(--accent); outline-offset:2px; }
+#appShell #content .bank-workspace .pix-segment { min-height:var(--bank-control-height); padding:3px; }
+#appShell #content .bank-workspace .pix-segment label > span { min-height:34px; }
+@media (min-width:901px) { html:has(#appShell:not(.hidden)) { scrollbar-gutter:stable; } }
+#appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) { width:100%; max-width:var(--bank-workspace-width); margin-inline:auto; padding:0; border:0; background:none; box-shadow:none; }
+#appShell #content .bank-workspace .workspace-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:0 0 24px; padding:0; border:0; background:none; }
+#appShell #content .bank-workspace .workspace-heading h2 { font-size:1.6rem; font-weight:650; line-height:1.2; letter-spacing:-.035em; margin:0 0 7px; }
+#appShell #content .bank-workspace .workspace-heading p { font-size:.83rem; line-height:1.6; margin:0; color:var(--muted); }
+.workspace-badge { flex-shrink:0; padding:6px 10px; border:1px solid var(--border); border-radius:20px; font-size:.65rem; color:var(--muted-secondary); white-space:nowrap; }
+#appShell #content .bank-workspace .workspace-eyebrow { font-size:.63rem; font-weight:650; letter-spacing:.12em; color:var(--muted-secondary); margin-bottom:7px; }
+#appShell #content .bank-workspace :is(.bank-tabs,.bank-filter-tabs) { display:flex; align-items:stretch; gap:18px; width:100%; max-width:100%; overflow-x:auto; padding:0; margin:0 0 24px; border:0; border-bottom:1px solid var(--border); border-radius:0; background:none; box-shadow:none; }
+#appShell #content .bank-workspace :is(.bank-tabs,.bank-filter-tabs) > button { display:flex; align-items:center; justify-content:center; gap:7px; flex:0 0 auto; min-height:44px; margin:0; padding:9px 0 12px; border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--muted-secondary); font-size:.78rem; font-weight:500; box-shadow:none; }
+#appShell #content .bank-workspace :is(.bank-tabs,.bank-filter-tabs) > button:is([aria-selected=true],.ativo) { color:var(--text); border-bottom-color:var(--accent); background:none; box-shadow:none; }
+#appShell #content .bank-workspace .bank-tabs .material-symbols-outlined { font-size:18px; }
+#appShell #content .bank-workspace :is(.card,.bank-panel,.pix-side-card) { padding:var(--bank-card-padding); border:1px solid var(--border); border-radius:var(--bank-card-radius); background:var(--surface); box-shadow:none; }
+#appShell #content .bank-workspace .card:hover { background:var(--surface); }
+#appShell #content .bank-workspace .highlight { color:var(--text); background:var(--surface); border-color:var(--border); box-shadow:none; }
+#appShell #content .bank-workspace h3 { font-size:1rem; font-weight:600; letter-spacing:-.02em; margin:0 0 10px; }
+#appShell #content .bank-workspace h4 { font-size:.9rem; font-weight:600; }
+#appShell #content .bank-workspace .bank-hint,#appShell #content .bank-workspace .bank-note { color:var(--muted-secondary); font-size:.77rem; line-height:1.7; margin:0 0 14px; }
+.bank-note { padding:12px 16px; border-left:2px solid var(--accent); border-radius:0 10px 10px 0; background:var(--accent-soft); }
+.bank-notice { padding:12px 16px; border:1px solid var(--accent-soft-strong); border-radius:12px; background:var(--accent-soft); margin-bottom:18px; font-size:.8rem; }
+#appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) .bank-form { display:grid; gap:18px; min-width:0; width:100%; max-width:none; margin:0; padding:var(--bank-card-padding); border:1px solid var(--border); border-radius:var(--bank-card-radius); background:var(--surface); }
+#appShell #content #pixPage #pixPaymentForm.bank-form { padding:var(--bank-card-padding); border-radius:var(--bank-card-radius); }
+#appShell #content #pixPage #pixKeyForm.bank-form,#appShell #content #pixPage #pixLookup.bank-form { background:none; }
+#appShell #content #investmentsPage #investmentForm.bank-form { max-width:none; }
+#appShell #content .bank-workspace .bank-form label { display:grid; gap:7px; min-width:0; margin:0; font-size:.77rem; font-weight:550; }
+#appShell #content .bank-workspace .bank-form :where(input:not([type=checkbox]):not([type=radio]),select,textarea) { width:100%; min-width:0; min-height:var(--bank-control-height); padding:9px 11px; border:1px solid var(--border-strong); border-radius:var(--bank-control-radius); background:var(--input-bg); font-size:var(--bank-font-input); margin:0; }
+#appShell #content .bank-workspace :is(.btn,.btn-outline,.btn-secondary) { min-height:42px; padding:9px 16px; font-size:.8rem; border-radius:10px; }
+#appShell #content .bank-workspace .bank-form :is(.bank-field-row,.grid-2) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; min-width:0; }
+#appShell #content .bank-workspace .bank-form > [type=submit] { justify-self:end; }
+.bank-layout { display:grid; grid-template-columns:minmax(0,1fr) 280px; align-items:start; gap:22px; }
+#appShell #content #pixPage .pix-layout { grid-template-columns:minmax(0,1fr) 280px; }
+#appShell #content #paymentsPage .financial-grid { grid-template-columns:minmax(0,1fr) 280px; gap:22px; }
+#appShell #content .bank-workspace .bank-panel > :last-child { margin-bottom:0; }
+.bank-account-note { display:grid; align-content:start; gap:12px; }
+.bank-account-note > strong { font-size:1.5rem; font-weight:650; letter-spacing:-.03em; }
+.bank-form-heading { margin:0; padding:0; border:0; background:none; }
+.bank-form-heading h3,.bank-form-heading h4 { margin:0; }
+.bank-entry { display:grid; gap:18px; }
+.bank-entry > .btn { justify-self:end !important; }
+#appShell #content .bank-workspace .bank-form :is([role=status],.error-message):empty { display:none; }
+#appShell #content .bank-workspace .bank-review-panel { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 10px; padding:0; border:0; background:none; }
+.bank-review-panel > :is([data-review],#investmentPreviewResult,label) { grid-column:1/-1; }
+.bank-review-panel > :is([data-review],#investmentPreviewResult) { padding:14px 0; font-size:.84rem; line-height:1.9; border-bottom:1px solid var(--border); }
+.bank-review-panel > label { max-width:320px; }
+.bank-review { margin:0; }
+.bank-review > div { display:flex; justify-content:space-between; align-items:baseline; gap:16px; padding:10px 0; border-bottom:1px solid var(--border); }
+#appShell #content .bank-workspace .bank-review dt { font-size:.76rem; color:var(--muted-secondary); font-weight:400; }
+#appShell #content .bank-workspace .bank-review dd { margin:0; font-size:.84rem; text-align:right; overflow-wrap:anywhere; }
+#appShell #content .bank-workspace .bank-review .is-value dd { font-size:1.25rem; font-weight:650; }
+#appShell #content .bank-workspace .bank-review-panel > :has(> .bank-review) { padding:0; border:0; }
+#appShell #content .bank-workspace .bank-review-panel > [type=submit] { grid-row:3; grid-column:2; justify-self:end; }
+#appShell #content .bank-workspace .bank-review-panel .bank-edit { grid-row:3; grid-column:1; justify-self:start; }
+#appShell #content .bank-workspace .bank-form-section { display:grid; gap:14px; border:0; background:none; padding:0; margin:0; }
+.bank-form-section legend { padding:0 0 12px; font-size:.8rem; font-weight:600; }
+.bank-identity { display:grid; gap:18px; padding:0; border:0; }
+#appShell #content .bank-workspace .bank-identity { padding:0; margin:0; border:0; background:none; }
+.bank-identity legend { display:none; }
+.bank-identity .grid-2 { grid-template-columns:1fr; gap:18px; }
+#appShell #content .bank-workspace .bank-identity label { display:grid; gap:5px; font-size:.7rem; color:var(--muted-secondary); }
+#appShell #content .bank-workspace .bank-identity input { padding:0; min-height:24px; height:24px; border:0; background:none; color:var(--text); -webkit-text-fill-color:var(--text); opacity:1; font-size:.85rem; font-weight:500; }
+.bank-identity input::-webkit-calendar-picker-indicator { display:none; }
+.bank-timing { display:grid; gap:7px; }
+.bank-timing > span { font-size:.77rem; font-weight:550; }
+.bank-segment { display:flex; gap:4px; min-height:42px; padding:3px; border:1px solid var(--border); border-radius:10px; background:var(--input-bg); }
+.bank-segment button { flex:1; border:0; border-radius:7px; background:none; font-size:.75rem; color:var(--muted-secondary); }
+.bank-segment [aria-pressed=true] { background:var(--surface); color:var(--text); box-shadow:0 1px 5px rgba(0,0,0,.1); }
+#appShell #content .bank-workspace .bank-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:0 0 18px; }
+#appShell #content .bank-workspace .bank-metrics > :is(.card,.bank-panel) { display:grid; gap:7px; padding:18px; margin:0; }
+#appShell #content .bank-workspace .bank-metrics .highlight { border-left:3px solid var(--accent); }
+#appShell #content .bank-workspace .bank-metrics :is(p,span) { font-size:.76rem; color:var(--muted-secondary); margin:0; }
+#appShell #content .bank-workspace .bank-metrics :is(h2,strong) { font-size:1.35rem; letter-spacing:-.03em; margin:0; }
+#appShell #content .bank-workspace .bank-quick-actions { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; padding:0; border:0; background:none; box-shadow:none; margin:0 0 18px; }
+#appShell #content .bank-workspace .bank-quick-actions .menu-item { display:flex; flex-direction:row; justify-content:flex-start; align-items:center; gap:10px; min-width:0; padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); text-align:left; color:var(--text); }
+#appShell #content .bank-workspace .bank-quick-actions .icon { display:grid; place-items:center; width:32px; height:32px; padding:0; margin:0; border:0; border-radius:9px; background:var(--accent-soft); color:var(--accent-text); flex-shrink:0; }
+#appShell #content .bank-workspace .bank-quick-actions .icon .material-symbols-outlined { font-size:19px; }
+#appShell #content .bank-workspace .bank-quick-actions .menu-item > span { font-size:.76rem; }
+#appShell #content .bank-workspace .statement-toolbar { flex-wrap:nowrap; }
+#appShell #content .bank-workspace .resumo-valores { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+#appShell #content .bank-workspace .resumo-valores > div { padding:14px; border:1px solid var(--border); border-radius:12px; background:var(--bg-secondary); }
+#appShell #content .bank-workspace .bank-brand-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin:8px 0 18px; }
+.bank-brand-tile { display:grid; align-content:start; gap:12px; padding:16px; min-width:0; border:1px solid var(--border); border-radius:14px; background:var(--bg-secondary); }
+#appShell #content .bank-workspace .bank-brand-tile label { display:block; font-size:.76rem; }
+.bank-brand-tile .card-brand-logo { display:block; width:82px; height:42px; margin-bottom:8px; }
+#appShell #content .bank-workspace .bank-brand-tile input { margin-top:9px; }
+#appShell #content .bank-workspace .bank-brand-tile .bank-money-input { margin-top:9px; }
+#appShell #content .bank-workspace .bank-brand-tile p { font-size:.7rem; line-height:1.8; margin:0; }
+.bank-form-footer { display:flex; align-items:flex-end; gap:14px; }
+.bank-form-footer label { flex:1; max-width:320px; }
+.bank-form-footer > button { margin-left:auto; }
+#appShell #content .bank-workspace #creditAllocationForm fieldset { padding:0; border:0; }
+#appShell #content .bank-workspace #creditAllocationForm > fieldset { display:block; }
+.bank-action-disclosure { padding:16px 20px; border:1px solid var(--border); border-radius:16px; background:var(--surface); margin-bottom:16px; }
+.bank-action-disclosure > summary { cursor:pointer; font-size:.85rem; font-weight:550; }
+#appShell #content .bank-workspace .bank-action-disclosure .bank-form { padding:18px 0 0; border:0; background:none; }
+#appShell #content .bank-workspace .bank-issue-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding:0; border:0; }
+.bank-issue-fields legend { display:none; }
+.bank-issue-fields [type=submit] { grid-column:1/-1; }
+.bank-finance-group { margin-top:18px; }
+.bank-operation-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 16px; align-items:start; }
+#appShell #content .bank-workspace .bank-operation-grid > details { margin:0; padding:12px; border:1px solid var(--border); border-radius:10px; }
+.bank-operation-grid summary { cursor:pointer; font-size:.78rem; }
+#appShell #content .bank-workspace .bank-operation-grid .bank-form { border:0; padding:14px 0 0; background:none; }
+.bank-operation-grid [open] { grid-column:1/-1; }
+.bank-operation-grid fieldset { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.bank-operation-grid fieldset > :is(button,pre,p) { grid-column:1/-1; }
+.bank-operation-grid fieldset > button { justify-self:end; }
+.bank-operation-grid .bank-form legend { display:none; }
+#appShell #content .bank-workspace .investment-products { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:0; }
+#appShell #content .bank-workspace .investment-products > article { display:grid; align-content:start; gap:10px; margin:0; }
+.bank-investment-positions > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.bank-investment-positions > div > p { grid-column:1/-1; }
+#appShell #content .bank-workspace .bank-redemption-history details { padding:16px; margin-top:12px; border:1px solid var(--border); border-radius:12px; }
+#appShell #content .bank-workspace :is(#cardInstruments,#cardFinance,#creditAllocationPage) > h3 { margin-bottom:14px; }
+#appShell #content .bank-workspace .bank-module-panel { padding:0; border:0; background:none; box-shadow:none; }
+@media (max-width:1100px) {
+  #appShell #content .bank-workspace .bank-layout,#appShell #content #pixPage .pix-layout,#appShell #content #paymentsPage .financial-grid { grid-template-columns:minmax(0,1fr); }
+  #appShell #content #pixPage { max-width:var(--bank-workspace-width); }
+  .bank-account-note { display:none !important; }
+}
+@media (max-width:700px) {
+  #appShell #content .bank-workspace .bank-brand-grid { grid-template-columns:1fr; }
+  .bank-brand-tile .card-brand-logo { display:inline-block; vertical-align:middle; margin-right:10px; }
+  .bank-investment-positions > div { grid-template-columns:1fr; }
+  #appShell #content .bank-workspace .resumo-valores { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:560px) {
+  :root { --bank-control-height:44px; --bank-font-input:16px; }
+  #appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) form :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { font-size:var(--bank-font-input); min-height:var(--bank-control-height); }
+  #appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) form :is(.bank-money-input,.pix-money-input) input[type=number] { min-height:42px; font-size:1.1rem; }
+  #appShell #content .bank-workspace .pix-segment label > span { min-height:36px; }
+  #appShell #content .bank-workspace .workspace-heading { align-items:flex-start; gap:10px; margin-bottom:20px; }
+  #appShell #content .bank-workspace .workspace-heading h2 { font-size:1.4rem; }
+  #appShell #content .bank-workspace .workspace-heading p { font-size:.77rem; }
+  .workspace-badge { font-size:.55rem; padding:5px 7px; margin-top:3px; }
+  #appShell #content .bank-workspace .bank-tabs { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:3px; margin-bottom:18px; }
+  #appShell #content .bank-workspace .bank-tabs > button { flex-direction:column; gap:5px; min-width:0; padding:8px 2px 10px; font-size:.64rem; line-height:1.3; }
+  #appShell #content :is(.bank-workspace,#pixPage,#paymentsPage,#investmentsPage) .bank-form,#appShell #content #pixPage #pixPaymentForm.bank-form { padding:16px; }
+  #appShell #content .bank-workspace .bank-form :where(input:not([type=checkbox]):not([type=radio]),select,textarea) { font-size:16px; min-height:44px; }
+  #appShell #content .bank-workspace .bank-form .bank-field-row { grid-template-columns:1fr; }
+  #appShell #content .bank-workspace .bank-form .bank-account-row,#appShell #content .bank-workspace .bank-form .bank-value-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #appShell #content .bank-workspace .bank-metrics { gap:8px; }
+  #appShell #content .bank-workspace .bank-metrics :is(.card,.bank-panel) { padding:12px; }
+  #appShell #content .bank-workspace .bank-metrics :is(h2,strong) { font-size:1.02rem; }
+  #appShell #content .bank-workspace .bank-metrics :is(p,span) { font-size:.64rem; }
+  #appShell #content .bank-workspace .bank-quick-actions { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .bank-form-footer { flex-direction:column; align-items:stretch; }
+  .bank-form-footer label { max-width:none; }
+  #appShell #content .bank-workspace .bank-operation-grid,#appShell #content .bank-workspace .investment-products { grid-template-columns:1fr; }
+  #appShell #content .bank-workspace .bank-panel { padding:16px; }
+}

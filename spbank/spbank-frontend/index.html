@@ -17,7 +17,8 @@
     href="img/favicon-spbank-dark.png"
   >
 
-  <link rel="stylesheet" href="style.css?v=20261027-1">
+  <link rel="stylesheet" href="style.css?v=20261028-4">
+  <link rel="stylesheet" href="workspace.css?v=20261028-2">
   <link
     rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -586,73 +587,7 @@
 
   <div id="appShell" class="container hidden">
 
-    <aside class="sidebar">
-      <div class="logo">
-        <img
-          class="theme-logo"
-          src="img/logo-spbank-dark.png"
-          alt="SPBank"
-        >
-      </div>
-
-      <button type="button" onclick="loadPage('dashboard')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >team_dashboard</span>
-        Dashboard
-      </button>
-
-      <button type="button" onclick="loadPage('pix')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          id="pix"
-          aria-hidden="true"
-        >window</span>
-        Pix
-      </button>
-
-      <button type="button" onclick="loadPage('transfer')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >sync_alt</span>
-        Transferência
-      </button>
-
-      <button type="button" onclick="loadPage('payments')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">payments</span>Pagamentos e recargas</button>
-      <button type="button" onclick="loadPage('invest')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >monitoring</span>
-        Investimentos
-      </button>
-
-      <button type="button" onclick="loadPage('cartao')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >credit_card</span>
-        Cartão
-      </button>
-
-      <button type="button" onclick="loadPage('extrato')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >receipt</span>
-        Extrato
-      </button>
-
-      <button type="button" onclick="loadPage('profile')">
-        <span
-          class="material-symbols-outlined menu-icon"
-          aria-hidden="true"
-        >manage_accounts</span>
-        Meus dados
-      </button>
-    </aside>
+<aside class="sidebar floating-nav" aria-label="Navegação principal"><div class="nav-brand"><img class="theme-logo" src="img/logo-spbank-dark.png" alt="SPBank"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="primaryNavigation" aria-label="Expandir menu" title="Expandir menu"><span class="material-symbols-outlined" aria-hidden="true">menu_open</span></button></div><nav id="primaryNavigation"><button type="button" data-nav-page="dashboard" data-tooltip="Início" aria-label="Início" onclick="loadPage('dashboard')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">space_dashboard</span><span class="nav-label">Início</span></button><button type="button" data-nav-page="pix" data-tooltip="Pix" aria-label="Pix" onclick="loadPage('pix')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">payments</span><span class="nav-label">Pix</span></button><button type="button" data-nav-page="transfer" data-tooltip="Transferências" aria-label="Transferências" onclick="loadPage('transfer')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">swap_horiz</span><span class="nav-label">Transferências</span></button><button type="button" data-nav-page="payments" data-tooltip="Pagamentos" aria-label="Pagamentos" onclick="loadPage('payments')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">receipt_long</span><span class="nav-label">Pagamentos</span></button><button type="button" data-nav-page="invest" data-tooltip="Investimentos" aria-label="Investimentos" onclick="loadPage('invest')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">monitoring</span><span class="nav-label">Investimentos</span></button><button type="button" data-nav-page="cartao" data-tooltip="Cartões" aria-label="Cartões" onclick="loadPage('cartao')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">credit_card</span><span class="nav-label">Cartões</span></button><button type="button" data-nav-page="extrato" data-tooltip="Extrato" aria-label="Extrato" onclick="loadPage('extrato')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">history</span><span class="nav-label">Extrato</span></button><button type="button" data-nav-page="profile" data-tooltip="Meus dados" aria-label="Meus dados" onclick="loadPage('profile')"><span class="material-symbols-outlined menu-icon" aria-hidden="true">person</span><span class="nav-label">Meus dados</span></button></nav><div class="nav-footer"><span class="nav-status-dot"></span><span class="nav-label">Seu banco, no seu ritmo</span></div></aside>
 
     <main>
       <header class="app-header">
@@ -896,11 +831,12 @@
 
   <!-- JAVASCRIPT -->
 
-  <script src="card-finance.js?v=20261023-1"></script>
-  <script src="payments.js?v=20261027"></script>
-  <script src="pix.js?v=20261027"></script>
-  <script src="investments.js?v=20261027-1"></script>
-  <script src="app.js?v=20261027-1"></script>
+  <script src="workspace.js?v=20261028-2"></script>
+  <script src="card-finance.js?v=20261028-4"></script>
+  <script src="payments.js?v=20261028-4"></script>
+  <script src="pix.js?v=20261028-4"></script>
+  <script src="investments.js?v=20261028-4"></script>
+  <script src="app.js?v=20261028-4"></script>
 
 </body>
 </html>

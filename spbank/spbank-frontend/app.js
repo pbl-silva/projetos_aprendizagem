@@ -787,6 +787,7 @@ function renderFeaturePlaceholder(title, description) {
 }
 
 function renderDashboard() {
+  updateNavigation("dashboard");
   const content = document.getElementById('content');
   const recentEntries = extrato
     .slice()
@@ -921,6 +922,7 @@ function renderDashboard() {
           `).join('')}
     </div>
   `;
+  organizeDashboardWorkspace();
 }
 
 function renderTransferPage() {
@@ -1038,6 +1040,7 @@ function renderTransferPage() {
     </dialog>
   `;
 
+  organizeTransferWorkspace();
   document.getElementById('transferForm')
     .addEventListener('submit', submitTransfer);
 
@@ -1303,6 +1306,7 @@ function renderTransferReceipt(transfer) {
     </section>
   `;
 
+  organizeTransferReceiptWorkspace();
   setText('receiptStatus', transferStatusLabels[transfer.status] || transfer.status);
   setText('receiptId', transfer.id);
   setText('receiptRecipient', transfer.recipientName);
@@ -1401,6 +1405,7 @@ function filtrarExtrato(tipo, botao) {
 
   document.querySelectorAll('.filtro-btn').forEach(btn => {
     btn.classList.remove('ativo');
+    btn.setAttribute('aria-pressed','false');
   });
 
   if (botao) botao.classList.add('ativo');
@@ -1417,7 +1422,7 @@ function atualizarFiltroAtivo() {
   });
 
   const ativo = document.getElementById(mapa[filtroAtual]);
-  if (ativo) ativo.classList.add('ativo');
+  if (ativo) { ativo.classList.add('ativo'); ativo.setAttribute('aria-pressed','true'); }
 }
 
 function getFilteredStatementEntries() {
@@ -1597,6 +1602,7 @@ function renderExtratoPage() {
     <div id="listaExtrato"></div>
   `;
 
+  organizeStatementWorkspace();
   atualizarFiltroAtivo();
   renderExtrato();
   renderStatementSummary();
@@ -1794,19 +1800,19 @@ function renderProfilePage() {
     </form>
   `;
 
+  organizeProfileWorkspace();
   document.getElementById('profileForm')
     .addEventListener('submit', handleProfileUpdate);
 
   document.getElementById('passwordForm')
     .addEventListener('submit', handlePasswordChange);
 
-  loadProfile().catch(error =>
-    showApiError(document.getElementById('profileMessage'), error)
-  );
+  loadProfile().catch(error=>{const message=document.getElementById('profileMessage');if(message)showApiError(message,error);});
 }
 
 async function loadProfile() {
   const profile = await api('/api/v1/auth/profile');
+  if(!document.getElementById('profileForm'))return profile;
 
   document.getElementById('profileFullName').value = profile.fullName ?? '';
   document.getElementById('profileCpf').value = formatCpf(profile.cpf);
@@ -1924,6 +1930,7 @@ async function handlePasswordChange(event) {
 async function renderCardAllocationPage() {
   const content = document.getElementById('content');
   content.innerHTML = '<section id="creditAllocationPage" class="card" aria-live="polite">Carregando crédito…</section><section id="cardInstruments" class="card" aria-live="polite">Carregando cartões…</section><section id="cardFinance" class="card" aria-live="polite">Carregando faturas…</section>';
+  organizeCardWorkspace();
   renderCardInstruments(document.getElementById('cardInstruments'));
   renderCardFinance(document.getElementById('cardFinance'));
   const page = document.getElementById('creditAllocationPage');
@@ -1960,6 +1967,7 @@ async function renderCardAllocationPage() {
       </form>
       <div id="creditAllocationMessage" role="status" aria-live="polite"></div>
     `;
+    decorateCreditAllocation(page,overview,allocation);
     page.querySelector('form').addEventListener('submit', handleCreditAllocation);
   } catch (error) {
     if (page.isConnected) {
@@ -2061,6 +2069,7 @@ async function renderCardInstruments(container) {
           <button type="button" data-hide-card class="btn-outline">Ocultar dados</button>
           <details><summary>Gerenciar instrumento</summary>${actions}</details></article>`;
       }).join('') : '<p>Nenhum cartão emitido.</p>'}`;
+    decorateCardInstruments(container);
     container.querySelectorAll('[data-card-form]').forEach(form => form.addEventListener('submit', handleCardInstrumentAction));
     container.querySelectorAll('[data-hide-card]').forEach(button => button.addEventListener('click', hideRevealedCardData));
   } catch (error) {
@@ -2137,6 +2146,7 @@ async function renderAdminCardInstruments(customerId, container) {
 }
 
 function loadPage(page) {
+  updateNavigation(page);
   hideRevealedCardData();
   switch (page) {
     case 'dashboard':
@@ -2522,6 +2532,8 @@ function renderCustomerPlanHistory(history) {
 
 async function initializeApp() {
   initializeTheme();
+  initializeNavigation();
+  initializeClientThemePlacement();
 
   document.querySelectorAll('[data-public-tab]').forEach(control => {
     control.addEventListener('click', () => {
@@ -2644,3 +2656,38 @@ async function initializeApp() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) hideRevealedCardData(); });
 window.addEventListener('pagehide', hideRevealedCardData);
 initializeApp();
+
+/* Floating navigation: only layout preference is kept locally. */
+function initializeNavigation(){
+ const nav=document.querySelector('#appShell .floating-nav');if(!nav)return;
+ let expanded=false;try{expanded=localStorage.getItem('spbank.nav-expanded')==='true';}catch{}
+ const more=document.createElement('button');more.type='button';more.className='nav-more';more.setAttribute('aria-label','Mais opções de navegação');more.setAttribute('aria-controls','primaryNavigation');more.setAttribute('aria-expanded','false');more.innerHTML='<span class="material-symbols-outlined" aria-hidden="true">apps</span><span>Mais</span>';nav.append(more);
+ more.onclick=()=>setMobileNavigationOpen(nav,!nav.classList.contains('mobile-open'));
+ matchMedia('(max-width:900px)').addEventListener('change',()=>setMobileNavigationOpen(nav,false));
+ nav.querySelectorAll('[data-nav-page]').forEach(button=>{button.title=button.getAttribute('aria-label');});
+ const toggle=nav.querySelector('.nav-toggle');
+ const apply=()=>{nav.classList.toggle('is-expanded',expanded);document.getElementById('appShell').classList.toggle('nav-expanded',expanded);toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-label',expanded?'Recolher menu':'Expandir menu');toggle.title=expanded?'Recolher menu':'Expandir menu';toggle.firstElementChild.textContent=expanded?'chevron_left':'chevron_right';};
+ toggle.addEventListener('click',()=>{expanded=!expanded;apply();try{localStorage.setItem('spbank.nav-expanded',String(expanded));}catch{}});
+ nav.addEventListener('keydown',event=>{if(event.key==='Escape'&&nav.classList.contains('mobile-open')){setMobileNavigationOpen(nav,false);more.focus();}else if(event.key==='Escape'&&expanded){expanded=false;apply();toggle.focus();try{localStorage.setItem('spbank.nav-expanded','false');}catch{}}});apply();updateNavigation('dashboard');
+}
+function updateNavigation(page){
+ const nav=document.querySelector('.floating-nav');if(nav){const wasOpen=nav.classList.contains('mobile-open');setMobileNavigationOpen(nav,false);const more=nav.querySelector('.nav-more');if(more){if(wasOpen&&matchMedia('(max-width:900px)').matches)more.focus();more.setAttribute('aria-expanded','false');more.classList.toggle('is-active',['invest','cartao','extrato','profile'].includes(page));}}
+ document.querySelectorAll('[data-nav-page]').forEach(button=>{const active=button.dataset.navPage===page;button.classList.toggle('is-active',active);if(active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
+}
+
+function setMobileNavigationOpen(nav,open){
+ nav.classList.toggle('mobile-open',open);const more=nav.querySelector('.nav-more');if(!more)return;
+ more.setAttribute('aria-expanded',String(open));more.setAttribute('aria-label',open?'Fechar opções de navegação':'Mais opções de navegação');
+ more.firstElementChild.textContent=open?'close':'apps';more.lastElementChild.textContent=open?'Fechar':'Mais';
+}
+
+function initializeClientThemePlacement(){
+ const control=document.getElementById('themeControl'),shell=document.getElementById('appShell');if(!control||!shell)return;
+ const home=document.createComment('theme control home');control.before(home);
+ const compact=matchMedia('(max-width:560px)');
+ const place=()=>{const target=compact.matches&&!shell.classList.contains('hidden')?shell.querySelector('.app-header .user-session'):null;
+  if(target&&control.parentElement!==target){closeThemeMenu();target.append(control);}
+  else if(!target&&control.previousSibling!==home){closeThemeMenu();home.after(control);}
+ };
+ new MutationObserver(place).observe(shell,{attributes:true,attributeFilter:['class']});compact.addEventListener('change',place);place();
+}

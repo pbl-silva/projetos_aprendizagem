@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:${MYSQL_HOST_PORT:3306}/${MYSQL_DATABASE:spbank}?useSSL=false&allowPublicKeyRetrieval=true&connectionTimeZone=UTC&createDatabaseIfNotExist=true}
+    username: ${DB_USER:spbank}
+    password: ${DB_PASSWORD:spbank123}
+
+  flyway:
+    locations: classpath:db/migration,classpath:db/devmigration
+
+# Chave estavel do laboratorio para os cartoes emitidos localmente.
+spbank:
+  card:
+    data-secret: ${CARD_DATA_SECRET:spbank-local-study-card-secret-change-before-deployment}

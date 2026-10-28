@@ -59,6 +59,7 @@ async function renderCardFinance(container) {
       ${cardFinanceHistory('Acordos',state.agreements,row=>`${row.brand} · ${row.status} · principal ${formatarMoeda(row.principal)} · juros ${formatarMoeda(row.interest)} · ${row.installments} parcelas`)}
       ${cardFinanceHistory('Encargos por atraso',state.lateEpisodes,row=>`${row.brand} · multa ${formatarMoeda(row.remainingFine)} · mora ${formatarMoeda(row.remainingMora)} · plano na origem ${row.plan}`)}
     `;
+    decorateCardFinance(container);
     container.querySelectorAll('[data-finance-action]').forEach(form => {
       form.addEventListener('submit', handleCardFinanceSubmit);
       form.querySelector('[data-finance-preview]')?.addEventListener('click', () => previewCardFinance(form));
@@ -117,7 +118,10 @@ async function handleCardFinanceSubmit(event){
   try {const result=await api(request.path,{method:request.method,headers:{'Idempotency-Key':form.pendingCardFinance.key},body});
     form.pendingCardFinance=null;if(!form.isConnected)return;
     output.textContent=`${result.status ?? 'Concluído'} · ${result.message ?? ''}${result.amount!=null?' · Valor '+formatarMoeda(result.amount):''}`;
-    const refresh=document.createElement('button');refresh.type='button';refresh.className='btn-outline';refresh.textContent='Atualizar dados do cartão';refresh.onclick=()=>renderCardAllocationPage();output.append(refresh);
+    const status=result.request?.status??result.status;
+    const labels={REQUESTED:'Solicitação enviada',CANCELLED:'Operação cancelada',APPROVED:'Operação aprovada',DECLINED:'Operação recusada',COMPLETED:'Operação concluída',PROPOSED:'Proposta gerada',ACTIVE:'Operação confirmada',OFFERED:'Oferta disponível'};
+    const notice=(labels[status]||result.message||'Operação registrada')+(result.amount!=null?' · '+formatarMoeda(result.amount):'');
+    await renderCardAllocationPage();const workspace=document.getElementById('cardsWorkspace');if(workspace)announceBankWorkspace(workspace,notice);
   }catch(error){if(output.isConnected)showApiError(output,error);}finally{fieldset.disabled=false;clearCardFinanceSecrets(form);}
 }
 async function downloadCardInvoice(button){
