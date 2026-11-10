@@ -36,7 +36,7 @@ Foram identificados dois riscos médios de aplicação e dois pontos de atençã
 
 O SBOM contém **96 componentes de produção**. A consulta realizada em 10/11/2026 retornou **zero avisos conhecidos** para as versões resolvidas.
 
-Esse resultado é uma fotografia da base OSV no momento da consulta. O Dependabot foi configurado para revisar semanalmente Maven, a imagem Docker e as GitHub Actions. Novos avisos podem aparecer depois desta data.
+Esse resultado é uma fotografia da base OSV no momento da consulta. O Dependabot foi configurado para revisar semanalmente Maven e GitHub Actions. Novos avisos podem aparecer depois desta data.
 
 ### Limitação da NVD
 
@@ -106,10 +106,11 @@ Recomendação: cadastrar uma chave NVD como segredo e executar o Dependency-Che
 Executa semanalmente para:
 
 - dependências Maven em `spbank/spbank-backend`;
-- imagem Docker usada pelo backend;
 - GitHub Actions do repositório.
 
 Os pull requests ainda precisam passar por revisão e testes antes do merge. Atualizações não são aplicadas diretamente à branch principal.
+
+Uma rotina experimental para o ecossistema Docker falhou ao analisar o diretório que contém apenas o Compose e foi removida para não manter um check permanentemente quebrado. A imagem MySQL permanece fora da cobertura automatizada desta entrega e deve ser verificada com scanner de contêiner apropriado.
 
 ### CodeQL
 
@@ -120,7 +121,7 @@ O sucesso do workflow confirma que a análise foi produzida e aceita pelo GitHub
 ## Limitações
 
 - Não houve teste de penetração dinâmico contra uma implantação pública.
-- A imagem MySQL não foi analisada localmente por scanner de contêiner; o Dependabot passa a acompanhar atualizações da referência.
+- A imagem MySQL não foi analisada localmente por scanner de contêiner e não ficou coberta pelo Dependabot nesta configuração.
 - O banco real não foi submetido a testes de privilégio nesta revisão.
 - A NVD não foi consultada de forma conclusiva sem chave.
 - A API anônima do GitHub não permitiu listar os alertas enviados pelo CodeQL; a conferência precisa ser feita por uma conta com permissão no repositório.

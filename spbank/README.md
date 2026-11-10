@@ -94,7 +94,7 @@ Os scripts HTTP e Chrome em `spbank-backend/scripts` são fixtures de integraç�
 
 Consulte [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) para os resultados da validação e os documentos de cada etapa.
 
-A revisão de dependências, código e configuração está em [docs/relatorio-seguranca-2026-11-10.md](docs/relatorio-seguranca-2026-11-10.md). O repositório também mantém Dependabot para Maven, imagem Docker e GitHub Actions, além de análise Java com CodeQL em pushes e pull requests da branch principal.
+A revisão de dependências, código e configuração está em [docs/relatorio-seguranca-2026-11-10.md](docs/relatorio-seguranca-2026-11-10.md). O repositório também mantém Dependabot para Maven e GitHub Actions, além de análise Java com CodeQL em pushes e pull requests da branch principal.
 
 ## Padrão visual das modalidades
 

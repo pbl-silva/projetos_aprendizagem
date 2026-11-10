@@ -13,7 +13,7 @@ Atualizado em 10/11/2026. Escopo funcional do guia concluído.
 | Recargas PAG-2 | Doze produtos, celular validado, logos, confirmação, histórico e comprovante concluídos |
 | Agendamentos PAG-3 | Criação sem reserva, execução, revalidação, falha de negócio, nova tentativa técnica e cancelamento concluídos |
 | Integrações externas | Selic/CDI da BrasilAPI como referência visual e ViaCEP para auxílio no preenchimento de endereço, ambos com timeout, cache e resposta segura a falhas |
-| Segurança contínua | Spring Boot 4.1.2, Dependabot para Maven/Docker/Actions e CodeQL Java configurados; relatório inicial publicado |
+| Segurança contínua | Spring Boot 4.1.2, Dependabot para Maven/Actions e CodeQL Java configurados; relatório inicial publicado |
 | Inicialização | README, configuração de exemplo, Compose opcional e servidor estático Node incluídos |
 
 Validação: **287 testes Java, zero falhas, zero erros e zero testes ignorados**; compilação aprovada. A análise JDT de produção e testes terminou sem diagnósticos de nulabilidade, com as três violações do controle negativo detectadas.
