@@ -113,7 +113,9 @@ Os pull requests ainda precisam passar por revisão e testes antes do merge. Atu
 
 ### CodeQL
 
-Analisa Java com o conjunto `security-extended` em pushes e pull requests da branch `main`, toda segunda-feira e sob execução manual. A primeira conclusão do CodeQL ocorrerá no GitHub após o push deste commit; os resultados devem ser consultados na aba **Security > Code scanning**.
+Analisa Java com o conjunto `security-extended` em pushes e pull requests da branch `main`, toda segunda-feira e sob execução manual. A [primeira execução do CodeQL](https://github.com/pbl-silva/projetos_aprendizagem/actions/runs/42890592984) terminou com sucesso em 10/11/2026: checkout, Java 25, inicialização, compilação, análise e envio dos resultados foram concluídos.
+
+O sucesso do workflow confirma que a análise foi produzida e aceita pelo GitHub, mas não significa automaticamente zero alertas. A relação de achados exige acesso autenticado e deve ser consultada em **Security > Code scanning**.
 
 ## Limitações
 
@@ -121,13 +123,13 @@ Analisa Java com o conjunto `security-extended` em pushes e pull requests da bra
 - A imagem MySQL não foi analisada localmente por scanner de contêiner; o Dependabot passa a acompanhar atualizações da referência.
 - O banco real não foi submetido a testes de privilégio nesta revisão.
 - A NVD não foi consultada de forma conclusiva sem chave.
-- CodeQL só produzirá o primeiro resultado depois que o workflow for executado no GitHub.
+- A API anônima do GitHub não permitiu listar os alertas enviados pelo CodeQL; a conferência precisa ser feita por uma conta com permissão no repositório.
 - Revisão estática e ausência de CVEs conhecidos não provam ausência de falhas lógicas ou vulnerabilidades futuras.
 
 ## Prioridades recomendadas
 
 1. Implementar rate limiting para login, cadastro e consulta de CEP.
-2. Acompanhar a primeira execução do CodeQL e avaliar cada alerta antes de fechar o relatório.
+2. Consultar os alertas autenticados do CodeQL e avaliar cada item antes de considerar a revisão encerrada.
 3. Migrar tokens para cookies protegidos e adicionar Content-Security-Policy.
 4. Criar um perfil de produção sem credenciais ou chaves padrão.
 5. Configurar uma chave NVD e automatizar o Dependency-Check como segunda fonte.
