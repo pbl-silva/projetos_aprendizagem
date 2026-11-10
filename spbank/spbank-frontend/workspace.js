@@ -156,7 +156,7 @@ function decorateCardFinance(container) {
 }
 function organizeInvestmentWorkspace(page,products) {
   const intro=page.querySelector(':scope > p');intro?.remove();standardizeBankModule(page,'invest');
-  const catalog=page.querySelector('.investment-products'),form=page.querySelector('#investmentForm'),positions=page.querySelector('.bank-investment-positions'),history=page.querySelector('.bank-redemption-history');
+  const marketRates=page.querySelector('.market-rates'),catalog=page.querySelector('.investment-products'),form=page.querySelector('#investmentForm'),positions=page.querySelector('.bank-investment-positions'),history=page.querySelector('.bank-redemption-history');
   if(intro){intro.className='bank-note';catalog.before(intro);}
   catalog.querySelectorAll(':scope > article').forEach((card,index)=>{card.classList.add('bank-panel');const button=document.createElement('button');button.type='button';button.className='btn-outline';button.textContent='Aplicar neste produto';button.onclick=()=>{setBankTab(page,'apply');form.elements.productId.value=products[index].id;form.elements.productId.dispatchEvent(new Event('change'));form.elements.amount.focus();};card.append(button);});
   const grid=bankFieldRow(form.elements.productId.closest('label'),form.elements.amount.closest('label'));form.querySelector('#investmentPreview').before(grid);
@@ -167,7 +167,7 @@ function organizeInvestmentWorkspace(page,products) {
   guide.insertAdjacentHTML('beforeend','<div data-product-guide class="bank-hint">Selecione um produto para ver suas condições.</div><p class="bank-hint">Valores brutos, sem tributação ou suitability. Cota e CDI são simulados.</p>');
   form.elements.productId.addEventListener('change',()=>{const product=products.find(p=>p.id===form.elements.productId.value);guide.querySelector('[data-product-guide]').textContent=product?product.name+' · aplicação mínima '+formatarMoeda(product.minimumApplication):'Selecione um produto para ver suas condições.';});
   const applyLayout=document.createElement('div');applyLayout.className='bank-layout';applyLayout.append(form,guide);
-  mountBankTabs(page,[{key:'overview',label:'Produtos',icon:'view_agenda',nodes:[...(intro?[intro]:[]),catalog]},{key:'apply',label:'Aplicar',icon:'add_chart',nodes:[applyLayout]},{key:'positions',label:'Minhas posições',icon:'monitoring',nodes:[positions]},{key:'redemptions',label:'Resgates',icon:'south_west',nodes:[history]}]);
+  mountBankTabs(page,[{key:'overview',label:'Produtos',icon:'view_agenda',nodes:[...(intro?[intro]:[]),marketRates,catalog]},{key:'apply',label:'Aplicar',icon:'add_chart',nodes:[applyLayout]},{key:'positions',label:'Minhas posições',icon:'monitoring',nodes:[positions]},{key:'redemptions',label:'Resgates',icon:'south_west',nodes:[history]}]);
   return step;
 }
 function bankReviewMarkup(values,extraClass='') {

@@ -572,6 +572,35 @@ async function handleRegistration(event) {
   }
 }
 
+function bindPostalCodeLookup(form) {
+  const postalCode=form.elements.postalCode;
+  if(!postalCode||postalCode.dataset.lookupBound==='true')return;
+  postalCode.dataset.lookupBound='true';postalCode.inputMode='numeric';postalCode.maxLength=9;postalCode.pattern='[0-9]{5}-?[0-9]{3}';
+  const status=document.createElement('small');status.className='postal-code-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');postalCode.closest('label').append(status);
+  const addressNames=['street','district','city','state'];let requestVersion=0;
+  postalCode.addEventListener('input',()=>{requestVersion++;postalCode.setCustomValidity('');status.textContent='';delete status.dataset.state;});
+  postalCode.addEventListener('blur',async()=>{
+    const digits=postalCode.value.replace(/\D/g,'');
+    if(!digits){status.textContent='';return;}
+    if(!/^\d{8}$/.test(digits)){postalCode.setCustomValidity('Informe um CEP com oito dígitos.');status.dataset.state='error';status.textContent='Informe um CEP com oito dígitos.';return;}
+    postalCode.setCustomValidity('');postalCode.value=digits.replace(/^(\d{5})(\d{3})$/,'$1-$2');
+    const version=++requestVersion,before=Object.fromEntries(addressNames.map(name=>[name,form.elements[name]?.value]));
+    status.dataset.state='loading';status.textContent='Consultando ViaCEP…';
+    try{
+      const result=await api('/api/v1/address/postal-codes/'+encodeURIComponent(digits));
+      if(version!==requestVersion||postalCode.value.replace(/\D/g,'')!==digits)return;
+      if(result.status==='AVAILABLE'){
+        for(const name of addressNames){const field=form.elements[name],value=result[name];if(field&&value&&field.value===before[name])field.value=value;}
+        status.dataset.state='success';status.textContent='Endereço localizado pelo ViaCEP. Confira os dados e informe o número.';
+      }else{
+        status.dataset.state='error';status.textContent=result.notice||'CEP não encontrado. Preencha o endereço manualmente.';
+      }
+    }catch(_){
+      if(version===requestVersion){status.dataset.state='error';status.textContent='Não foi possível consultar o ViaCEP. Preencha o endereço manualmente.';}
+    }
+  });
+}
+
 async function performLogout() {
   try {
     await api('/api/v1/auth/logout', { method: 'POST' });
@@ -1801,8 +1830,9 @@ function renderProfilePage() {
   `;
 
   organizeProfileWorkspace();
-  document.getElementById('profileForm')
-    .addEventListener('submit', handleProfileUpdate);
+  const profileForm=document.getElementById('profileForm');
+  profileForm.addEventListener('submit', handleProfileUpdate);
+  bindPostalCodeLookup(profileForm);
 
   document.getElementById('passwordForm')
     .addEventListener('submit', handlePasswordChange);
@@ -2544,8 +2574,9 @@ async function initializeApp() {
   document.getElementById('loginForm')
     .addEventListener('submit', handleLogin);
 
-  document.getElementById('registerForm')
-    .addEventListener('submit', handleRegistration);
+  const registerForm=document.getElementById('registerForm');
+  registerForm.addEventListener('submit', handleRegistration);
+  bindPostalCodeLookup(registerForm);
 
   document.getElementById('adminLoginForm')
     .addEventListener('submit', handleAdminLogin);

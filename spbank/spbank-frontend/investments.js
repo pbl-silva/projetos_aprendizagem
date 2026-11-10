@@ -5,10 +5,12 @@ async function renderInvestmentsPage() {
   content.innerHTML='<section id="investmentsPage" class="card" aria-live="polite">Carregando investimentos…</section>';
   const page=document.getElementById('investmentsPage');
   try {
-    const [products,positions]=await Promise.all([api('/api/v1/investments/products'),api('/api/v1/investments/positions')]);
+    const marketRequest=api('/api/v1/market/rates').catch(()=>({status:'UNAVAILABLE',rates:[],source:'BrasilAPI',notice:'Referências de Selic e CDI temporariamente indisponíveis.'}));
+    const [products,positions,marketRates]=await Promise.all([api('/api/v1/investments/products'),api('/api/v1/investments/positions'),marketRequest]);
     if(!page.isConnected)return;
     const account=selectedCustomerAccount();
     page.innerHTML='<h2>Investimentos</h2><p>Produtos fictícios do laboratório. Valores brutos, sem cálculo de impostos ou avaliação do perfil do investidor. Não representam recomendação.</p>'+
+      renderMarketRates(marketRates)+
       '<div class="investment-products">'+products.map(product=>'<article class="card"><h3>'+escapeHtml(product.name)+'</h3><p>Aplicação mínima: '+formatarMoeda(product.minimumApplication)+'</p>'+(product.type==='FUND'?'<p>Permanência mínima: '+formatarMoeda(product.minimumRemaining)+'</p>':'')+'<p>'+escapeHtml(product.type==='FUND'?'Fundo por cotas · sem cobertura do FGC':'CDB · elegível ao FGC como informação de produto; cobertura não calculada')+'</p><p>'+escapeHtml(product.type==='FUND'?'Cotização D+0 e pagamento de resgate D+1 útil':product.cdb.cdiPercent+'% do CDI simulado · '+product.cdb.termDays+' dias corridos · liquidez no vencimento')+'</p>'+(product.quote?'<p>Cota de referência: '+escapeHtml(product.quote.price)+' em '+escapeHtml(product.quote.date)+'</p>':'')+'</article>').join('')+'</div>'+
       '<form id="investmentForm"><h3>Aplicar pela conta selecionada</h3><p>'+escapeHtml(account?account.branch+' · '+account.accountNumber:'Selecione uma conta própria no cabeçalho')+'</p><label>Produto<select name="productId" required><option value="">Selecione</option>'+products.map(p=>'<option value="'+escapeHtml(p.id)+'">'+escapeHtml(p.name)+'</option>').join('')+'</select></label><label>Valor<input name="amount" type="number" min="0.01" step="0.01" required></label><button type="button" class="btn-outline" id="investmentPreview">Consultar prévia</button><div id="investmentPreviewResult"></div><label>Senha de login<input name="confirmationPassword" type="password" autocomplete="off" maxlength="128" required></label><button type="submit" class="btn" disabled>Confirmar aplicação</button><div id="investmentMessage" role="status"></div></form>'+
       '<section class="bank-investment-positions"><h3>Minhas posições</h3><p>Valores brutos com data de referência, sem impostos. A valorização não altera o saldo da conta e não garante retorno futuro.</p><div>'+positions.map(p=>'<article class="card" data-investment-position><h4>'+escapeHtml(p.product.name)+'</h4><p>Principal remanescente: '+formatarMoeda(p.principal)+' · aplicação em '+escapeHtml(p.effectiveDate)+'</p>'+(p.units!==undefined?'<p>'+escapeHtml(p.units)+' cotas · cota de aquisição '+escapeHtml(p.unitPrice)+' em '+escapeHtml(p.quoteDate)+'</p>':'<p>Vencimento contratual: '+escapeHtml(p.maturityDate)+' · '+escapeHtml(p.product.cdb.cdiPercent)+'% do CDI simulado</p>')+renderInvestmentValuation(p)+'</article>').join('')+(positions.length?'':'<p>Nenhuma posição nesta titularidade.</p>')+'</div></section>';
@@ -40,6 +42,18 @@ async function renderInvestmentsPage() {
       }catch(error){if(page.isConnected){showApiError(message,error);button.disabled=false;}}finally{form.elements.confirmationPassword.value='';}
     });
   }catch(error){if(page.isConnected){showBankLoadError(page,'invest',error);}}
+}
+
+function renderMarketRates(snapshot) {
+  const rates=new Map((snapshot.rates||[]).map(rate=>[rate.name,rate.annualPercent]));
+  const selic=rates.get('SELIC'),cdi=rates.get('CDI');
+  if(snapshot.status==='UNAVAILABLE'||selic===undefined||cdi===undefined){
+    return '<section class="market-rates market-rates-unavailable bank-panel" aria-labelledby="marketRatesTitle"><div class="market-rates-heading"><div><span class="workspace-eyebrow">REFERÊNCIA DE MERCADO</span><h3 id="marketRatesTitle">Selic e CDI indisponíveis</h3></div><span class="market-rate-status">Sem conexão</span></div><p>'+escapeHtml(snapshot.notice||'A consulta externa está temporariamente indisponível.')+' Os cálculos dos investimentos continuam usando os dados simulados do laboratório.</p></section>';
+  }
+  const formatRate=value=>Number(value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const consulted=new Date(snapshot.consultedAt),consultedLabel=Number.isNaN(consulted.getTime())?'horário não informado':consulted.toLocaleString('pt-BR');
+  const status=snapshot.status==='STALE'?'Última consulta':'Atual';
+  return '<section class="market-rates bank-panel" aria-labelledby="marketRatesTitle"><div class="market-rates-heading"><div><span class="workspace-eyebrow">REFERÊNCIA DE MERCADO</span><h3 id="marketRatesTitle">Taxas atuais</h3></div><span class="market-rate-status">'+status+'</span></div><div class="market-rate-values"><div><span>Selic</span><strong>'+escapeHtml(formatRate(selic))+'% a.a.</strong></div><div><span>CDI</span><strong>'+escapeHtml(formatRate(cdi))+'% a.a.</strong></div></div><p>'+escapeHtml(snapshot.notice)+' Fonte: '+escapeHtml(snapshot.source)+' · consulta em '+escapeHtml(consultedLabel)+'.</p></section>';
 }
 
 function renderInvestmentValuation(position) {

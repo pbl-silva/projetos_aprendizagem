@@ -57,6 +57,22 @@ spbank:
     favorite-required-above: 1000.00
     zone: ${spbank.zone}
 
+  market:
+    rates-url: ${MARKET_RATES_URL:https://brasilapi.com.br/api/taxas/v1}
+    connect-timeout: ${MARKET_CONNECT_TIMEOUT:2s}
+    request-timeout: ${MARKET_REQUEST_TIMEOUT:3s}
+    cache-ttl: ${MARKET_CACHE_TTL:30m}
+    failure-cache-ttl: ${MARKET_FAILURE_CACHE_TTL:1m}
+
+  postal-code:
+    base-url: ${POSTAL_CODE_BASE_URL:https://viacep.com.br/ws/}
+    connect-timeout: ${POSTAL_CODE_CONNECT_TIMEOUT:2s}
+    request-timeout: ${POSTAL_CODE_REQUEST_TIMEOUT:3s}
+    success-cache-ttl: ${POSTAL_CODE_SUCCESS_CACHE_TTL:24h}
+    not-found-cache-ttl: ${POSTAL_CODE_NOT_FOUND_CACHE_TTL:5m}
+    failure-cache-ttl: ${POSTAL_CODE_FAILURE_CACHE_TTL:1m}
+    max-cache-entries: ${POSTAL_CODE_MAX_CACHE_ENTRIES:1000}
+
 
 management:
   endpoints:

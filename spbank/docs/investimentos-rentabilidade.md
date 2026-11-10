@@ -14,7 +14,9 @@ O CDB usa exclusivamente o percentual de CDI registrado no lote. Os fatores inte
 
 Esses fatores são compostos com `BigDecimal` e precisão `DECIMAL128`, sem arredondamento diário para centavos. O valor bruto final usa duas casas e `HALF_EVEN`; rendimento bruto é a diferença para o principal. O dia da aplicação é excluído e a data de referência é incluída. Somente dias úteis, descontados os feriados persistidos, geram rendimento. A composição termina na data contratual de vencimento, mesmo que a consulta ocorra depois.
 
-As vigências de estudo em V2 são fictícias, não representam observações ou previsões de mercado. Nenhum componente do módulo busca cotas ou CDI pela internet. Um teste de arquitetura protege essa restrição.
+As vigências de estudo em V2 são fictícias, não representam observações ou previsões de mercado. Nenhum componente do módulo de investimentos busca cotas ou CDI pela internet. Um teste de arquitetura protege essa restrição.
+
+A interface consulta separadamente `GET /api/v1/market/rates`, que usa a BrasilAPI para apresentar Selic e CDI anuais como referência visual. Essa integração vive no módulo `mercado`, não participa do cálculo de rentabilidade e nunca altera posições, contratos, saldos ou lançamentos. O resultado fica em cache por 30 minutos; quando a fonte externa falha, o endpoint devolve a última consulta como `STALE` ou o estado `UNAVAILABLE`, mantém essa falha em cache por um minuto para não sobrecarregar o provedor e não impede o acesso aos investimentos.
 
 Se faltar uma cota ou um fator necessário, houver sobreposição de vigências, fator inválido, data inconsistente ou valor fora da capacidade monetária, a posição retorna `DATA_UNAVAILABLE`, com código estável e **sem inventar valor bruto ou rendimento zero**. As outras posições continuam visíveis.
 

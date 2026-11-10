@@ -54,7 +54,13 @@ public final class AccessSessionFilter
                 || !path.startsWith("/api/")
                 || path.startsWith("/api/v1/admin/")
                 || "/api/v1/auth/login".equals(path)
-                || "/api/v1/auth/register".equals(path);
+                || "/api/v1/auth/register".equals(path)
+                || isPublicPostalCodeLookup(request, path);
+    }
+
+    private static boolean isPublicPostalCodeLookup(HttpServletRequest request, String path) {
+        return "GET".equalsIgnoreCase(request.getMethod())
+                && path.matches("^/api/v1/address/postal-codes/\\d{8}$");
     }
 
     @Override

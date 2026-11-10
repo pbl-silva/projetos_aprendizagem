@@ -20,6 +20,37 @@ import org.springframework.web.servlet.ModelAndView;
 class AccessSessionFilterTest {
 
     @Test
+    void shouldAllowAValidPostalCodeLookupBeforeRegistration()
+            throws Exception {
+        AuthenticationUseCase authentication = java.util.Objects.requireNonNull(mock(AuthenticationUseCase.class));
+        HandlerExceptionResolver resolver = java.util.Objects.requireNonNull(mock(HandlerExceptionResolver.class));
+        FilterChain chain = java.util.Objects.requireNonNull(mock(FilterChain.class));
+        var request = new MockHttpServletRequest("GET", "/api/v1/address/postal-codes/01001000");
+        var response = new MockHttpServletResponse();
+
+        new AccessSessionFilter(authentication, resolver).doFilter(request, response, chain);
+
+        verify(chain).doFilter(request, response);
+        verifyNoInteractions(authentication, resolver);
+    }
+
+    @Test
+    void shouldNotExposeMalformedPostalCodeRoutesWithoutAuthentication()
+            throws Exception {
+        AuthenticationUseCase authentication = java.util.Objects.requireNonNull(mock(AuthenticationUseCase.class));
+        when(authentication.resolveSession(isNull())).thenThrow(new UnauthorizedException());
+        HandlerExceptionResolver resolver = java.util.Objects.requireNonNull(mock(HandlerExceptionResolver.class));
+        FilterChain chain = java.util.Objects.requireNonNull(mock(FilterChain.class));
+        var request = new MockHttpServletRequest("GET", "/api/v1/address/postal-codes/01001-000");
+        var response = new MockHttpServletResponse();
+
+        new AccessSessionFilter(authentication, resolver).doFilter(request, response, chain);
+
+        verify(authentication).resolveSession(isNull());
+        verifyNoInteractions(chain);
+    }
+
+    @Test
     void shouldLeaveAdministrativeRoutesToTheirOwnFilter()
             throws Exception {
 

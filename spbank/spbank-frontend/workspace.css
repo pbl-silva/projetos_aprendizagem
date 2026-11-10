@@ -115,6 +115,19 @@
 .bank-operation-grid .bank-form legend { display:none; }
 #appShell #content .bank-workspace .investment-products { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:0; }
 #appShell #content .bank-workspace .investment-products > article { display:grid; align-content:start; gap:10px; margin:0; }
+.market-rates { display:grid; gap:14px; margin:0 0 18px; }
+.market-rates-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+#appShell #content .bank-workspace .market-rates-heading h3 { margin:0; }
+.market-rate-status { padding:5px 9px; border:1px solid var(--accent-soft-strong); border-radius:999px; background:var(--accent-soft); color:var(--accent-text); font-size:.65rem; white-space:nowrap; }
+.market-rate-values { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.market-rate-values > div { display:grid; gap:5px; padding:13px 14px; border-radius:12px; background:var(--bg-secondary); }
+.market-rate-values span { font-size:.72rem; color:var(--muted-secondary); }
+.market-rate-values strong { font-size:1.2rem; letter-spacing:-.025em; }
+#appShell #content .bank-workspace .market-rates > p { margin:0; color:var(--muted-secondary); font-size:.72rem; line-height:1.65; }
+.market-rates-unavailable { border-style:dashed; }
+.postal-code-status { display:block; min-height:1.2em; margin-top:5px; color:var(--muted-secondary); font-size:.7rem; line-height:1.45; }
+.postal-code-status[data-state=success] { color:var(--success); }
+.postal-code-status[data-state=error] { color:var(--danger); }
 .bank-investment-positions > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .bank-investment-positions > div > p { grid-column:1/-1; }
 #appShell #content .bank-workspace .bank-redemption-history details { padding:16px; margin-top:12px; border:1px solid var(--border); border-radius:12px; }
@@ -154,5 +167,6 @@
   .bank-form-footer { flex-direction:column; align-items:stretch; }
   .bank-form-footer label { max-width:none; }
   #appShell #content .bank-workspace .bank-operation-grid,#appShell #content .bank-workspace .investment-products { grid-template-columns:1fr; }
+  .market-rate-values { grid-template-columns:1fr; }
   #appShell #content .bank-workspace .bank-panel { padding:16px; }
 }
